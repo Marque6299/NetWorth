@@ -1,0 +1,699 @@
+{
+  "meta": {
+    "worldId": "aurel",
+    "name": "Aurel",
+    "version": "1.0.0",
+    "coordinateSystem": "normalized-world-plane",
+    "width": 1000,
+    "height": 600,
+    "origin": "top-left",
+    "units": "abstract"
+  },
+  "geography": {
+    "continents": [
+      {
+        "id": "eldoria",
+        "name": "Eldoria",
+        "anchor": {
+          "x": 245,
+          "y": 215
+        },
+        "regions": [
+          "westmark",
+          "crownlands",
+          "meridian-coast"
+        ]
+      },
+      {
+        "id": "sundara",
+        "name": "Sundara",
+        "anchor": {
+          "x": 390,
+          "y": 420
+        },
+        "regions": [
+          "greenwake",
+          "sunvale",
+          "riftmarch"
+        ]
+      },
+      {
+        "id": "veyra",
+        "name": "Veyra",
+        "anchor": {
+          "x": 720,
+          "y": 255
+        },
+        "regions": [
+          "veyran-core",
+          "eastreach",
+          "orin-basin"
+        ]
+      },
+      {
+        "id": "northreach",
+        "name": "Northreach",
+        "anchor": {
+          "x": 520,
+          "y": 90
+        },
+        "regions": [
+          "northwood",
+          "frostholm"
+        ]
+      },
+      {
+        "id": "pelagic-isles",
+        "name": "The Pelagic Isles",
+        "anchor": {
+          "x": 590,
+          "y": 485
+        },
+        "regions": [
+          "pelagic-isles"
+        ]
+      }
+    ],
+    "waterBodies": [
+      {
+        "id": "aurelian-sea",
+        "name": "Aurelian Sea",
+        "type": "sea"
+      },
+      {
+        "id": "lake-orin",
+        "name": "Lake Orin",
+        "type": "lake",
+        "anchor": {
+          "x": 755,
+          "y": 270
+        }
+      },
+      {
+        "id": "blue-current",
+        "name": "The Blue Current",
+        "type": "ocean-current"
+      }
+    ],
+    "landmarks": [
+      {
+        "id": "crownspine",
+        "name": "Crownspine Range",
+        "type": "mountain-range",
+        "anchor": {
+          "x": 300,
+          "y": 145
+        }
+      },
+      {
+        "id": "sundara-rift",
+        "name": "Sundara Rift",
+        "type": "volcanic-mineral-belt",
+        "anchor": {
+          "x": 465,
+          "y": 410
+        }
+      },
+      {
+        "id": "greenwake-basin",
+        "name": "Greenwake Basin",
+        "type": "river-basin",
+        "anchor": {
+          "x": 340,
+          "y": 385
+        }
+      },
+      {
+        "id": "northreach-taiga",
+        "name": "Northreach Taiga",
+        "type": "forest",
+        "anchor": {
+          "x": 540,
+          "y": 105
+        }
+      },
+      {
+        "id": "veyran-highlands",
+        "name": "Veyran Highlands",
+        "type": "highlands",
+        "anchor": {
+          "x": 680,
+          "y": 305
+        }
+      },
+      {
+        "id": "pelagic-arc",
+        "name": "Pelagic Arc",
+        "type": "island-chain",
+        "anchor": {
+          "x": 590,
+          "y": 500
+        }
+      }
+    ]
+  },
+  "regions": [
+    {
+      "id": "westmark",
+      "name": "Westmark",
+      "continentId": "eldoria",
+      "anchor": {
+        "x": 175,
+        "y": 225
+      },
+      "character": "mature-services",
+      "strengths": [
+        "finance",
+        "education",
+        "professional-services"
+      ],
+      "majorCityId": "asterfall"
+    },
+    {
+      "id": "crownlands",
+      "name": "Crownlands",
+      "continentId": "eldoria",
+      "anchor": {
+        "x": 285,
+        "y": 145
+      },
+      "character": "mountain-industrial",
+      "strengths": [
+        "copper",
+        "iron",
+        "hydropower"
+      ],
+      "majorCityId": "highridge"
+    },
+    {
+      "id": "meridian-coast",
+      "name": "Meridian Coast",
+      "continentId": "eldoria",
+      "anchor": {
+        "x": 310,
+        "y": 285
+      },
+      "character": "coastal-trade",
+      "strengths": [
+        "port-logistics",
+        "manufacturing",
+        "finance"
+      ],
+      "majorCityId": "meridian"
+    },
+    {
+      "id": "greenwake",
+      "name": "Greenwake",
+      "continentId": "sundara",
+      "anchor": {
+        "x": 345,
+        "y": 385
+      },
+      "character": "fertile-river-basin",
+      "strengths": [
+        "grain",
+        "fruit",
+        "timber",
+        "freshwater"
+      ],
+      "majorCityId": "sao-aurora"
+    },
+    {
+      "id": "sunvale",
+      "name": "Sunvale",
+      "continentId": "sundara",
+      "anchor": {
+        "x": 405,
+        "y": 470
+      },
+      "character": "arid-solar-belt",
+      "strengths": [
+        "solar",
+        "lithium",
+        "livestock"
+      ],
+      "majorCityId": "solenne"
+    },
+    {
+      "id": "riftmarch",
+      "name": "Riftmarch",
+      "continentId": "sundara",
+      "anchor": {
+        "x": 480,
+        "y": 405
+      },
+      "character": "volcanic-mineral-belt",
+      "strengths": [
+        "nickel",
+        "copper",
+        "geothermal"
+      ],
+      "majorCityId": "kitala"
+    },
+    {
+      "id": "veyran-core",
+      "name": "Veyran Core",
+      "continentId": "veyra",
+      "anchor": {
+        "x": 720,
+        "y": 235
+      },
+      "character": "technology-manufacturing",
+      "strengths": [
+        "electronics",
+        "machinery",
+        "research"
+      ],
+      "majorCityId": "euron"
+    },
+    {
+      "id": "eastreach",
+      "name": "Eastreach",
+      "continentId": "veyra",
+      "anchor": {
+        "x": 830,
+        "y": 280
+      },
+      "character": "export-coast",
+      "strengths": [
+        "shipping",
+        "steel",
+        "consumer-goods"
+      ],
+      "majorCityId": "port-serein"
+    },
+    {
+      "id": "orin-basin",
+      "name": "Orin Basin",
+      "continentId": "veyra",
+      "anchor": {
+        "x": 690,
+        "y": 315
+      },
+      "character": "lake-river-logistics",
+      "strengths": [
+        "freshwater",
+        "agriculture",
+        "logistics"
+      ],
+      "majorCityId": "lakehaven"
+    },
+    {
+      "id": "northwood",
+      "name": "Northwood",
+      "continentId": "northreach",
+      "anchor": {
+        "x": 500,
+        "y": 95
+      },
+      "character": "taiga-forest",
+      "strengths": [
+        "timber",
+        "pulp",
+        "hydropower"
+      ],
+      "majorCityId": "borealis"
+    },
+    {
+      "id": "frostholm",
+      "name": "Frostholm",
+      "continentId": "northreach",
+      "anchor": {
+        "x": 650,
+        "y": 75
+      },
+      "character": "cold-mineral-frontier",
+      "strengths": [
+        "rare-earths",
+        "iron",
+        "gas"
+      ],
+      "majorCityId": "skeld"
+    },
+    {
+      "id": "pelagic-isles",
+      "name": "Pelagic Isles",
+      "continentId": "pelagic-isles",
+      "anchor": {
+        "x": 590,
+        "y": 500
+      },
+      "character": "maritime-archipelago",
+      "strengths": [
+        "fisheries",
+        "tourism",
+        "transshipment"
+      ],
+      "majorCityId": "nacre-bay"
+    }
+  ],
+  "cities": [
+    {
+      "id": "asterfall",
+      "name": "Asterfall",
+      "regionId": "westmark",
+      "anchor": {
+        "x": 180,
+        "y": 220
+      },
+      "tier": "major"
+    },
+    {
+      "id": "highridge",
+      "name": "Highridge",
+      "regionId": "crownlands",
+      "anchor": {
+        "x": 285,
+        "y": 150
+      },
+      "tier": "major"
+    },
+    {
+      "id": "meridian",
+      "name": "Meridian",
+      "regionId": "meridian-coast",
+      "anchor": {
+        "x": 310,
+        "y": 285
+      },
+      "tier": "major",
+      "isStarter": true,
+      "stats": {
+        "population": 842000,
+        "gdpLU": 142600000000,
+        "unemployment": 4.8,
+        "inflation": 2.1
+      },
+      "districts": [
+        "old-quay",
+        "civic-center",
+        "exchange-quarter",
+        "northbank",
+        "southworks",
+        "new-meridian",
+        "harborfront"
+      ]
+    },
+    {
+      "id": "sao-aurora",
+      "name": "Sao Aurora",
+      "regionId": "greenwake",
+      "anchor": {
+        "x": 350,
+        "y": 390
+      },
+      "tier": "major"
+    },
+    {
+      "id": "solenne",
+      "name": "Solenne",
+      "regionId": "sunvale",
+      "anchor": {
+        "x": 405,
+        "y": 470
+      },
+      "tier": "major"
+    },
+    {
+      "id": "kitala",
+      "name": "Kitala",
+      "regionId": "riftmarch",
+      "anchor": {
+        "x": 480,
+        "y": 410
+      },
+      "tier": "major"
+    },
+    {
+      "id": "euron",
+      "name": "Euron",
+      "regionId": "veyran-core",
+      "anchor": {
+        "x": 720,
+        "y": 235
+      },
+      "tier": "major"
+    },
+    {
+      "id": "port-serein",
+      "name": "Port Serein",
+      "regionId": "eastreach",
+      "anchor": {
+        "x": 835,
+        "y": 280
+      },
+      "tier": "major"
+    },
+    {
+      "id": "lakehaven",
+      "name": "Lakehaven",
+      "regionId": "orin-basin",
+      "anchor": {
+        "x": 690,
+        "y": 315
+      },
+      "tier": "major"
+    },
+    {
+      "id": "borealis",
+      "name": "Borealis",
+      "regionId": "northwood",
+      "anchor": {
+        "x": 505,
+        "y": 100
+      },
+      "tier": "major"
+    },
+    {
+      "id": "skeld",
+      "name": "Skeld",
+      "regionId": "frostholm",
+      "anchor": {
+        "x": 650,
+        "y": 80
+      },
+      "tier": "major"
+    },
+    {
+      "id": "nacre-bay",
+      "name": "Nacre Bay",
+      "regionId": "pelagic-isles",
+      "anchor": {
+        "x": 590,
+        "y": 505
+      },
+      "tier": "major"
+    }
+  ],
+  "resources": [
+    {
+      "id": "grain",
+      "name": "Grain",
+      "regions": [
+        "greenwake",
+        "orin-basin"
+      ],
+      "category": "agriculture"
+    },
+    {
+      "id": "fruit",
+      "name": "Fruit",
+      "regions": [
+        "greenwake",
+        "pelagic-isles"
+      ],
+      "category": "agriculture"
+    },
+    {
+      "id": "timber",
+      "name": "Timber",
+      "regions": [
+        "northwood",
+        "greenwake"
+      ],
+      "category": "forestry"
+    },
+    {
+      "id": "copper",
+      "name": "Copper",
+      "regions": [
+        "crownlands",
+        "riftmarch"
+      ],
+      "category": "mineral"
+    },
+    {
+      "id": "iron",
+      "name": "Iron",
+      "regions": [
+        "crownlands",
+        "veyran-core"
+      ],
+      "category": "mineral"
+    },
+    {
+      "id": "nickel",
+      "name": "Nickel",
+      "regions": [
+        "riftmarch"
+      ],
+      "category": "mineral"
+    },
+    {
+      "id": "lithium",
+      "name": "Lithium",
+      "regions": [
+        "sunvale"
+      ],
+      "category": "mineral"
+    },
+    {
+      "id": "rare-earths",
+      "name": "Rare Earths",
+      "regions": [
+        "frostholm",
+        "veyran-core"
+      ],
+      "category": "mineral"
+    },
+    {
+      "id": "oil-gas",
+      "name": "Oil & Natural Gas",
+      "regions": [
+        "eastreach",
+        "frostholm"
+      ],
+      "category": "energy"
+    },
+    {
+      "id": "solar",
+      "name": "Solar Energy",
+      "regions": [
+        "sunvale"
+      ],
+      "category": "energy"
+    },
+    {
+      "id": "geothermal",
+      "name": "Geothermal Energy",
+      "regions": [
+        "riftmarch"
+      ],
+      "category": "energy"
+    },
+    {
+      "id": "fisheries",
+      "name": "Fisheries",
+      "regions": [
+        "pelagic-isles",
+        "meridian-coast"
+      ],
+      "category": "food"
+    }
+  ],
+  "routes": [
+    {
+      "id": "meridian-asterfall",
+      "name": "Meridian–Asterfall Corridor",
+      "mode": [
+        "sea",
+        "road"
+      ],
+      "from": "meridian",
+      "to": "asterfall",
+      "goods": [
+        "financial-services",
+        "manufactured-goods",
+        "professional-labor"
+      ]
+    },
+    {
+      "id": "meridian-sao-aurora",
+      "name": "Meridian–Sao Aurora Line",
+      "mode": [
+        "sea",
+        "river"
+      ],
+      "from": "meridian",
+      "to": "sao-aurora",
+      "goods": [
+        "food",
+        "timber",
+        "agricultural-inputs"
+      ]
+    },
+    {
+      "id": "meridian-port-serein",
+      "name": "Meridian–Port Serein Route",
+      "mode": [
+        "sea"
+      ],
+      "from": "meridian",
+      "to": "port-serein",
+      "goods": [
+        "electronics",
+        "machinery",
+        "consumer-goods"
+      ]
+    },
+    {
+      "id": "meridian-nacre-bay",
+      "name": "Meridian–Nacre Bay Route",
+      "mode": [
+        "sea"
+      ],
+      "from": "meridian",
+      "to": "nacre-bay",
+      "goods": [
+        "shipping-services",
+        "fish",
+        "tourism"
+      ]
+    },
+    {
+      "id": "highridge-euron",
+      "name": "Highridge–Euron Link",
+      "mode": [
+        "rail",
+        "sea"
+      ],
+      "from": "highridge",
+      "to": "euron",
+      "goods": [
+        "metals",
+        "machinery",
+        "industrial-components"
+      ]
+    },
+    {
+      "id": "borealis-crownlands",
+      "name": "Borealis–Crownlands Resource Route",
+      "mode": [
+        "rail",
+        "sea"
+      ],
+      "from": "borealis",
+      "to": "highridge",
+      "goods": [
+        "timber",
+        "minerals",
+        "energy-equipment"
+      ]
+    },
+    {
+      "id": "sunvale-riftmarch",
+      "name": "Sunvale–Riftmarch Energy Link",
+      "mode": [
+        "road",
+        "rail"
+      ],
+      "from": "solenne",
+      "to": "kitala",
+      "goods": [
+        "solar-equipment",
+        "batteries",
+        "mineral-inputs"
+      ]
+    }
+  ]
+}
