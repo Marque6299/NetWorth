@@ -1,86 +1,90 @@
 # MOSAIC — Visual Production Roadmap
 
-## Phase 0 — Visual discovery and style lock
+## Phase 0 — World-map visual lock
 
-**Goal:** Confirm the visual language before creating a large asset library.
-
-Deliverables:
-- Moodboard with 2–3 compatible visual directions.
-- Isometric grid, camera angle, object scale, and light direction specification.
-- World and UI color tokens.
-- Typography and icon rules.
-- One mini-scene art test (street, home, shop, office, trees, props, three people).
-- Review checklist for readability at desktop and mobile sizes.
-
-**Exit criteria:** The scene reads clearly at normal zoom; assets share one perspective and lighting system; the UI remains legible over the scene.
-
-## Phase 1 — Starter city kit
-
-**Goal:** Build the minimum reusable environment kit for Meridian.
+**Goal:** Confirm the top-down map language and navigation hierarchy before creating a large asset library.
 
 Deliverables:
-- Ground, sidewalk, road, intersection, and plaza tiles.
-- Starter residential building, convenience shop, and office.
-- Trees, lamps, signs, benches, bins, and a few vehicles.
-- Selection outlines, map markers, and building interaction states.
-- One assembled street block.
+- Top-down fictional world map style anchor.
+- World geography and biome palette.
+- Map projection and camera behavior specification.
+- Zoom hierarchy: World → Region → City → District / Property.
+- City, resource, route, event, and ownership marker family.
+- Management HUD and map-layer control mockup.
+- Desktop and mobile readability review.
 
-**Exit criteria:** A small city block can be assembled from reusable pieces without bespoke redraws.
+**Exit criteria:** The map reads as a true top-down orthographic view; geography and markers remain clear at multiple scales; the HUD does not overwhelm the map.
 
-## Phase 2 — Character kit
+## Phase 1 — World geography foundation
 
-**Goal:** Give the city visible human activity.
-
-Deliverables:
-- Player avatar base and customization variants.
-- Three to five NPC archetypes.
-- Casual and work outfits.
-- Idle and walk animation tests.
-- NPC name / role / status UI treatment.
-
-**Exit criteria:** Characters are distinguishable at the intended map zoom and can be reused across different jobs and neighborhoods.
-
-## Phase 3 — Gameplay-specific visual feedback
-
-**Goal:** Make simulation events visible in the world and interface.
+**Goal:** Build the first navigable map of Aurel.
 
 Deliverables:
-- Work shift and workplace feedback.
-- Shopping / delivery / inventory feedback.
-- Business open/closed states.
-- Building upgrade and ownership states.
-- Household needs and health alerts.
-- Market shortage, price increase, and crisis indicators.
-- News and notification cards.
+- Ocean, coast, landmass, island, river, mountain, and biome layers.
+- Region/province boundaries.
+- Major road, rail, shipping, and trade corridors.
+- World and region map labels.
+- Meridian starter-city marker and selected-location state.
+- Pan, zoom, recenter, and search interactions.
 
-**Exit criteria:** Key events can be understood without reading a long log entry.
+**Exit criteria:** Aurel can be explored as a coherent world map, with location markers anchored to stable geographic coordinates.
 
-## Phase 4 — Economy and city expansion assets
+## Phase 2 — Economic and simulation overlays
 
-**Goal:** Support deeper economic systems.
+**Goal:** Make the map communicate the living economy.
 
 Deliverables:
-- Bank, market, café, clinic, school, workshop, warehouse, transport, civic buildings.
-- Additional vehicles, goods props, storefront signs, and business branding.
-- More character outfits and job-specific props.
-- District visual themes and environmental variations.
+- Population and urbanization overlay.
+- GDP / prosperity / employment overlays.
+- Resource nodes and production regions.
+- Infrastructure and logistics overlays.
+- Player ownership and business markers.
+- Regional risk, crisis, and event markers.
+- Layer legend, filters, and selected-entity panels.
 
-**Exit criteria:** New gameplay systems can be represented by recombining the existing visual kit plus a small number of new assets.
+**Exit criteria:** The player can understand where economic activity occurs and inspect the causes of regional differences.
+
+## Phase 3 — City and district detail
+
+**Goal:** Let players zoom from strategy to local management.
+
+Deliverables:
+- City boundaries and district footprints.
+- Road hierarchy and zoning/land-use colors.
+- Residential, commercial, industrial, civic, and mixed-use markers.
+- Property and business lots.
+- Optional stylized character/building sprites for selected close-up locations.
+
+**Exit criteria:** City-level information is detailed enough for property and business decisions without replacing the world map as the primary navigation surface.
+
+## Phase 4 — Gameplay feedback and world events
+
+**Goal:** Make simulation changes visible geographically.
+
+Deliverables:
+- New construction and upgrades.
+- Business open/closed and production states.
+- Supply shortages and price changes.
+- Traffic, shipping, and logistics disruption.
+- Natural disasters, political events, and regional crises.
+- News, notifications, and route alerts.
+
+**Exit criteria:** Important simulation events can be located and understood from the map.
 
 ## Phase 5 — Polish and optimization
 
-**Goal:** Prepare a consistent, performant asset pipeline.
+**Goal:** Prepare a consistent, performant map asset pipeline.
 
 Deliverables:
-- Optimized PNG/WebP/SVG runtime exports.
-- Sprite atlases where useful.
-- Lazy loading and fallback placeholders.
+- Tile/chunk or vector-layer optimization.
+- Level-of-detail and marker clustering.
+- Lazy loading and caching.
 - Reduced-motion and accessibility review.
-- Mobile performance and memory budget.
+- Mobile pan/zoom performance review.
 - Asset manifest validation and unused-asset audit.
 
-**Exit criteria:** No major missing assets, no inconsistent style, and acceptable load/render performance on mid-range mobile devices.
+**Exit criteria:** Smooth navigation and acceptable load/render performance on mid-range mobile devices.
 
 ## Recommended first production task
 
-Create the **Meridian Street Block Art Test** before drawing dozens of assets. It is the fastest way to validate the art style, scale, palette, and technical pipeline. Only after approval should we commission or generate the full building, prop, and character sets.
+Create the **Aurel World Map Art Test** and a minimal interactive map canvas before producing detailed building or character assets. The old Meridian Street Block concept is superseded as the primary view; it can later inform an optional close-up city/district view.
