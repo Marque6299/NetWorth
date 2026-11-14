@@ -1,9 +1,18 @@
 # MOSAIC / NetWorth — Initial Art Direction
 
-**Status:** Draft 0.1 — planning baseline  
+**Status:** Locked baseline 1.0 — approved visual direction  
 **Purpose:** Define the visual identity and production rules before creating final game art.
 
-## 1. Core visual concept
+## 1. Locked visual decisions
+
+- **Perspective:** 2D isometric.
+- **Characters:** Stylized 2D characters.
+- **Gameplay presentation:** Hybrid city viewport + management dashboard.
+- **First scene:** Meridian Street Block.
+
+See [Meridian Street Block Specification](MERIDIAN_STREET_BLOCK_SPEC.md) and [First Asset Generation Plan](ASSET_GENERATION_PLAN.md) for production details.
+
+## 2. Core visual concept
 
 A **stylized 2D isometric life-and-economy simulation**. The player should feel that they are building a life inside a living city, while the interface makes money, needs, work, businesses, and economic cause-and-effect easy to understand.
 
@@ -17,7 +26,7 @@ The target is a warm, believable, slightly optimistic modern city—not a hyper-
 - **Economic clarity:** positive, negative, warning, and neutral states use consistent colors and iconography.
 - **Expandable production:** buildings, people, props, and UI elements should be modular and recombinable.
 
-## 2. Recommended art style
+## 3. Recommended art style
 
 - 2D isometric / 3-quarter top-down perspective for the city layer.
 - Clean geometric silhouettes with subtly softened corners.
@@ -29,7 +38,7 @@ The target is a warm, believable, slightly optimistic modern city—not a hyper-
 
 **Avoid:** photorealism, heavy pixel-art constraints, extreme outlines, noisy textures, tiny unreadable signage, and mixing unrelated asset styles.
 
-## 3. World identity
+## 4. World identity
 
 | Element | Direction |
 |---|---|
@@ -41,7 +50,7 @@ The target is a warm, believable, slightly optimistic modern city—not a hyper-
 | Environment | Tropical/coastal influence may be explored, but should remain fictional and not copy a real city |
 | Brand tone | Thoughtful, grounded, approachable, systems-oriented |
 
-## 4. Color language
+## 5. Color language
 
 Use the existing dark management UI as a temporary prototype baseline, but establish separate palettes for the world map and interface.
 
@@ -62,7 +71,7 @@ Use the existing dark management UI as a temporary prototype baseline, but estab
 
 Do not rely on color alone: pair states with labels, icons, arrows, or patterns for accessibility.
 
-## 5. Camera and world presentation
+## 6. Camera and world presentation
 
 - Fixed isometric camera for the first city scene.
 - Modular tile or chunk-based map, with clear road and sidewalk hierarchy.
@@ -70,7 +79,7 @@ Do not rely on color alone: pair states with labels, icons, arrows, or patterns 
 - Camera pan and zoom can be considered after the first static scene is validated.
 - Keep the active play area visually calm; reserve high-detail backgrounds for non-interactive distant scenery.
 
-## 6. Character direction
+## 7. Character direction
 
 Create a small reusable character system rather than unique art for every NPC.
 
@@ -85,7 +94,7 @@ Initial modular parts:
 
 Represent NPC identity primarily through silhouette, clothing, color grouping, role, and a small number of distinguishing features. Avoid making every character depend on bespoke portrait art.
 
-## 7. UI direction
+## 8. UI direction
 
 The existing dashboard can evolve into a more polished hybrid of:
 - City view as the main visual anchor.
@@ -96,7 +105,7 @@ The existing dashboard can evolve into a more polished hybrid of:
 
 Keep financial data dense but legible. Use progressive disclosure: show the key decision first, with detailed breakdowns one click deeper.
 
-## 8. Asset technical standards
+## 9. Asset technical standards
 
 Initial target standards (to validate in the first art test):
 - World/building assets: transparent PNG or WebP; source files retained in SVG or layered format where possible.
@@ -109,7 +118,7 @@ Initial target standards (to validate in the first art test):
 
 Do not commit large unoptimized source exports into the runtime asset directory. Keep editable source and optimized runtime output separate.
 
-## 9. Accessibility and performance
+## 10. Accessibility and performance
 
 - Maintain text contrast and readable type sizes.
 - Never communicate status by color alone.
@@ -119,7 +128,7 @@ Do not commit large unoptimized source exports into the runtime asset directory.
 - Provide placeholder/fallback visuals if an asset is missing.
 - Keep the initial asset bundle small enough for a fast first load on mobile networks.
 
-## 10. First art validation milestone
+## 11. First art validation milestone
 
 Before producing a full city, create one cohesive visual test containing:
 1. One small isometric street block.
