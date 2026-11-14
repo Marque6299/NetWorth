@@ -1,142 +1,148 @@
-# MOSAIC / NetWorth — Initial Art Direction
+# MOSAIC / NetWorth — Art Direction
 
-**Status:** Locked baseline 1.0 — approved visual direction  
-**Purpose:** Define the visual identity and production rules before creating final game art.
+**Status:** Locked baseline 2.0 — top-down world map  
+**Purpose:** Define the visual identity and production rules for the world-map-first game presentation.
 
 ## 1. Locked visual decisions
 
-- **Perspective:** 2D isometric.
-- **Characters:** Stylized 2D characters.
-- **Gameplay presentation:** Hybrid city viewport + management dashboard.
-- **First scene:** Meridian Street Block.
+- **Primary perspective:** 2D top-down / orthographic world map. No isometric street scene as the default gameplay view.
+- **Characters:** Stylized 2D characters, used as map-scale markers and in optional close-up location views.
+- **Gameplay presentation:** World map + management dashboard.
+- **Primary navigation hierarchy:** World → Region → City → District → Property / business.
+- **World:** Aurel.
+- **Starter city:** Meridian.
+- **Currency:** Luma (LU).
 
-See [Meridian Street Block Specification](MERIDIAN_STREET_BLOCK_SPEC.md) and [First Asset Generation Plan](ASSET_GENERATION_PLAN.md) for production details.
+The previous Meridian Street Block concept is superseded as the primary visual direction. It may be reused later as an optional close-up city/district view, but it is not the main game camera.
 
 ## 2. Core visual concept
 
-A **stylized 2D isometric life-and-economy simulation**. The player should feel that they are building a life inside a living city, while the interface makes money, needs, work, businesses, and economic cause-and-effect easy to understand.
+MOSAIC is a persistent life-and-economy sandbox viewed through a navigable map of Aurel. The player can inspect regions, cities, economic activity, resources, transport links, ownership, and events from a broad strategic view, then zoom into progressively more detailed local maps.
 
-The target is a warm, believable, slightly optimistic modern city—not a hyper-realistic financial terminal and not a childish cartoon.
+The world map is the main playable surface—not a decorative background. Locations, routes, borders, markets, resource nodes, and events should be represented as distinct interactive layers.
 
 ### Visual pillars
 
-- **Readable at a glance:** important resources, prices, needs, and alerts must be immediately understandable.
-- **Lived-in city:** streets, homes, shops, workplaces, transit, parks, and public services should imply a connected society.
-- **Human scale:** NPCs and businesses should feel like part of a community, not just spreadsheet rows.
-- **Economic clarity:** positive, negative, warning, and neutral states use consistent colors and iconography.
-- **Expandable production:** buildings, people, props, and UI elements should be modular and recombinable.
+- **Strategic readability:** geography and economic relationships are understandable at a glance.
+- **Living world:** cities, ports, farms, industrial zones, transport corridors, and natural resources suggest a connected society.
+- **Economic clarity:** overlays communicate population, prosperity, employment, prices, ownership, supply chains, and risk.
+- **Progressive detail:** zooming reveals more detail without changing the visual language.
+- **Expandable geography:** new regions and cities can be added without redesigning the entire map.
+- **Modular rendering:** map terrain, roads, labels, markers, routes, and UI remain separate layers.
 
-## 3. Recommended art style
+## 3. Map art style
 
-- 2D isometric / 3-quarter top-down perspective for the city layer.
-- Clean geometric silhouettes with subtly softened corners.
-- Moderately simplified forms; avoid excessive micro-detail.
-- Soft ambient shadows and restrained highlights.
-- Painted or vector-like surfaces with a small amount of texture.
-- Consistent light direction (top-left) and consistent isometric grid.
-- Characters use readable silhouettes, clear clothing palettes, and simple expressive poses.
+- True top-down / orthographic projection; avoid tilted perspective and isometric building faces.
+- Stylized, polished strategy-simulation map with readable landforms and coastlines.
+- Clean regional shapes, controlled texture, and clear biome differentiation.
+- Subtle relief shading is acceptable, but must not make the camera appear oblique.
+- Cities are indicated by compact skyline/settlement symbols at world zoom; detailed buildings appear only at city/district zoom.
+- Roads, railways, shipping lanes, and trade corridors use consistent line styles.
+- Water, terrain, borders, and overlays must remain distinguishable at multiple zoom levels.
+- Use a fictional geography; do not trace a real-world map.
 
-**Avoid:** photorealism, heavy pixel-art constraints, extreme outlines, noisy textures, tiny unreadable signage, and mixing unrelated asset styles.
+**Avoid:** street-level scenes as the default, isometric building clusters, photorealistic satellite imagery, excessive labels, noisy terrain textures, and decorative details that compete with map information.
 
-## 4. World identity
+## 4. World identity and geography
 
 | Element | Direction |
 |---|---|
 | World | Aurel |
 | Starter city | Meridian |
 | Currency | Luma (LU) |
-| City mood | Growing regional city; modern mixed-use center with older neighborhoods |
-| Architecture | Contemporary mid-rise blocks, low-rise homes, local retail, civic buildings, light industrial sites |
-| Environment | Tropical/coastal influence may be explored, but should remain fictional and not copy a real city |
+| Geography | Fictional continents, island chains, inland seas, rivers, mountain ranges, and coastlines |
+| Climate | Multiple readable climate/biome zones |
+| City mood | Growing regional economy with mixed urban, rural, coastal, and industrial areas |
 | Brand tone | Thoughtful, grounded, approachable, systems-oriented |
+
+The world map should be designed for gameplay systems: resource distribution, population centers, trade routes, infrastructure, government, regional events, and economic shocks.
 
 ## 5. Color language
 
-Use the existing dark management UI as a temporary prototype baseline, but establish separate palettes for the world map and interface.
+### Base map palette
+- Ocean: deep blue and teal, with restrained bathymetric variation.
+- Lowlands: varied greens and muted agricultural tones.
+- Forests: deeper layered greens.
+- Arid regions: sand, ochre, and muted rust.
+- Mountains: slate, stone, and cool grey.
+- Snow / highlands: pale cool neutrals.
+- Urban areas: restrained warm grey and sandstone settlement footprints.
 
-### World palette (starting proposal)
-
-- Deep slate / blue-grey for roads, shadows, and structural contrast.
-- Warm concrete, sandstone, muted terracotta, and pale plaster for buildings.
-- Sage, deep green, and turquoise for vegetation and water.
-- Controlled accents of amber, coral, and cyan for signs, vehicles, and points of interest.
-
-### UI semantic colors
-
-- Positive / growth: mint or green.
-- Information / neutral: blue.
-- Caution / volatility: amber.
+### Strategic overlay palette
+- Growth / positive: mint or green.
+- Information / selected: cyan or blue.
+- Warning / volatility: amber.
 - Negative / loss / crisis: coral-red.
-- Premium / long-term assets: restrained violet or gold.
+- Ownership / player assets: violet or gold accent.
+- Neutral infrastructure: pale blue-grey.
 
-Do not rely on color alone: pair states with labels, icons, arrows, or patterns for accessibility.
+Never rely on color alone. Pair overlays with patterns, labels, icons, outlines, or directional indicators.
 
-## 6. Camera and world presentation
+## 6. Camera, zoom, and navigation
 
-- Fixed isometric camera for the first city scene.
-- Modular tile or chunk-based map, with clear road and sidewalk hierarchy.
-- Buildings occupy consistent footprints and snap to the same grid.
-- Camera pan and zoom can be considered after the first static scene is validated.
-- Keep the active play area visually calm; reserve high-detail backgrounds for non-interactive distant scenery.
+The map uses a true top-down orthographic camera.
 
-## 7. Character direction
+### Zoom hierarchy
+1. **World zoom:** continents, oceans, major regions, international routes, macroeconomic events.
+2. **Region zoom:** countries/provinces, major cities, resource areas, ports, rail and highway corridors.
+3. **City zoom:** city boundaries, districts, major roads, services, commercial and residential zones.
+4. **District/property zoom:** individual lots, businesses, homes, infrastructure, and local interactions.
 
-Create a small reusable character system rather than unique art for every NPC.
+The transition between zoom levels should be intentional:
+- Labels and markers appear/disappear by scale.
+- Generalized roads become detailed networks.
+- City markers expand into district footprints.
+- Economic overlays retain meaning and update aggregation level.
+- Avoid abrupt changes in geography or marker placement.
 
-Initial modular parts:
-- Body / base silhouette
-- Skin-tone variants
-- Hair styles
-- Tops and bottoms
-- Workwear / casual / formal outfit sets
-- Accessories (bag, cap, glasses, tools)
-- Idle, walk, work, shop, and conversation poses
+Support pan, zoom, recenter, selected-location focus, and a minimap/overview control. On mobile, provide touch pan and pinch zoom with large tap targets.
 
-Represent NPC identity primarily through silhouette, clothing, color grouping, role, and a small number of distinguishing features. Avoid making every character depend on bespoke portrait art.
+## 7. Characters and settlement symbols
+
+At world and region zoom, do not render individual walking characters. Use compact symbols for settlements, institutions, and events. At city/district zoom, stylized 2D characters may appear as small readable figures or activity markers. Detailed character sprites are reserved for optional close-up interactions and should not dictate the world map camera.
 
 ## 8. UI direction
 
-The existing dashboard can evolve into a more polished hybrid of:
-- City view as the main visual anchor.
-- Persistent top strip for date, cash, time controls, and alerts.
-- Context panel for selected person, building, business, or market.
-- Bottom or side navigation for Life, Work, Finance, Market, Business, Investments, and World.
-- Charts and tables for economic information, with plain-language explanations.
+Use a polished management dashboard framing the world map:
+- Top status bar: date, simulation speed, cash, net worth, alerts.
+- Main canvas: interactive world map.
+- Side panel: selected region, city, route, resource, property, or event.
+- Map layer controls: economy, population, employment, infrastructure, ownership, resources, risk, political boundaries.
+- Bottom navigation: World, Life, Finance, Markets, Businesses, Real Estate, Research, Family.
+- Search / go-to control for finding cities, companies, resources, and owned assets.
+- Optional event ticker and compact market snapshot.
 
-Keep financial data dense but legible. Use progressive disclosure: show the key decision first, with detailed breakdowns one click deeper.
+The map must remain visually dominant. Panels should be collapsible and must not permanently obscure critical map areas. On mobile, use collapsible drawers and bottom sheets.
 
 ## 9. Asset technical standards
 
-Initial target standards (to validate in the first art test):
-- World/building assets: transparent PNG or WebP; source files retained in SVG or layered format where possible.
-- UI icons: SVG preferred.
-- Character sprites: transparent PNG/WebP sprite sheets with documented frame dimensions and pivot points.
-- UI illustrations: SVG or WebP.
-- Texture atlases: only where batching or loading efficiency benefits.
-- Use 2x source resolution for UI raster assets where practical.
-- Define a naming convention and metadata for every reusable asset.
-
-Do not commit large unoptimized source exports into the runtime asset directory. Keep editable source and optimized runtime output separate.
+- Map base: layered SVG or tiled raster/Canvas assets; choose based on scale and performance tests.
+- Terrain textures: optimized WebP/PNG tiles where needed.
+- Roads, borders, routes, selection outlines, and labels: vector layers where practical.
+- City and resource markers: SVG preferred.
+- UI icons: SVG.
+- Optional close-up characters/buildings: transparent PNG/WebP sprites.
+- Keep editable sources in `art-source/` and optimized runtime assets in `assets/`.
+- Maintain an asset manifest with dimensions, projection, zoom range, anchor, source, license, and approval status.
 
 ## 10. Accessibility and performance
 
-- Maintain text contrast and readable type sizes.
-- Never communicate status by color alone.
-- Provide reduced-motion behavior for animated UI.
-- Lazy-load non-critical scene art.
-- Use sprite atlases or shared textures only when they improve loading and rendering.
-- Provide placeholder/fallback visuals if an asset is missing.
-- Keep the initial asset bundle small enough for a fast first load on mobile networks.
+- Keep labels legible at supported zoom levels.
+- Provide non-color cues for all data overlays.
+- Support reduced motion.
+- Avoid loading the entire world as one oversized bitmap.
+- Use level-of-detail, tile/chunk loading, and layer visibility rules.
+- Keep first-load assets small for mobile networks.
+- Provide fallback markers and map tiles if optional art fails to load.
 
-## 11. First art validation milestone
+## 11. First visual validation milestone
 
-Before producing a full city, create one cohesive visual test containing:
-1. One small isometric street block.
-2. One residential building.
-3. One convenience shop.
-4. One office/workplace.
-5. Three character variants.
-6. A small set of trees, streetlights, road markings, and street props.
-7. One UI mock showing the city with a selected building and player status.
+Create a top-down world-map concept and a functional map prototype containing:
+1. Fictional continents, coastlines, rivers, mountain ranges, and biome zones.
+2. Several regions and a handful of major settlement markers.
+3. Meridian as the clearly highlighted starter city.
+4. Roads, rail, shipping lanes, and trade routes.
+5. A small number of resource nodes and economic event markers.
+6. A management HUD with a selected-location panel and map-layer controls.
 
-Approve perspective, scale, palette, detail density, and readability before expanding the asset library.
+Approve geography readability, zoom hierarchy, marker language, palette, and UI density before producing detailed city or property art.
