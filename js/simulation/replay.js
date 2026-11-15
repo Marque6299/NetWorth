@@ -9,6 +9,7 @@ export function recordScheduledEvent(log,{id,type,atTick,priority=0,payload={}},
  if(!log||log.version!==1||!Array.isArray(log.scheduledEvents))throw new TypeError("Invalid replay log.");
  if(!Number.isSafeInteger(scheduledAtTick)||scheduledAtTick<log.initialState.simulation.tick)throw new RangeError("Invalid event scheduling tick.");
  if(!Number.isSafeInteger(atTick)||atTick<=scheduledAtTick)throw new RangeError("Replay events must be scheduled for a future tick.");
+ if(!Number.isFinite(priority))throw new TypeError("Event priority must be finite.");
  if(typeof id!=="string"||!id.trim()||typeof type!=="string"||!type.trim())throw new TypeError("Event id and type are required.");
  if(log.scheduledEvents.some(e=>e.id===id))throw new Error("Duplicate replay event id: "+id);
  const sequence=log.scheduledEvents.length+1;
