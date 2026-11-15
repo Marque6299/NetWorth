@@ -58,21 +58,25 @@ This roadmap tracks the path from repository initialization to the intended full
 **Exit criteria:** map content is data-driven, validated and navigable across world, region and city scales.
 
 ### Phase 2 — Simulation architecture and accounting core
-**Status: In progress · Initial accounting vertical slice committed**
+**Status: Complete · Core contracts and automated verification implemented**
 
-- [x] Define a versioned canonical game-state root and stable save identifier.
-- [x] Define the simulation clock's tick counter, pause state and deterministic date advancement.
-- [x] Implement integer-minor-unit money utilities for LU (100 minor units per LU).
-- [x] Implement a domain-only double-entry ledger with account types and normal-balance conventions.
-- [x] Validate complete transactions before posting; reject unbalanced, mixed-currency, duplicate-ID and invalid-account entries atomically.
-- [x] Add transaction history, account balance calculation and explicit reversal records.
-- [x] Add Node built-in test coverage for money, posting, rejection, reversal, state initialization and clock behavior.
-- [ ] Expand tests to cover transfers, purchases, income, expenses, debt, account hierarchy and long-run reconciliation.
-- [ ] Add deterministic seeded random/event utilities and formal tick ordering.
-- [ ] Define save serialization, migrations and replay/reconciliation contracts.
+- [x] Define a versioned canonical game-state root and stable save identifier (schema v2).
+- [x] Define simulation tick, pause state, deterministic date advancement and stable system phase ordering.
+- [x] Implement integer-minor-unit money utilities for LU (100 minor units per LU), including safe-integer overflow rejection.
+- [x] Implement a domain-only double-entry ledger with asset, liability, equity, income and expense accounts.
+- [x] Validate complete transactions before posting; reject unbalanced, mixed-currency, duplicate-ID, invalid-account and invalid-reversal entries atomically.
+- [x] Add account hierarchy validation, normal-balance calculations, per-currency trial balance and transaction audit history.
+- [x] Support explicit immutable reversals and ledger snapshot export/import with replay validation.
+- [x] Add deterministic seeded random draws with explicit random-call counters.
+- [x] Add a deterministic simulation scheduler with fixed phases, stable system ordering and ordered future-event processing.
+- [x] Add a scheduled-event replay journal that reproduces a run from a known baseline.
+- [x] Add versioned JSON save serialization, schema v1-to-v2 migration and corruption-detection checksum.
+- [x] Add automated tests for money, transfers, purchases, income, expenses, debt, hierarchy, reconciliation, reversals, snapshots, migrations, checksums, PRNG, tick ordering, events and replay.
 - [x] Keep simulation modules independent of DOM and rendering code.
 
-**Exit criteria:** all financial events can be posted, audited, replayed and reconciled without UI-dependent calculations. The current vertical slice establishes the ledger invariants; Phase 2 remains open until the remaining tests, deterministic event utilities and persistence/replay contracts are implemented and verified.
+**Exit criteria met:** financial transactions are integer-based, balanced, auditable and reversible; account balances reconcile through a trial balance; the scheduler has explicit deterministic ordering; seeded randomness and scheduled-event replay are defined; and saves have versioned serialization and migration handling.
+
+**Boundary:** the replay journal records scheduled simulation events and requires deterministic system/event handlers. It is not a server-side anti-cheat system or a cryptographic proof of execution. The save checksum detects accidental corruption; it is not a security signature. Future multiplayer/server-authoritative requirements would need a trusted execution and signing model.
 
 ### Phase 3 — Player, household and life simulation
 **Status: Not started**
