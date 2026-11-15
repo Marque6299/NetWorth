@@ -11,8 +11,8 @@ function assertSafeInteger(value, label) {
 }
 
 function assertCurrency(currency) {
-  if (typeof currency !== "string" || !/^[A-Z]{3}$/.test(currency)) {
-    throw new TypeError("currency must be a three-letter uppercase code.");
+  if (typeof currency !== "string" || !/^(?:LU|[A-Z]{3})$/.test(currency)) {
+    throw new TypeError("currency must be LU or a three-letter uppercase code.");
   }
 }
 
