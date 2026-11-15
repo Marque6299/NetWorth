@@ -79,17 +79,17 @@ This roadmap tracks the path from repository initialization to the intended full
 **Boundary:** the replay journal records scheduled simulation events and requires deterministic system/event handlers. It is not a server-side anti-cheat system or a cryptographic proof of execution. The save checksum detects accidental corruption; it is not a security signature. Future multiplayer/server-authoritative requirements would need a trusted execution and signing model.
 
 ### Phase 3 — Player, household and life simulation
-**Status: Not started**
+**Status: Initial foundation implemented · Scenario and household lifecycle**
 
-- Player profile and starting circumstances.
-- Household members and relationships.
-- Needs, living costs and recurring obligations.
-- Employment status, income and career progression.
-- Housing, rent, utilities, food, transport and healthcare expenses.
-- Personal assets, liabilities, savings and net worth.
-- Event-driven life decisions and consequences.
+- [x] Add three integrated, data-driven starting scenarios combining cash, employment, household members, liabilities, housing and living costs.
+- [x] Create a balanced opening financial position through the Phase 2 double-entry ledger.
+- [x] Add household budget projection and ledger-backed monthly income/obligation settlement.
+- [x] Track debt principal reduction and prevent duplicate or out-of-order monthly settlement.
+- [x] Add automated tests for scenario integrity, opening reconciliation, net worth, budget, settlement and unemployment cash shortfall.
+- [ ] Add player needs, wellbeing, skills, career progression and richer life events.
+- [ ] Add payroll funding, interest, taxes, benefits, multiple earners and full asset valuation.
 
-**Exit criteria:** a player can live through a stable in-game period with complete, explainable cash flow and household state.
+**Exit criteria:** initial scenario, household and monthly cash flow foundations are implemented and tested. Full life progression remains in progress.
 
 ### Phase 4 — City, property and NPC foundation
 **Status: Not started**
