@@ -29,6 +29,12 @@ The first simulation-core modules are available under `js/simulation/`:
 - `ledger.js` — double-entry accounts, atomic balanced posting, balances, history and reversals.
 - `state.js` — versioned root save-state structure, separated from presentation state.
 - `clock.js` — pause/resume and deterministic tick/date advancement.
+- `random.js` — seeded deterministic random draws with explicit counter state.
+- `engine.js` — ordered simulation phases and scheduled event processing.
+- `replay.js` — reproducible scheduled-event replay from a baseline save.
+- `persistence.js` — versioned save serialization, migration and corruption checksum.
+
+The ledger also supports account hierarchy, trial-balance reconciliation, explicit reversals and validated snapshot restore. The current save schema is v2.
 
 Run the automated tests with Node.js 18 or newer:
 
