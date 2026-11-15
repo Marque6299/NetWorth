@@ -58,17 +58,21 @@ This roadmap tracks the path from repository initialization to the intended full
 **Exit criteria:** map content is data-driven, validated and navigable across world, region and city scales.
 
 ### Phase 2 — Simulation architecture and accounting core
-**Status: Not started · Next major system milestone**
+**Status: In progress · Initial accounting vertical slice committed**
 
-- Define canonical game-state schema and stable entity IDs.
-- Define simulation clock, tick order and deterministic random/event seeds.
-- Build account chart and double-entry ledger.
-- Implement atomic transaction posting and balance validation.
-- Define money precision, rounding and currency rules.
-- Add unit tests for transfers, purchases, income, expenses, debt and reversals.
-- Separate simulation domain logic from UI and rendering.
+- [x] Define a versioned canonical game-state root and stable save identifier.
+- [x] Define the simulation clock's tick counter, pause state and deterministic date advancement.
+- [x] Implement integer-minor-unit money utilities for LU (100 minor units per LU).
+- [x] Implement a domain-only double-entry ledger with account types and normal-balance conventions.
+- [x] Validate complete transactions before posting; reject unbalanced, mixed-currency, duplicate-ID and invalid-account entries atomically.
+- [x] Add transaction history, account balance calculation and explicit reversal records.
+- [x] Add Node built-in test coverage for money, posting, rejection, reversal, state initialization and clock behavior.
+- [ ] Expand tests to cover transfers, purchases, income, expenses, debt, account hierarchy and long-run reconciliation.
+- [ ] Add deterministic seeded random/event utilities and formal tick ordering.
+- [ ] Define save serialization, migrations and replay/reconciliation contracts.
+- [x] Keep simulation modules independent of DOM and rendering code.
 
-**Exit criteria:** all financial events can be posted, audited, replayed and reconciled without UI-dependent calculations.
+**Exit criteria:** all financial events can be posted, audited, replayed and reconciled without UI-dependent calculations. The current vertical slice establishes the ledger invariants; Phase 2 remains open until the remaining tests, deterministic event utilities and persistence/replay contracts are implemented and verified.
 
 ### Phase 3 — Player, household and life simulation
 **Status: Not started**
