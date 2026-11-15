@@ -7,6 +7,7 @@ import { createSimulationClock } from "../js/simulation/clock.js";
 import { nextRandomUint32, nextRandomFloat, nextRandomInt, pickRandom } from "../js/simulation/random.js";
 import { createSimulationEngine } from "../js/simulation/engine.js";
 import { serializeGameState, deserializeGameState, migrateGameState } from "../js/simulation/persistence.js";
+import { createReplayLog, recordScheduledEvent, replaySimulation } from "../js/simulation/replay.js";
 
 function basicLedger(){
  const ledger=new Ledger();
@@ -197,4 +198,18 @@ test("simulation engine does not advance while paused and orders queued events",
  assert.deepEqual(state.marks,["first"]);
  state=engine.step(state);
  assert.deepEqual(state.marks,["first","later"]);
+});
+
+test("replay journal reproduces scheduled events from the same baseline",()=>{
+ const engine=createSimulationEngine();
+ engine.registerEventHandler("cashflow",(state,event)=>({...state,results:[...(state.results??[]),event.payload.amount]}));
+ const baseline=createInitialGameState({saveId:"replay-baseline",seed:99});
+ const running={...baseline,simulation:{...baseline.simulation,paused:false}};
+ let log=createReplayLog(running);
+ log=recordScheduledEvent(log,{id:"salary",type:"cashflow",atTick:1,payload:{amount:1200}},0);
+ log=recordScheduledEvent(log,{id:"rent",type:"cashflow",atTick:2,payload:{amount:-400}},0);
+ const result=replaySimulation(log,engine,{untilTick:2});
+ assert.deepEqual(result.results,[1200,-400]);
+ assert.equal(result.simulation.tick,2);
+ assert.equal(result.world.eventQueue.length,0);
 });
