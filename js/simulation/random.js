@@ -1,5 +1,5 @@
 /** Stateless deterministic PRNG helpers. Every draw returns an updated counter. */
-function assertRandomState(state){if(!state||!Number.isSafeInteger(state.seed)||!Number.isSafeInteger(state.randomCallCount)||state.randomCallCount<0)throw new TypeError("Invalid deterministic random state.");}
+function assertRandomState(state){if(!state||!Number.isSafeInteger(state.seed)||!Number.isSafeInteger(state.randomCallCount)||state.randomCallCount<0||state.randomCallCount===Number.MAX_SAFE_INTEGER)throw new TypeError("Invalid or exhausted deterministic random state.");}
 function mix32(value){let x=value>>>0;x=Math.imul(x^(x>>>16),0x21f0aaad);x=Math.imul(x^(x>>>15),0x735a2d97);return (x^(x>>>15))>>>0;}
 export function nextRandomUint32(state){assertRandomState(state);const value=mix32((state.seed>>>0)+Math.imul(state.randomCallCount+1,0x9e3779b9));return {value,state:{...state,randomCallCount:state.randomCallCount+1}};}
 export function nextRandomFloat(state){const draw=nextRandomUint32(state);return {value:draw.value/0x100000000,state:draw.state};}
