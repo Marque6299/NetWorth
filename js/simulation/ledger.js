@@ -13,7 +13,7 @@ export class Ledger{
   id=text(id,"Account id");name=text(name,"Account name");
   if(this.#accounts.has(id))throw new Error("Account already exists: "+id);
   if(!ACCOUNT_TYPES.includes(type))throw new RangeError("Unsupported account type: "+type);
-  if(typeof currency!=="string"||!/^[A-Z]{3}$/.test(currency))throw new TypeError("Invalid currency.");
+  if(typeof currency!=="string"||!/^(?:LU|[A-Z]{3})$/.test(currency))throw new TypeError("Invalid currency.");
   if(parentId!==null){const p=this.#accounts.get(parentId);if(!p)throw new Error("Unknown parent account: "+parentId);if(p.currency!==currency)throw new RangeError("Parent and child accounts must use the same currency.");}
   if(metadata===null||typeof metadata!=="object"||Array.isArray(metadata))throw new TypeError("Account metadata must be an object.");
   const a=Object.freeze({id,name,type,currency,parentId,metadata:clone(metadata),active:true});this.#accounts.set(id,a);return clone(a);
