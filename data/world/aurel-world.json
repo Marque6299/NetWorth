@@ -392,6 +392,28 @@
         "southworks",
         "new-meridian",
         "harborfront"
+      ],
+      "industries": [
+        {
+          "name": "Port logistics",
+          "share": 24
+        },
+        {
+          "name": "Professional services",
+          "share": 22
+        },
+        {
+          "name": "Manufacturing",
+          "share": 19
+        },
+        {
+          "name": "Retail & hospitality",
+          "share": 18
+        },
+        {
+          "name": "Other sectors",
+          "share": 17
+        }
       ]
     },
     {
@@ -605,7 +627,11 @@
         "financial-services",
         "manufactured-goods",
         "professional-labor"
-      ]
+      ],
+      "controlPoint": {
+        "x": 245,
+        "y": 185
+      }
     },
     {
       "id": "meridian-sao-aurora",
@@ -620,7 +646,11 @@
         "food",
         "timber",
         "agricultural-inputs"
-      ]
+      ],
+      "controlPoint": {
+        "x": 320,
+        "y": 345
+      }
     },
     {
       "id": "meridian-port-serein",
@@ -634,7 +664,11 @@
         "electronics",
         "machinery",
         "consumer-goods"
-      ]
+      ],
+      "controlPoint": {
+        "x": 570,
+        "y": 190
+      }
     },
     {
       "id": "meridian-nacre-bay",
@@ -648,7 +682,11 @@
         "shipping-services",
         "fish",
         "tourism"
-      ]
+      ],
+      "controlPoint": {
+        "x": 460,
+        "y": 465
+      }
     },
     {
       "id": "highridge-euron",
@@ -663,7 +701,11 @@
         "metals",
         "machinery",
         "industrial-components"
-      ]
+      ],
+      "controlPoint": {
+        "x": 505,
+        "y": 110
+      }
     },
     {
       "id": "borealis-crownlands",
@@ -678,7 +720,11 @@
         "timber",
         "minerals",
         "energy-equipment"
-      ]
+      ],
+      "controlPoint": {
+        "x": 390,
+        "y": 115
+      }
     },
     {
       "id": "sunvale-riftmarch",
@@ -693,7 +739,86 @@
         "solar-equipment",
         "batteries",
         "mineral-inputs"
-      ]
+      ],
+      "controlPoint": {
+        "x": 445,
+        "y": 435
+      }
+    }
+  ],
+  "resourceSites": [
+    {
+      "id": "crownlands-metals",
+      "resourceIds": [
+        "copper",
+        "iron"
+      ],
+      "regionId": "crownlands",
+      "anchor": {
+        "x": 298,
+        "y": 140
+      }
+    },
+    {
+      "id": "greenwake-agriculture",
+      "resourceIds": [
+        "grain",
+        "fruit",
+        "timber"
+      ],
+      "regionId": "greenwake",
+      "anchor": {
+        "x": 355,
+        "y": 390
+      }
+    },
+    {
+      "id": "sunvale-lithium-solar",
+      "resourceIds": [
+        "lithium",
+        "solar"
+      ],
+      "regionId": "sunvale",
+      "anchor": {
+        "x": 407,
+        "y": 465
+      }
+    },
+    {
+      "id": "riftmarch-minerals-energy",
+      "resourceIds": [
+        "nickel",
+        "copper",
+        "geothermal"
+      ],
+      "regionId": "riftmarch",
+      "anchor": {
+        "x": 475,
+        "y": 410
+      }
+    },
+    {
+      "id": "frostholm-rare-earths",
+      "resourceIds": [
+        "rare-earths",
+        "oil-gas"
+      ],
+      "regionId": "frostholm",
+      "anchor": {
+        "x": 650,
+        "y": 77
+      }
+    },
+    {
+      "id": "northwood-timber",
+      "resourceIds": [
+        "timber"
+      ],
+      "regionId": "northwood",
+      "anchor": {
+        "x": 520,
+        "y": 99
+      }
     }
   ]
 }
