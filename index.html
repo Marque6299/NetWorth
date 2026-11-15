@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101b25">
+  <meta name="description" content="MOSAIC — explore Aurel, a living fictional world economy.">
+  <title>MOSAIC — Aurel World</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="MOSAIC home"><span class="brand-mark">M</span><span><strong>MOSAIC</strong><small>THE WORLD OF AUREL</small></span></a>
+      <div class="world-date"><span class="live-dot"></span><span>YEAR 01 · SPRING</span><strong id="clock">Day 01</strong></div>
+      <div class="top-stats">
+        <div><small>AVAILABLE CASH</small><strong>LU 25,000</strong></div>
+        <div><small>NET WORTH</small><strong>LU 25,000</strong></div>
+        <button class="icon-button" aria-label="Notifications">♧<i></i></button>
+        <button class="avatar" aria-label="Player profile">JM</button>
+      </div>
+    </header>
+
+    <main class="main-layout">
+      <aside class="rail">
+        <button class="rail-item active" title="World"><span>◎</span><small>WORLD</small></button>
+        <button class="rail-item" title="Life"><span>♙</span><small>LIFE</small></button>
+        <button class="rail-item" title="Finance"><span>◈</span><small>FINANCE</small></button>
+        <button class="rail-item" title="Markets"><span>⌁</span><small>MARKETS</small></button>
+        <button class="rail-item" title="Business"><span>▦</span><small>BUSINESS</small></button>
+        <button class="rail-item" title="Property"><span>⌂</span><small>PROPERTY</small></button>
+        <div class="rail-spacer"></div>
+        <button class="rail-item" title="Settings"><span>⚙</span><small>SETTINGS</small></button>
+      </aside>
+
+      <section class="map-workspace">
+        <div class="map-heading">
+          <div><div class="eyebrow">WORLD ATLAS <span>/</span> AUREL</div><h1>Explore the world</h1><p>Discover cities, resources, trade routes and opportunities.</p></div>
+          <div class="map-actions"><label class="search-box"><span>⌕</span><input id="search" type="search" placeholder="Find a city or region…" autocomplete="off"><kbd>⌘ K</kbd></label><button id="resetView" class="secondary-button">◎ <span>Reset view</span></button></div>
+        </div>
+        <div class="map-stage">
+          <div class="map-toolbar">
+            <div class="zoom-level"><span class="live-dot"></span><span id="zoomLabel">WORLD VIEW</span></div>
+            <div class="map-tools"><button id="zoomOut" aria-label="Zoom out">−</button><button id="zoomIn" aria-label="Zoom in">+</button><span class="tool-divider"></span><button id="fitMap" aria-label="Fit map">⛶</button></div>
+          </div>
+          <div class="map-canvas-wrap" id="mapWrap">
+            <svg id="worldMap" viewBox="0 0 1000 600" role="img" aria-label="Top-down illustrated map of the fictional world Aurel">
+              <defs>
+                <linearGradient id="ocean" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#173c4b"/><stop offset=".55" stop-color="#102e3d"/><stop offset="1" stop-color="#0d2635"/></linearGradient>
+                <linearGradient id="land" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9eae82"/><stop offset=".52" stop-color="#829b76"/><stop offset="1" stop-color="#647f70"/></linearGradient>
+                <pattern id="oceanLines" width="72" height="54" patternUnits="userSpaceOnUse"><path d="M0 18 Q18 10 36 18 T72 18 M-18 44 Q0 36 18 44 T54 44" fill="none" stroke="#8ab0b2" stroke-opacity=".07" stroke-width="1"/></pattern>
+                <pattern id="forest" width="22" height="22" patternUnits="userSpaceOnUse"><path d="M11 3 5 15h12z" fill="#365f54" opacity=".28"/></pattern>
+                <pattern id="desert" width="28" height="22" patternUnits="userSpaceOnUse"><path d="M2 16q6-5 12 0t12 0" fill="none" stroke="#b78b57" stroke-opacity=".3"/></pattern>
+                <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#06151e" flood-opacity=".35"/></filter>
+              </defs>
+              <rect width="1000" height="600" fill="url(#ocean)"/>
+              <rect width="1000" height="600" fill="url(#oceanLines)"/>
+              <g id="geography">
+                <path class="landmass" d="M80 112 117 76 176 60 222 74 254 55 299 76 333 112 326 151 354 181 340 218 361 247 335 275 320 309 286 321 260 300 230 312 201 288 167 293 146 268 112 256 91 222 62 199 57 158Z"/>
+                <path class="land-detail" d="M80 112 117 76 176 60 222 74 254 55 299 76 333 112 326 151 354 181 340 218 361 247 335 275 320 309 286 321 260 300 230 312 201 288 167 293 146 268 112 256 91 222 62 199 57 158Z"/>
+                <path class="landmass" d="M272 340 311 319 350 332 377 355 408 361 438 391 455 427 442 466 414 493 388 529 351 541 325 519 300 492 276 463 258 426 247 389Z"/>
+                <path class="land-detail" d="M272 340 311 319 350 332 377 355 408 361 438 391 455 427 442 466 414 493 388 529 351 541 325 519 300 492 276 463 258 426 247 389Z"/>
+                <path class="landmass" d="M572 133 607 103 650 95 682 111 724 99 765 118 803 145 827 178 858 201 874 240 858 274 871 309 845 343 815 357 785 342 752 359 720 341 684 350 655 326 627 311 606 276 582 247 559 212 550 174Z"/>
+                <path class="land-detail" d="M572 133 607 103 650 95 682 111 724 99 765 118 803 145 827 178 858 201 874 240 858 274 871 309 845 343 815 357 785 342 752 359 720 341 684 350 655 326 627 311 606 276 582 247 559 212 550 174Z"/>
+                <path class="landmass cold-land" d="M389 24 424 9 469 17 507 5 548 18 575 43 566 77 531 92 490 82 455 96 414 78 390 53Z"/>
+                <path class="landmass cold-land" d="M679 29 715 17 754 28 778 49 761 72 724 77 691 60Z"/>
+                <path class="landmass island" d="M552 432 572 421 592 431 588 451 568 461 550 451Z M612 472 632 458 651 469 648 491 629 501 610 489Z M676 433 691 423 705 435 700 451 683 455Z M728 490 745 480 760 491 753 508 735 511Z"/>
+                <path class="landmass island" d="M927 383 944 373 958 384 951 400 934 402Z M901 437 915 428 928 438 921 453 906 453Z"/>
+                <path d="M281 133 302 155 311 186 300 215 314 244" class="mountain-line"/>
+                <path d="M303 137 322 163 328 187" class="mountain-line"/>
+                <path d="M350 373 Q370 392 364 418 T389 468" class="river-line"/>
+                <path d="M383 362 Q400 387 392 410 T414 445" class="river-line"/>
+                <path d="M705 141 731 167 737 190 762 208 780 237" class="mountain-line"/>
+                <path d="M687 285 Q712 273 738 281 T781 270" class="river-line"/>
+                <ellipse cx="753" cy="271" rx="27" ry="18" class="lake"/>
+                <path d="M433 402 Q457 384 477 402 T520 401" class="rift-line"/>
+                <path d="M444 420 Q470 405 491 422" class="rift-line"/>
+                <path d="M123 110 165 86 205 90 245 76" class="forest-patch"/>
+                <path d="M467 27 497 19 532 29 545 49 518 64 484 55Z" class="forest-patch"/>
+                <path d="M290 448 329 433 365 455 356 487 323 493Z" class="desert-patch"/>
+              </g>
+              <g id="regionLabels">
+                <text x="178" y="178" class="region-label">WESTMARK</text>
+                <text x="285" y="119" class="region-label">CROWNLANDS</text>
+                <text x="274" y="279" class="region-label">MERIDIAN COAST</text>
+                <text x="337" y="371" class="region-label">GREENWAKE</text>
+                <text x="352" y="487" class="region-label">SUNVALE</text>
+                <text x="459" y="390" class="region-label">RIFTMARCH</text>
+                <text x="690" y="213" class="region-label">VEYRAN CORE</text>
+                <text x="817" y="258" class="region-label">EASTREACH</text>
+                <text x="675" y="340" class="region-label">ORIN BASIN</text>
+                <text x="467" y="70" class="region-label">NORTHWOOD</text>
+                <text x="680" y="55" class="region-label">FROSTHOLM</text>
+                <text x="586" y="525" class="region-label">PELAGIC ISLES</text>
+              </g>
+              <g id="routeLayer"></g>
+              <g id="resourceLayer"></g>
+              <g id="cityLayer"></g>
+              <g id="labelsLayer"></g>
+              <g id="selectionLayer"></g>
+              <g id="waterLabels"><text x="447" y="260" class="water-label">AURELIAN SEA</text><text x="496" y="330" class="water-small">MERIDIAN PASSAGE</text><text x="872" y="345" class="water-small">EASTERN GATE</text></g>
+            </svg>
+            <div class="map-vignette"></div>
+            <div class="map-legend"><span><i class="legend-dot city-dot"></i> Major city</span><span><i class="legend-line"></i> Trade route</span><span><i class="legend-dot resource-dot"></i> Resource zone</span></div>
+            <div class="map-compass"><span>N</span><b>✦</b></div>
+          </div>
+          <div class="map-footer"><span id="coordinates">AUREL · WORLD COORDINATES</span><span>DRAG TO EXPLORE <b>·</b> SCROLL TO ZOOM</span></div>
+        </div>
+      </section>
+
+      <aside class="inspector" id="inspector">
+        <div class="inspector-head"><div><div class="eyebrow">LOCATION INSPECTOR</div><h2 id="selectedName">Meridian</h2><p id="selectedType">Major city · Meridian Coast</p></div><button id="closeInspector" class="close-button" aria-label="Close inspector">×</button></div>
+        <div class="selected-banner"><div class="banner-orb">⌂</div><div><span>STARTING LOCATION</span><strong>MERIDIAN</strong><small>Meridian Coast · Eldoria</small></div><span class="pin-badge">★</span></div>
+        <div class="inspector-section"><div class="section-title">CITY OVERVIEW <span>YEAR 01</span></div><div class="metric-grid"><div class="metric"><small>POPULATION</small><strong id="population">842,000</strong><em>Residents</em></div><div class="metric"><small>GDP</small><strong id="gdp">LU 142.6B</strong><em>Annual output</em></div><div class="metric"><small>UNEMPLOYMENT</small><strong id="unemployment">4.8%</strong><em class="positive">Healthy labor market</em></div><div class="metric"><small>INFLATION</small><strong id="inflation">2.1%</strong><em>Year over year</em></div></div></div>
+        <div class="inspector-section"><div class="section-title">ECONOMIC PROFILE</div><div class="industry-list"><span>Port logistics <b>24%</b></span><div><i style="width:24%"></i></div><span>Professional services <b>22%</b></span><div><i style="width:22%"></i></div><span>Manufacturing <b>19%</b></span><div><i style="width:19%"></i></div><span>Retail & hospitality <b>18%</b></span><div><i style="width:18%"></i></div></div></div>
+        <div class="inspector-section layers-section"><div class="section-title">MAP LAYERS <button id="allLayers">RESET</button></div>
+          <label class="layer-toggle"><span><i class="layer-icon economy">↗</i><span><b>Trade routes</b><small>Major commercial corridors</small></span></span><input type="checkbox" id="toggleRoutes" checked><i class="switch"></i></label>
+          <label class="layer-toggle"><span><i class="layer-icon resource">◆</i><span><b>Resource zones</b><small>Natural resources & production</small></span></span><input type="checkbox" id="toggleResources" checked><i class="switch"></i></label>
+          <label class="layer-toggle"><span><i class="layer-icon names">Aa</i><span><b>Region names</b><small>Administrative labels</small></span></span><input type="checkbox" id="toggleRegions" checked><i class="switch"></i></label>
+        </div>
+        <div class="inspector-bottom"><button id="openLocation" class="primary-button">Open location <span>↗</span></button><p>More city and district details unlock as you explore Aurel.</p></div>
+      </aside>
+    </main>
+    <footer class="bottom-bar"><span>© MOSAIC SIMULATION <b>·</b> AUREL WORLD ATLAS</span><span>PROTOTYPE 0.2 <b>·</b> FICTIONAL WORLD / NO REAL-MONEY ECONOMY</span></footer>
+  </div>
+  <script src="js/world-map.js" defer></script>
+</body>
+</html>
