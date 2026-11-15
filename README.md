@@ -22,6 +22,28 @@ The current browser prototype introduces **Aurel**, a fictional world rendered i
 - **Visual direction:** Top-down orthographic world map + stylized 2D markers + management dashboard
 - **Platform target:** Browser-first, responsive desktop and mobile web
 
+## Simulation foundation (Phase 2)
+
+The first simulation-core modules are available under `js/simulation/`:
+- `money.js` — LU values represented as integer minor units (1 LU = 100 minor units).
+- `ledger.js` — double-entry accounts, atomic balanced posting, balances, history and reversals.
+- `state.js` — versioned root save-state structure, separated from presentation state.
+- `clock.js` — pause/resume and deterministic tick/date advancement.
+
+Run the automated tests with Node.js 18 or newer:
+
+```bash
+npm test
+```
+
+Run world-data validation with:
+
+```bash
+npm run validate:world
+```
+
+See [Simulation Architecture](docs/SIMULATION_ARCHITECTURE.md) for accounting conventions and current boundaries.
+
 ## Documentation
 
 - [Art direction](docs/ART_DIRECTION.md)
