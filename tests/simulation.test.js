@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createMoney, parseMoney, addMoney, formatMoney } from "../js/simulation/money.js";
+import { createMoney, parseMoney, addMoney, formatMoney, multiplyMoney, applyBasisPoints } from "../js/simulation/money.js";
 import { Ledger } from "../js/simulation/ledger.js";
 import { createInitialGameState } from "../js/simulation/state.js";
 import { createSimulationClock } from "../js/simulation/clock.js";
@@ -27,6 +27,10 @@ test("money uses integer minor units and rejects excess precision and overflow",
  assert.throws(()=>parseMoney("1.234"),RangeError);
  assert.throws(()=>parseMoney("90071992547409.92"),RangeError);
  assert.throws(()=>addMoney(createMoney(Number.MAX_SAFE_INTEGER),createMoney(1)),RangeError);
+ assert.equal(multiplyMoney(parseMoney("12.34"),3).minorUnits,3702);
+ assert.equal(applyBasisPoints(parseMoney("100.00"),125).minorUnits,1250);
+ assert.equal(applyBasisPoints(createMoney(1),5000).minorUnits,1);
+ assert.equal(applyBasisPoints(createMoney(1),5000,{rounding:"down"}).minorUnits,0);
  assert.throws(()=>addMoney(createMoney(100,"LU"),createMoney(100,"USD")),RangeError);
 });
 
