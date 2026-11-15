@@ -12,6 +12,10 @@
 
 Cloudflare Pages is connected to the GitHub repository. Commits pushed to `main` should trigger production deployments automatically; other branches can receive preview deployments.
 
+## Production preview URL
+
+- Public preview: https://netoworth.pages.dev
+
 ## Deployment notes
 
 The current project is a static browser prototype. No package installation or build step is required. The entry point is `index.html`; styles, JavaScript, and world data are served from their repository paths.
