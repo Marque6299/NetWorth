@@ -1,0 +1,14 @@
+{
+  "name": "networth-mosaic",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "MOSAIC: Life, Capital & Consequence — simulation foundation",
+  "scripts": {
+    "test": "node --test",
+    "validate:world": "node scripts/validate-world-data.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
