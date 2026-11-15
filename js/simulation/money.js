@@ -7,7 +7,8 @@ export const DEFAULT_CURRENCY = "LU";
 export const DEFAULT_MINOR_UNITS_PER_UNIT = 100;
 
 function assertSafeInteger(value, label) {
-  if (!Number.isSafeInteger(value)) throw new TypeError(`${label} must be a safe integer.`);
+  if (typeof value !== "number" || !Number.isInteger(value)) throw new TypeError(`${label} must be an integer.`);
+  if (!Number.isSafeInteger(value)) throw new RangeError(`${label} exceeds safe integer precision.`);
 }
 
 function assertCurrency(currency) {
