@@ -1,7 +1,7 @@
 /** Deterministic simulation scheduler. System order is phase, order, then stable id. */
 export const SYSTEM_PHASES=Object.freeze(["world","household","employment","business","markets","government","finalize"]);
 const clone=value=>structuredClone(value);
-function requireState(state){if(!state?.simulation||!Number.isSafeInteger(state.simulation.tick)||state.simulation.tick<0||!Number.isSafeInteger(state.simulation.ticksPerDay)||state.simulation.ticksPerDay<1)throw new TypeError("Invalid simulation state.");const date=state.simulation.date;if(typeof date!=="string"||!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)||new Date(date+"T00:00:00.000Z").toISOString().slice(0,10)!==date)throw new TypeError("Invalid simulation date.");}
+function requireState(state){if(!state?.simulation||!Number.isSafeInteger(state.simulation.tick)||state.simulation.tick<0||!Number.isSafeInteger(state.simulation.ticksPerDay)||state.simulation.ticksPerDay<1)throw new TypeError("Invalid simulation state.");const date=state.simulation.date;if(typeof date!=="string"||!/^\d{4}-\d{2}-\d{2}$/.test(date)||new Date(date+"T00:00:00.000Z").toISOString().slice(0,10)!==date)throw new TypeError("Invalid simulation date.");}
 function compareSystems(a,b){return SYSTEM_PHASES.indexOf(a.phase)-SYSTEM_PHASES.indexOf(b.phase)||a.order-b.order||a.id.localeCompare(b.id);}
 export function createSimulationEngine(){
  const systems=new Map(),eventHandlers=new Map();
