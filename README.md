@@ -32,7 +32,7 @@ The first simulation-core modules are available under `js/simulation/`:
 - `random.js` — seeded deterministic random draws with explicit counter state.
 - `engine.js` — ordered simulation phases and scheduled event processing.
 - `replay.js` — reproducible scheduled-event replay from a baseline save.
-- `persistence.js` — versioned save serialization, migration and corruption checksum.
+- `persistence.js` — versioned save serialization, migration and corruption checksum.\n- `scenarios.js` — integrated player starts with cash, employment, household, housing and liabilities.\n- `life.js` — household budget projection and balanced monthly settlement through the ledger.
 
 The ledger also supports account hierarchy, trial-balance reconciliation, explicit reversals and validated snapshot restore. The current save schema is v2.
 
@@ -48,7 +48,7 @@ Run world-data validation with:
 npm run validate:world
 ```
 
-See [Simulation Architecture](docs/SIMULATION_ARCHITECTURE.md) for accounting conventions and current boundaries.
+See [Simulation Architecture](docs/SIMULATION_ARCHITECTURE.md) for accounting conventions and current boundaries.\n\nPhase 3 player and household starts are documented in [Player, Household & Life Simulation](docs/PLAYER_HOUSEHOLD_LIFE.md). Three integrated scenarios are available: Meridian Newcomer, Family Provider and Career Transition.
 
 ## Documentation
 
