@@ -51,11 +51,34 @@ export function subtractMoney(a, b) {
   return createMoney(a.minorUnits - b.minorUnits, a.currency);
 }
 
-export function multiplyMoney(money, quantity, { rounding = "half-up" } = {}) {
+export function multiplyMoney(money, quantity) {
   if (!money || !Number.isSafeInteger(money.minorUnits)) throw new TypeError("Invalid money value.");
   if (!Number.isSafeInteger(quantity)) throw new TypeError("quantity must be a safe integer.");
+  const result = BigInt(money.minorUnits) * BigInt(quantity);
+  if (result > BigInt(Number.MAX_SAFE_INTEGER) || result < BigInt(Number.MIN_SAFE_INTEGER)) {
+    throw new RangeError("Money multiplication exceeds safe integer precision.");
+  }
+  return createMoney(Number(result), money.currency);
+}
+
+export function applyBasisPoints(money, basisPoints, { rounding = "half-up" } = {}) {
+  if (!money || !Number.isSafeInteger(money.minorUnits)) throw new TypeError("Invalid money value.");
+  if (!Number.isSafeInteger(basisPoints)) throw new TypeError("basisPoints must be a safe integer.");
   if (!["half-up", "down", "up"].includes(rounding)) throw new RangeError("Unsupported rounding mode.");
-  return createMoney(money.minorUnits * quantity, money.currency);
+  const numerator = BigInt(money.minorUnits) * BigInt(basisPoints);
+  const denominator = 10000n;
+  let quotient = numerator / denominator;
+  const remainder = numerator % denominator;
+  if (remainder !== 0n) {
+    if (rounding === "up") quotient += numerator > 0n ? 1n : -1n;
+    if (rounding === "half-up" && (remainder < 0n ? -remainder : remainder) * 2n >= denominator) {
+      quotient += numerator > 0n ? 1n : -1n;
+    }
+  }
+  if (quotient > BigInt(Number.MAX_SAFE_INTEGER) || quotient < BigInt(Number.MIN_SAFE_INTEGER)) {
+    throw new RangeError("Basis-point calculation exceeds safe integer precision.");
+  }
+  return createMoney(Number(quotient), money.currency);
 }
 
 export function assertSameCurrency(a, b) {
