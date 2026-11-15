@@ -6,3 +6,6 @@ export * from "./random.js";
 export * from "./engine.js";
 export * from "./persistence.js";
 export * from "./replay.js";
+
+export * from "./scenarios.js";
+export * from "./life.js";
