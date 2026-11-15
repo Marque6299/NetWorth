@@ -3,8 +3,11 @@
  * Validate Aurel's structured world data.
  * Run: node scripts/validate-world-data.js
  */
-const fs = require("node:fs");
-const path = require("node:path");
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const file = path.join(__dirname, "..", "data", "world", "aurel-world.json");
 const world = JSON.parse(fs.readFileSync(file, "utf8"));
 const errors = [];
