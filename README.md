@@ -31,6 +31,16 @@ The current browser prototype introduces **Aurel**, a fictional world rendered i
 - [Asset register](docs/ASSET_REGISTER.md)
 - [Visual production roadmap](docs/VISUAL_ROADMAP.md)
 
+## Implementation roadmap
+
+- [End-to-end implementation roadmap and status](docs/IMPLEMENTATION_ROADMAP.md)
+
+Validate the structured Aurel world data before committing world-data changes:
+
+```bash
+node scripts/validate-world-data.js
+```
+
 ## Run locally
 
 Serve the repository root with a static server (fetching the JSON data requires HTTP):
