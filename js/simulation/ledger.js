@@ -56,7 +56,7 @@ export class Ledger{
  }
  getTrialBalance(){
   const accounts=this.listAccounts().map(a=>({accountId:a.id,name:a.name,type:a.type,currency:a.currency,balance:this.getBalance(a.id)})),totals={};
-  for(const row of accounts){const t=totals[row.currency]??={debitMinor:0,creditMinor:0};const side=NORMAL_SIDE[row.type];const key=(row.balance.minorUnits>=0)===(side==="debit")?"debitMinor":"creditMinor";t[key]+=Math.abs(row.balance.minorUnits);if(!Number.isSafeInteger(t[key]))throw new RangeError("Trial balance exceeds safe integer precision.");}
+  for(const row of accounts){const t=totals[row.currency]??={debitMinor:0,creditMinor:0};const side=NORMAL_SIDE[row.type];const key=row.balance.minorUnits>=0?(side==="debit"?"debitMinor":"creditMinor"):(side==="debit"?"creditMinor":"debitMinor");t[key]+=Math.abs(row.balance.minorUnits);if(!Number.isSafeInteger(t[key]))throw new RangeError("Trial balance exceeds safe integer precision.");}
   return {accounts,totals,balanced:Object.values(totals).every(t=>t.debitMinor===t.creditMinor)};
  }
  getTransactions(){return this.#transactions.map(clone);}
