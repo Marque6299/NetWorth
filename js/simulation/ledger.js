@@ -51,7 +51,7 @@ export class Ledger {
     return [...this.#accounts.values()].map(account => structuredClone(account));
   }
 
-  postTransaction({ id, date, description, reference = null, entries }) {
+  postTransaction({ id, date, description, reference = null, reversalOf = null, entries }) {
     id = requireText(id, "Transaction id");
     description = requireText(description, "Transaction description");
     if (this.#transactionIds.has(id)) throw new Error(`Duplicate transaction id: ${id}`);
@@ -80,7 +80,7 @@ export class Ledger {
     if (debitTotal !== creditTotal) throw new RangeError(`Unbalanced transaction: debits ${debitTotal}, credits ${creditTotal}.`);
 
     const transaction = Object.freeze({
-      id, date, description, reference,
+      id, date, description, reference, reversalOf,
       currency: normalized[0].currency,
       debitTotalMinor: debitTotal,
       creditTotalMinor: creditTotal,
@@ -116,7 +116,7 @@ export class Ledger {
   reverseTransaction(originalId, { id, date, description } = {}) {
     const original = this.#transactions.find(tx => tx.id === originalId);
     if (!original) throw new Error(`Unknown transaction: ${originalId}`);
-    if (this.#transactions.some(tx => tx.reference === originalId && tx.description.startsWith("Reversal:"))) {
+    if (this.#transactions.some(tx => tx.reversalOf === originalId)) {
       throw new Error(`Transaction already reversed: ${originalId}`);
     }
     return this.postTransaction({
@@ -124,6 +124,7 @@ export class Ledger {
       date,
       description: description ?? `Reversal: ${original.description}`,
       reference: originalId,
+      reversalOf: originalId,
       entries: original.entries.map(entry => ({
         accountId: entry.accountId,
         side: entry.side === "debit" ? "credit" : "debit",
