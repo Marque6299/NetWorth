@@ -1,12 +1,13 @@
 {
-  "name": "networth-mosaic",
-  "version": "0.2.0",
+  "name": "networth-game",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "MOSAIC: Life, Capital & Consequence — simulation foundation",
+  "description": "Networth — turn-based financial life simulation and economic strategy game",
   "scripts": {
+    "dev": "node scripts/serve.mjs",
     "test": "node --test",
-    "validate:world": "node scripts/validate-world-data.js"
+    "check": "node --check js/app.js && node --check js/views.js && node --check js/components.js && node --check js/navigation.js"
   },
   "engines": {
     "node": ">=18"

@@ -1,86 +1,56 @@
-# NetWorth — MOSAIC Life & Economy Sandbox
+# Networth — Capital & Consequence
 
-NetWorth is the development repository for **MOSAIC**, an original browser-based life, finance, and economy simulation.
+Networth is a turn-based financial life simulation, economic strategy and business management game. You begin as an ordinary individual and work toward financial stability, investment success, business ownership and potentially a wider economic enterprise.
 
-## Current world-map prototype
+This repository contains **Phase 1 — Core Shell**: a responsive browser interface, shared UI components and navigable placeholder workspaces. The simulation systems are intentionally not implemented in this phase.
 
-The current browser prototype introduces **Aurel**, a fictional world rendered in a top-down strategic map view. It includes:
-- Layered illustrated world geography.
-- 12 major city markers with Meridian highlighted as the starter city.
-- Trade-route and resource-zone layers.
-- City inspector with starter economic indicators.
-- Search, pan, zoom, recenter, and map-layer toggles.
-- Responsive desktop and mobile management-dashboard layout.
+## Phase 1 scope
 
-## Project identity
+The interface includes all nine planned workspaces:
 
-- **Game:** MOSAIC
-- **Repository / working project name:** NetWorth
-- **World:** Aurel
-- **Starter city:** Meridian
-- **Currency:** Luma (LU)
-- **Visual direction:** Top-down orthographic world map + stylized 2D markers + management dashboard
-- **Platform target:** Browser-first, responsive desktop and mobile web
+- **Overview** — financial command center and empty dashboard states.
+- **Personal** — character dossier, calendar and well-being placeholders.
+- **Finance** — accounts, budgets, cash flow, debt and savings placeholders.
+- **Markets** — instrument directory, research, orders and holdings placeholders.
+- **Businesses** — company directory, business operations and ownership placeholders.
+- **Assets** — asset portfolio, property and collectibles placeholders.
+- **Network** — people, company relationships and ownership-network placeholders.
+- **News** — news feed, economic events and cause-and-effect placeholders.
+- **Reports** — financial statements, performance and forecast placeholders.
 
-## Simulation foundation (Phase 2)
-
-The first simulation-core modules are available under `js/simulation/`:
-- `money.js` — LU values represented as integer minor units (1 LU = 100 minor units).
-- `ledger.js` — double-entry accounts, atomic balanced posting, balances, history and reversals.
-- `state.js` — versioned root save-state structure, separated from presentation state.
-- `clock.js` — pause/resume and deterministic tick/date advancement.
-- `random.js` — seeded deterministic random draws with explicit counter state.
-- `engine.js` — ordered simulation phases and scheduled event processing.
-- `replay.js` — reproducible scheduled-event replay from a baseline save.
-- `persistence.js` — versioned save serialization, migration and corruption checksum.
-- `scenarios.js` — integrated player starts with cash, employment, household, housing and liabilities.
-- `life.js` — household budget projection and balanced monthly settlement through the ledger.
-
-The ledger also supports account hierarchy, trial-balance reconciliation, explicit reversals and validated snapshot restore. The current save schema is v2.
-
-Run the automated tests with Node.js 18 or newer:
-
-```bash
-npm test
-```
-
-Run world-data validation with:
-
-```bash
-npm run validate:world
-```
-
-See [Simulation Architecture](docs/SIMULATION_ARCHITECTURE.md) for accounting conventions and current boundaries.
-
-Phase 3 player and household starts are documented in [Player, Household & Life Simulation](docs/PLAYER_HOUSEHOLD_LIFE.md). Three integrated scenarios are available: Meridian Newcomer, Family Provider and Career Transition.
-
-## Documentation
-
-- [Art direction](docs/ART_DIRECTION.md)
-- [World map specification](docs/WORLD_MAP_VIEW_SPEC.md)
-- [Aurel world atlas](docs/AUREL_WORLD_ATLAS.md)
-- [World map asset plan](docs/ASSET_GENERATION_PLAN.md)
-- [Asset register](docs/ASSET_REGISTER.md)
-- [Visual production roadmap](docs/VISUAL_ROADMAP.md)
-
-## Implementation roadmap
-
-- [End-to-end implementation roadmap and status](docs/IMPLEMENTATION_ROADMAP.md)
-
-Validate the structured Aurel world data before committing world-data changes:
-
-```bash
-node scripts/validate-world-data.js
-```
+The design uses dashboards, directories, profiles, terminals, reports and relationship networks. There is no world map, geographic exploration, travel progression or multi-region unlock system.
 
 ## Run locally
 
-Serve the repository root with a static server (fetching the JSON data requires HTTP):
+Requirements: Node.js 18 or newer. There are no runtime dependencies to install.
+
 ```bash
-python -m http.server 8080
+npm run dev
 ```
-Then open `http://localhost:8080`.
 
-The map data is stored in `data/world/aurel-world.json`. The SVG geography is currently a hand-authored prototype illustration; replace/refine its landmass paths as the approved art direction develops.
+Open `http://127.0.0.1:4173`.
 
-All in-game names, companies, prices, and financial data are fictional. No real money is used.
+## Validate
+
+```bash
+npm test
+npm run check
+```
+
+The tests validate the nine-workspace navigation, route handling, placeholder content, reusable components and HTML escaping.
+
+## Technical boundaries
+
+- Browser-first responsive interface.
+- HTML, CSS and native JavaScript ES modules; no framework or third-party runtime dependency.
+- Presentation is separate from the future simulation rules.
+- No game clock, seeded simulation, character creation, ledger, market engine, business logic or persistence is active in Phase 1.
+- The empty states are deliberate; the interface does not display invented player balances or fabricated market data.
+
+## Project documents
+
+The Phase 1 implementation record and acceptance gate are in [`docs/PHASE_1_CORE_SHELL.md`](docs/PHASE_1_CORE_SHELL.md). The sequential implementation roadmap is in [`docs/IMPLEMENTATION_ROADMAP.md`](docs/IMPLEMENTATION_ROADMAP.md).
+
+## Current status
+
+**Phase 1 — Core Shell: implemented.** All nine workspaces are reachable and display intentional empty states. The automated acceptance checks run with `npm test` and `npm run check`.
