@@ -1,5 +1,5 @@
 import { PAGES } from "./navigation.js";
-import { icon, emptyState, panelTitle, statCard, featureCard } from "./components.js";
+import { esc, icon, emptyState, panelTitle, statCard, featureCard } from "./components.js";
 
 const sections = {
   personal: ["Your life, in context.", "The person behind every financial decision. Your circumstances, capabilities and priorities shape the opportunities available to you.", "user", "Phase 3 — Character & life", [
