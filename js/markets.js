@@ -71,7 +71,7 @@ export function validateMarketAction(markets,finance,action){
 }
 export function applyMarketAction(markets,finance,action,{date,turn,sequence}){
  const m=clone(markets),f=clone(finance),security=m.securities.find(x=>x.id===action.securityId),position=m.positions.find(x=>x.securityId===action.securityId);
- const tx=(kind,amount,description)=>m.transactions.unshift({id:"market-tx-"+sequence,turn,date,kind,securityId:security.id,symbol:security.symbol,quantityUnits:action.quantityUnits??0,priceMinor:security.priceMinor,amountMinor:amount,description});
+ const tx=(kind,amount,description)=>m.transactions.unshift({id:"market-tx-"+sequence+"-"+kind,turn,date,kind,securityId:security.id,symbol:security.symbol,quantityUnits:action.quantityUnits??0,priceMinor:security.priceMinor,amountMinor:amount,description});
  if(action.type==="MARKET_WATCHLIST"){m.watchlist=m.watchlist.includes(security.id)?m.watchlist.filter(x=>x!==security.id):[...m.watchlist,security.id];return {markets:m,finance:f};}
  const value=unitValue(security.priceMinor,action.quantityUnits),fee=feeFor(value);
  ensureAccount(f,"investment","Investment holdings","asset","investment");ensureAccount(f,"income","Income","income","income");ensureAccount(f,"expense","Household expenses","expense","expense");
