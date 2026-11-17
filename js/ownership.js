@@ -232,9 +232,9 @@ export function validateOwnershipAction(state, finance, character, action) {
   }
   if (action.type === "OWNERSHIP_TRANSFER_SHARES") {
     const seller = shareholderById(company, action.sellerId), buyer = shareholderById(company, action.buyerId);
-    if (!seller || !buyer || seller.id === buyer.id || !Number.isInteger(action.shares) || action.shares < 1 || action.shares > seller.shares || !safePositive(action.pricePerShareMinor)) return { valid: false, reason: "Choose two different existing shareholders, a valid share quantity and a positive negotiated price." };
+    if (!seller || (!buyer && action.buyerId !== "player") || seller.id === action.buyerId || !Number.isInteger(action.shares) || action.shares < 1 || action.shares > seller.shares || !safePositive(action.pricePerShareMinor)) return { valid: false, reason: "Choose two different existing shareholders, a valid share quantity and a positive negotiated price." };
     const proceeds = action.shares * action.pricePerShareMinor;
-    const buyerCash = buyer.id === "player" ? cash : (Number.isSafeInteger(buyer.cashMinor) ? buyer.cashMinor : (investorById(buyer.id)?.capacityMinor ?? 0));
+    const buyerCash = action.buyerId === "player" ? cash : (Number.isSafeInteger(buyer?.cashMinor) ? buyer.cashMinor : (investorById(action.buyerId)?.capacityMinor ?? 0));
     if (!safePositive(proceeds) || proceeds > buyerCash) return { valid: false, reason: "The buyer does not have enough available funds for this negotiated transfer." };
     return { valid: true };
   }
