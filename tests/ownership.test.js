@@ -139,7 +139,54 @@ test("company ownership and governance records survive JSON export and import", 
   assert.equal(validateGameState(restored).valid, true);
 });
 
-test("schema v8 saves migrate to schema v10 with an empty ownership subsystem with an empty ownership subsystem", () => {
+test("company double-entry ledger reconciles ownership cash and equity movements", () => {
+  let state = found(makeGame()), companyId = state.ownership.companies[0].id;
+  const company = () => state.ownership.companies.find(item => item.id === companyId);
+  const assertLedger = () => {
+    const c = company();
+    assert.ok(c.ledger.length >= 1);
+    for (const entry of c.ledger) assert.equal(entry.lines.reduce((sum, line) => sum + line.debitMinor, 0), entry.lines.reduce((sum, line) => sum + line.creditMinor, 0));
+    const account = id => c.ledgerAccounts.find(item => item.id === id).balanceMinor;
+    assert.equal(account("cash"), c.cashMinor);
+    assert.equal(account("shareCapital"), c.paidInCapitalMinor);
+    assert.equal(account("shareholderLoans"), c.loanBalanceMinor);
+    assert.equal(account("retainedEarnings"), c.retainedEarningsMinor);
+    assert.equal(validateOwnership(state.ownership, state.finance).valid, true);
+  };
+  assertLedger();
+  state = act(state, { type: "ADVANCE_TURN" }); assertLedger();
+  state = act(state, { type: "OWNERSHIP_CONTRIBUTE_CAPITAL", companyId, amountMinor: 25000 }); assertLedger();
+  state = act(state, { type: "OWNERSHIP_TAKE_LOAN", companyId, amountMinor: 12000 }); assertLedger();
+  state = act(state, { type: "OWNERSHIP_REPAY_LOAN", companyId, amountMinor: 5000 }); assertLedger();
+  state = act(state, { type: "OWNERSHIP_ISSUE_SHARES", companyId, investorId: "mira-chen", shares: 1000 }); assertLedger();
+  state = act(state, { type: "OWNERSHIP_BUYBACK_SHARES", companyId, shares: 100 }); assertLedger();
+  state = act(state, { type: "ADVANCE_TURN" });
+  const dividend = Math.max(1, Math.floor(company().retainedEarningsMinor / 10));
+  state = act(state, { type: "OWNERSHIP_PROPOSE_DIVIDEND", companyId, amountMinor: dividend });
+  const resolutionId = company().resolutions[0].id;
+  state = act(state, { type: "OWNERSHIP_VOTE", companyId, resolutionId, vote: "for" });
+  state = act(state, { type: "OWNERSHIP_CLOSE_VOTE", companyId, resolutionId });
+  assertLedger();
+});
+
+test("schema v9 ownership saves gain a balanced opening company ledger during migration", () => {
+  let old = found(makeGame());
+  old.schemaVersion = 9;
+  old.simulationVersion = "0.10.0";
+  for (const company of old.ownership.companies) {
+    delete company.ledger;
+    delete company.ledgerAccounts;
+    delete company.ledgerSequence;
+  }
+  const migrated = migrateGameState(old);
+  const company = migrated.ownership.companies[0];
+  assert.equal(migrated.schemaVersion, 10);
+  assert.equal(company.ledger.length, 1);
+  assert.equal(company.ledger[0].kind, "OPENING_BALANCE");
+  assert.equal(validateGameState(migrated).valid, true);
+});
+
+test("schema v8 saves migrate to schema v10 with an empty ownership subsystem", () => {
   const old = makeGame();
   old.schemaVersion = 8;
   old.simulationVersion = "0.9.0";
