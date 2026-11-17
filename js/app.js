@@ -296,7 +296,9 @@ function setupBusinessControls() {
     action.shares = Number(data.get("shares"));
    } else if (type === "OWNERSHIP_SELL_SHARES") {
     action.buyerId = String(data.get("buyerId")); action.shares = Number(data.get("shares")); action.pricePerShareMinor = parseCredits(data.get("price"));
-   } else if (type === "OWNERSHIP_CREATE_RESOLUTION") {
+   } else if (type === "OWNERSHIP_TRANSFER_SHARES") {
+     action.sellerId = String(data.get("sellerId")); action.buyerId = String(data.get("buyerId")); action.shares = Number(data.get("shares")); action.pricePerShareMinor = parseCredits(data.get("price"));
+    } else if (type === "OWNERSHIP_CREATE_RESOLUTION") {
     action.title = String(data.get("title")); action.resolutionType = String(data.get("resolutionType"));
    } else if (type === "OWNERSHIP_APPOINT_EXECUTIVE") {
     action.role = String(data.get("role")); action.candidateId = String(data.get("candidateId"));
