@@ -65,3 +65,41 @@
 @media(max-width:1100px){.market-security-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.market-overview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.market-order-form{grid-template-columns:1fr 1fr}.market-order-form label:first-child{grid-column:1/-1}.market-order-buttons{grid-column:1/-1}.market-index-panel{align-items:start;flex-direction:column}}
 @media(max-width:560px){.market-security-grid{grid-template-columns:1fr}.market-order-form{grid-template-columns:1fr}.market-order-form label:first-child,.market-order-buttons{grid-column:auto}.market-overview-grid{grid-template-columns:1fr 1fr}.market-overview-card strong{font-size:16px}}
+
+/* Phase 8 — property and collectibles */
+.asset-overview-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.asset-catalog-grid,.asset-holding-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+.asset-catalog-card,.asset-holding-card{display:flex;flex-direction:column;gap:10px;min-width:0;padding:15px;border:1px solid var(--line);border-radius:8px;background:#fff}
+.asset-card-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.asset-card-top span,.asset-card-top b{color:#95a199;font-size:7px;font-weight:800;letter-spacing:.08em}
+.asset-card-top b{color:#698474;text-align:right}
+.asset-catalog-card h3,.asset-holding-card h3{margin:0;color:#4e6261;font-size:13px;line-height:1.4}
+.asset-catalog-card>p{min-height:55px;margin:0;color:#8c9891;font-size:9px;line-height:1.6}
+.asset-price{padding:9px 0;color:#4a6060;font-size:20px;font-weight:750;font-variant-numeric:tabular-nums}
+.asset-price small{display:block;margin-top:4px;color:#99a49d;font-size:8px;font-weight:500}
+.asset-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.asset-detail-grid>div{padding:9px;border-radius:6px;background:#f7f9f6;min-width:0}
+.asset-detail-grid small,.asset-value-row small,.asset-condition small{display:block;color:#99a49d;font-size:7px;font-weight:800;letter-spacing:.07em}
+.asset-detail-grid b{display:block;margin-top:5px;color:#536565;font-size:10px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.asset-purchase-form{display:grid;gap:8px;margin-top:auto;padding-top:9px;border-top:1px solid #eef1ed}
+.asset-purchase-form label,.asset-actions label{display:grid;gap:5px;color:#89958e;font-size:8px;font-weight:800;letter-spacing:.06em}
+.asset-purchase-form select,.asset-actions select{width:100%;min-height:35px;padding:7px 8px;border:1px solid var(--line);border-radius:5px;background:#fff;color:#536565;font:inherit;font-size:10px;letter-spacing:normal}
+.asset-purchase-form .primary-button{width:100%;justify-content:center}
+.asset-owned-label{margin-top:auto;padding:11px 0 2px;border-top:1px solid #eef1ed;color:#6c8b76;font-size:8px;font-weight:800;letter-spacing:.08em}
+.asset-holding-card{margin-bottom:10px}
+.asset-value-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.asset-value-row>div{min-width:0}
+.asset-value-row strong{display:block;margin-top:6px;color:#4d6261;font-size:16px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.asset-condition{display:grid;gap:7px}
+.asset-condition>div:first-child{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.asset-condition b{color:#677c70;font-size:9px}
+.asset-condition .meter{height:6px}
+.asset-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding-top:9px;border-top:1px solid #eef1ed}
+.asset-actions form{grid-column:1/-1;display:grid;grid-template-columns:1fr auto;align-items:end;gap:8px}
+.asset-actions .secondary-button,.asset-actions .danger-button{justify-content:center;min-height:35px;font-size:9px}
+.danger-button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:8px 12px;border:1px solid #ead9d3;border-radius:5px;background:#fff9f7;color:#a66d5d;font:inherit;font-size:10px;font-weight:700;cursor:pointer}
+.danger-button:hover{background:#fbefeb}
+.asset-empty{padding:18px;border:1px dashed #dce2da;border-radius:7px;background:#fbfcfa;color:#8b9790;font-size:10px;line-height:1.6}
+.asset-feedback{min-height:15px;margin:12px 0 0;color:#597765;font-size:9px}
+@media(max-width:1100px){.asset-overview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.asset-catalog-grid,.asset-holding-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.asset-catalog-grid,.asset-holding-grid{grid-template-columns:1fr}.asset-overview-grid{grid-template-columns:1fr 1fr}.asset-catalog-card,.asset-holding-card{padding:12px}.asset-catalog-card>p{min-height:0}.asset-value-row strong{font-size:14px}}
