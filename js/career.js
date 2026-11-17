@@ -1,7 +1,7 @@
 import {applyFinanceAction} from "./finance.js";
 
 export const JOB_MARKET = Object.freeze([
- {id:"service-desk-associate",title:"Service Desk Associate",employer:"Northstar Services",industry:"Technology Services",level:"Entry",weeklyPayMinor:68000,hoursPerWeek:40,requiredEducation:1,requiredExperience:0,requiredSkills:{technical:35,operations:30,networking:30},skillGains:{technical:0.22,operations:0.12,communication:0}},
+ {id:"service-desk-associate",title:"Service Desk Associate",employer:"Northstar Services",industry:"Technology Services",level:"Entry",weeklyPayMinor:68000,hoursPerWeek:40,requiredEducation:1,requiredExperience:0,requiredSkills:{technical:35,operations:30,networking:30},skillGains:{technical:0.22,operations:0.12}},
  {id:"operations-coordinator",title:"Operations Coordinator",employer:"Meridian Operations Group",industry:"Business Services",level:"Associate",weeklyPayMinor:92000,hoursPerWeek:40,requiredEducation:1,requiredExperience:2,requiredSkills:{operations:45,management:35,networking:35},skillGains:{operations:0.24,management:0.12,leadership:0.08}},
  {id:"junior-data-analyst",title:"Junior Data Analyst",employer:"Cobalt Insights",industry:"Analytics",level:"Entry",weeklyPayMinor:108000,hoursPerWeek:40,requiredEducation:2,requiredExperience:0,requiredSkills:{technical:45,research:40,financialLiteracy:35},skillGains:{technical:0.18,research:0.2,financialLiteracy:0.12}},
  {id:"sales-account-executive",title:"Sales Account Executive",employer:"Brightline Commerce",industry:"Commercial",level:"Associate",weeklyPayMinor:105000,hoursPerWeek:40,requiredEducation:1,requiredExperience:2,requiredSkills:{sales:48,negotiation:40,networking:35},skillGains:{sales:0.22,negotiation:0.16,networking:0.1}},
