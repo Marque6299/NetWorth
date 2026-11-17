@@ -85,8 +85,8 @@ The save schema is now version 2. Phase 2 schema-v1 local saves and JSON backups
 
 ## Known limitations
 
-- Starting financial figures are not yet spendable balances and do not appear in a ledger.
-- Work hours are time-allocation inputs only; jobs, salary, performance and career history are Phase 5.
+- Starting financial figures are converted into authoritative opening balances by Phase 4.
+- Work hours are shared with the employment system introduced in Phase 5; the Personal workspace now includes jobs, salary, performance and career history.
 - No family-member simulation, dependents' needs, health-care expenses or social relationship actions are implemented.
 - Well-being coefficients are first-pass deterministic rules and require balancing.
 - Browser IndexedDB migration and save/load still require real-browser acceptance testing.
