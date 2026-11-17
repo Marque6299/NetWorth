@@ -148,13 +148,13 @@ test("business state and manager compensation survive JSON export and import", (
   assert.equal(validateGameState(restored).valid, true);
 });
 
-test("schema v7 saves migrate to schema v10 with an empty business subsystem", () => {
+test("schema v7 saves migrate to schema v11 with an empty business subsystem", () => {
   const old = makeGame();
   old.schemaVersion = 7;
   old.simulationVersion = "0.8.0";
   delete old.businesses;
   const migrated = migrateGameState(old);
-  assert.equal(migrated.schemaVersion, 10);
+  assert.equal(migrated.schemaVersion, 11);
   assert.equal(migrated.businesses.mandate, null);
   assert.deepEqual(migrated.assets, old.assets);
   assert.equal(validateGameState(migrated).valid, true);
