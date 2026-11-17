@@ -1,0 +1,9 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {createGameState,drawRandom,normalizeSeed,resolveAction,validateGameState} from "../js/simulation-core.js";
+test("same seed and action sequence produces the same calendar and events",()=>{let a=createGameState({seed:"repeatable"}),b=createGameState({seed:"repeatable"});for(let i=0;i<8;i++){a=resolveAction(a,{type:"ADVANCE_TURN"}).state;b=resolveAction(b,{type:"ADVANCE_TURN"}).state;}assert.equal(a.calendar.currentDate,"2026-03-02");assert.deepEqual(a.calendar,b.calendar);assert.deepEqual(a.eventLog,b.eventLog);});
+test("weekly turns use the in-game calendar and handle leap years",()=>{const s=createGameState({startDate:"2024-02-26"});const r=resolveAction(s,{type:"ADVANCE_TURN"});assert.equal(r.state.calendar.currentDate,"2024-03-04");assert.equal(s.calendar.currentDate,"2024-02-26");});
+test("invalid actions do not mutate the source state",()=>{const s=createGameState(),before=structuredClone(s),r=resolveAction(s,{type:"TRANSFER_MONEY",amount:500});assert.equal(r.ok,false);assert.deepEqual(s,before);assert.equal(r.state,s);});
+test("month boundary is recorded when a weekly turn crosses months",()=>{const s=createGameState({startDate:"2026-01-26"}),r=resolveAction(s,{type:"ADVANCE_TURN"});assert.equal(r.state.eventLog.some(e=>e.type==="MONTH_BOUNDARY"),true);});
+test("seeded random draws are reproducible",()=>{const seed=normalizeSeed("same");assert.deepEqual(drawRandom({state:seed},1000),drawRandom({state:seed},1000));});
+test("save validation rejects malformed calendars and unsupported schema",()=>{const s=createGameState();assert.equal(validateGameState(s).valid,true);assert.equal(validateGameState({...s,schemaVersion:999}).valid,false);assert.equal(validateGameState({...s,calendar:{...s.calendar,currentDate:"bad"}}).valid,false);});
