@@ -159,3 +159,13 @@ test("schema v7 saves migrate to schema v8 with an empty business subsystem", ()
   assert.deepEqual(migrated.assets, old.assets);
   assert.equal(validateGameState(migrated).valid, true);
 });
+
+test("branch cash never becomes negative when sales stop and operating obligations accumulate", () => {
+  let state = startMandate(makeGame());
+  for (let i = 0; i < 75; i++) state = act(state, { type: "ADVANCE_TURN" });
+  const summary = getBusinessSummary(state.businesses);
+  assert.ok(summary.payablesMinor > 0);
+  assert.ok(summary.cashMinor >= 0);
+  assert.ok(state.businesses.mandate.payables.length > 0);
+  assert.equal(validateGameState(state).valid, true);
+});
