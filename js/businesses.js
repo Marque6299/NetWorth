@@ -126,11 +126,11 @@ function createMandate(company, id, turn) {
   const openingCash = company.openingCashMinor;
   const ledger = {
     accounts: [
-      account("cash", "Operating cash", "asset", "cash", openingCash),
-      account("inventory", "Inventory on hand", "asset", "inventory", inventoryMinor),
+      account("cash", "Operating cash", "asset", "cash"),
+      account("inventory", "Inventory on hand", "asset", "inventory"),
       account("inventoryTransit", "Inventory in transit", "asset", "inventory-transit"),
       account("payables", "Operating payables", "liability", "payables"),
-      account("parentCapital", "Parent company operating capital", "equity", "parent-capital", openingCash + inventoryMinor),
+      account("parentCapital", "Parent company operating capital", "equity", "parent-capital"),
       account("revenue", "Sales revenue", "income", "revenue"),
       account("cogs", "Cost of goods sold", "expense", "cogs"),
       account("staffPayroll", "Staff payroll", "expense", "payroll"),
