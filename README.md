@@ -122,7 +122,8 @@ GitHub Actions runs the same tests and syntax checks on pushes and pull requests
 - [Phase 4 — Household Finance & Ledger](docs/PHASE_4_HOUSEHOLD_FINANCE.md)
 - [Phase 5 — Employment & Education](docs/PHASE_5_EMPLOYMENT_AND_EDUCATION.md)
 - [Phase 6 — Banking & Credit](docs/PHASE_6_BANKING_AND_CREDIT.md)
-- [Phase 7 — Investment Markets](docs/PHASE_7_INVESTMENT_MARKETS.md)\n- [Phase 8 — Property & Collectibles](docs/PHASE_8_PROPERTY_COLLECTIBLES.md)\n- [Phase 9 — Business Operations](docs/PHASE_9_BUSINESS_OPERATIONS.md)
+- [Phase 7 — Investment Markets](docs/PHASE_7_INVESTMENT_MARKETS.md)
+- [Phase 8 — Property & Collectibles](docs/PHASE_8_PROPERTY_COLLECTIBLES.md)\n- [Phase 9 — Business Operations](docs/PHASE_9_BUSINESS_OPERATIONS.md)
 - [Implementation Roadmap](docs/IMPLEMENTATION_ROADMAP.md)
 
 ## Current status
