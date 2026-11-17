@@ -79,14 +79,14 @@ export function applyCareerAction(career,character,finance,action,{turn,roll=0,d
   event={type:offered?"JOB_OFFER_RECEIVED":"JOB_APPLICATION_REJECTED",summary:offered?`An offer arrived from ${job.employer} for ${job.title}.`:`${job.employer} declined your application for ${job.title}.`,details:{jobId:job.id,applicationId:application.id,offerChance:chance,roll}};
  }else if(action.type==="ACCEPT_JOB_OFFER"){
   const application=next.applications.find(item=>item.id===action.applicationId),job=jobById(application.jobId);
-  if(next.currentJob)next.employmentHistory.push({...clone(next.currentJob),endedAtTurn:turn,endReason:"Accepted another position"});
+  if(next.currentJob){next.employmentHistory.push({...clone(next.currentJob),endedAtTurn:turn,endReason:"Accepted another position"});const previousApplication=next.applications.find(item=>item.jobId===next.currentJob.jobId&&item.status==="accepted");if(previousApplication)previousApplication.status="closed";}
   next.currentJob={jobId:job.id,title:job.title,employer:job.employer,industry:job.industry,level:1,weeklyPayMinor:job.weeklyPayMinor,hoursPerWeek:job.hoursPerWeek,startedAtTurn:turn,baseTitle:job.title};
   next.weeksEmployed=0;next.performance=70;next.promotions=0;application.status="accepted";
   for(const item of next.applications)if(item.id!==application.id&&item.status==="offered")item.status="closed";
   event={type:"JOB_ACCEPTED",summary:`You joined ${job.employer} as ${job.title}.`,details:{jobId:job.id,weeklyPayMinor:job.weeklyPayMinor,hoursPerWeek:job.hoursPerWeek}};
  }else if(action.type==="RESIGN_FROM_JOB"){
   next.employmentHistory.push({...clone(next.currentJob),endedAtTurn:turn,endReason:"Resigned"});
-  const previous=next.currentJob;next.currentJob=null;next.weeksEmployed=0;next.performance=70;next.promotions=0;
+  const previous=next.currentJob;const previousApplication=next.applications.find(item=>item.jobId===previous.jobId&&item.status==="accepted");if(previousApplication)previousApplication.status="closed";next.currentJob=null;next.weeksEmployed=0;next.performance=70;next.promotions=0;
   event={type:"JOB_RESIGNED",summary:`You resigned from ${previous.employer}.`,details:{jobId:previous.jobId}};
  }else if(action.type==="ENROLL_COURSE"){
   const course=courseById(action.courseId);
