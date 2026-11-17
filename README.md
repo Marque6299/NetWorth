@@ -24,7 +24,8 @@ The design uses dashboards, directories, profiles, terminals, reports and relati
 - Seed normalization and deterministic pseudo-random draws.
 - Central action validation/resolution; invalid actions do not mutate state.
 - Turn and month-boundary event log.
-- Three IndexedDB save slots stored locally in the current browser profile.
+- Three manual IndexedDB save slots plus a separate automatic recovery snapshot stored locally in the current browser profile.
+- Automatic recovery updates after successful game actions and restores the latest snapshot on page reload.
 - Versioned save validation and integrity checksum.
 - JSON backup export and validated import.
 
