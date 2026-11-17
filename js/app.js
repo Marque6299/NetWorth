@@ -276,4 +276,54 @@ function setupBusinessControls() {
    if (target) target.textContent = error.message;
   }
  }));
+ document.querySelectorAll("[data-ownership-form]").forEach(form => form.addEventListener("submit", event => {
+  event.preventDefault();
+  if (!currentGame) return;
+  const data = new FormData(form), type = form.dataset.ownershipForm, action = { type };
+  try {
+   if (data.has("companyId")) action.companyId = String(data.get("companyId"));
+   if (type === "OWNERSHIP_FOUND_COMPANY") {
+    action.name = String(data.get("name")); action.sector = String(data.get("sector"));
+    action.amountMinor = parseCredits(data.get("amount")); action.shares = Number(data.get("shares"));
+    action.description = String(data.get("description") ?? "");
+   } else if (["OWNERSHIP_CONTRIBUTE_CAPITAL","OWNERSHIP_TAKE_LOAN","OWNERSHIP_REPAY_LOAN","OWNERSHIP_PROPOSE_DIVIDEND"].includes(type)) {
+    action.amountMinor = parseCredits(data.get("amount"));
+   } else if (type === "OWNERSHIP_ISSUE_SHARES") {
+    action.investorId = String(data.get("investorId")); action.shares = Number(data.get("shares"));
+   } else if (type === "OWNERSHIP_BUYBACK_SHARES") {
+    action.shares = Number(data.get("shares"));
+   } else if (type === "OWNERSHIP_CREATE_RESOLUTION") {
+    action.title = String(data.get("title")); action.resolutionType = String(data.get("resolutionType"));
+   } else if (type === "OWNERSHIP_APPOINT_EXECUTIVE") {
+    action.role = String(data.get("role")); action.candidateId = String(data.get("candidateId"));
+   } else {
+    throw new Error("Unsupported ownership form.");
+   }
+   const result = resolveAction(currentGame, action);
+   if (!result.ok) throw new Error(result.reason);
+   currentGame = result.state; setFeedback(result.event?.summary ?? "Ownership decision recorded."); render();
+  } catch (error) {
+   setFeedback(error.message);
+   const target = document.querySelector("#ownershipFeedback");
+   if (target) target.textContent = error.message;
+  }
+ }));
+ document.querySelectorAll("[data-ownership-action]").forEach(button => button.addEventListener("click", () => {
+  if (!currentGame) return;
+  const type = button.dataset.ownershipAction, action = { type };
+  if (button.dataset.companyId) action.companyId = button.dataset.companyId;
+  if (button.dataset.targetId) action.targetId = button.dataset.targetId;
+  if (button.dataset.resolutionId) action.resolutionId = button.dataset.resolutionId;
+  if (button.dataset.vote) action.vote = button.dataset.vote;
+  if (type === "OWNERSHIP_ACQUIRE_TARGET" && !window.confirm("Acquire this company outright using household cash? The purchase will be recorded as a private-equity asset.")) return;
+  try {
+   const result = resolveAction(currentGame, action);
+   if (!result.ok) throw new Error(result.reason);
+   currentGame = result.state; setFeedback(result.event?.summary ?? "Ownership action completed."); render();
+  } catch (error) {
+   setFeedback(error.message);
+   const target = document.querySelector("#ownershipFeedback");
+   if (target) target.textContent = error.message;
+  }
+ }));
 }
