@@ -64,6 +64,7 @@ export function validateFinanceAction(finance,action){
  if(action.type==="RECORD_EXPENSE"&&amount>balance("cash"))return {valid:false,reason:"There is not enough cash for this expense."};
  if(action.type==="TRANSFER_FUNDS"&&(!["cash","savings"].includes(action.from)||!["cash","savings"].includes(action.to)||action.from===action.to||amount>balance(action.from)))return {valid:false,reason:"Choose valid source and destination accounts and an amount within the available balance."};
  if(action.type==="REPAY_DEBT"&&amount>balance("loan"))return {valid:false,reason:"Repayment cannot exceed the outstanding loan principal."};
+ if(action.type==="RECORD_UNREALIZED_CHANGE"&&!["gain","loss"].includes(action.direction))return {valid:false,reason:"Choose an unrealized gain or loss."};
  if(action.type==="RECORD_UNREALIZED_CHANGE"&&action.direction==="loss"&&amount>balance("investment"))return {valid:false,reason:"A valuation loss cannot exceed the recorded investment value."};
  if(action.type==="SET_BUDGET"&&(!["household","transport","education","health","leisure","other"].includes(action.category)||!Number.isSafeInteger(action.monthlyLimitMinor)||action.monthlyLimitMinor<0))return {valid:false,reason:"Choose a valid budget category and non-negative monthly limit."};
  if(!["RECORD_INCOME","RECORD_EXPENSE","TRANSFER_FUNDS","BORROW_MONEY","REPAY_DEBT","RECORD_UNREALIZED_CHANGE","SET_BUDGET"].includes(action.type))return {valid:false,reason:`Unknown finance action: ${action.type}`};
