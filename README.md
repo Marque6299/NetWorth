@@ -131,7 +131,7 @@ GitHub Actions runs the same tests and syntax checks on pushes and pull requests
 
 ## Current status
 
-**Phases 1–9 are accepted; Phase 10 is in progress.** The first ownership milestone passes 132 automated tests; browser acceptance remains pending.
+**Phases 1–9 are accepted; Phase 10 is in progress.** The first ownership milestone passes 136 automated tests; browser acceptance remains pending.
 
  
 ## Phase 8 — Property & collectibles
