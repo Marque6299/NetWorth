@@ -53,8 +53,8 @@ export function getFinanceSummary(finance){
  const liabilities=finance.accounts.filter(a=>a.type==="liability").reduce((s,a)=>s+a.balanceMinor,0);
  const income=finance.accounts.filter(a=>a.type==="income").reduce((s,a)=>s+a.balanceMinor,0);
  const expenses=finance.accounts.filter(a=>a.type==="expense").reduce((s,a)=>s+a.balanceMinor,0);
- const cashflow=finance.ledger.reduce((s,e)=>s+(e.kind==="INCOME"?e.amountMinor:e.kind==="EXPENSE"?-e.amountMinor:0),0);
- return {cash:get("cash"),savings:get("savings"),investment:get("investment"),assets,liabilities,netWorth:assets-liabilities,liquidNetWorth:get("cash")+get("savings")-liabilities,income,expenses,netCashflow:cashflow,monthlyBaseline:finance.monthlyBaselineMinor};
+ const cashflow=income-expenses;
+ return {cash:get("cash"),savings:get("savings"),investment:get("investment"),assets,liabilities,netWorth:assets-liabilities,liquidNetWorth:get("cash")+get("savings")+finance.accounts.filter(a=>a.type==="asset"&&["bank-checking","bank-savings"].includes(a.subtype)).reduce((sum,a)=>sum+a.balanceMinor,0)-liabilities,income,expenses,netCashflow:cashflow,monthlyBaseline:finance.monthlyBaselineMinor};
 }
 export function validateFinanceAction(finance,action){
  if(!finance?.initialized)return {valid:false,reason:"Create a character and initialize household finance first."};
