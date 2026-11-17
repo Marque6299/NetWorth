@@ -3,11 +3,11 @@ import { esc, icon, navLink } from "./components.js";
 import { renderOverview, renderSection, renderPersonalView, renderStartingProfilePreview, renderFinanceView, renderMarketsView, renderAssetsView, renderBusinessesView } from "./views.js";
 import { TIME_KEYS } from "./simulation-core.js";
 import { createGameState, resolveAction } from "./simulation-core.js";
-import { createExport, deleteSave, listSaveSlots, loadGame, parseImport, saveGame } from "./persistence.js";
+import { createExport, deleteSave, listSaveSlots, loadGame, loadAutoGame, parseImport, saveAutoGame, saveGame } from "./persistence.js";
 import { renderGamePanel } from "./game-ui.js";
 
 const root=document.querySelector("#app");
-let currentGame=null,saveSlots=[],storageError="",feedbackMessage="",busy=false;
+let currentGame=null,saveSlots=[],storageError="",feedbackMessage="",autoSaveError="",autoSaveQueue=Promise.resolve(),busy=false;
 function sidebar(active){
  return '<aside class="sidebar"><a class="brand" href="#/overview" data-route="overview"><span class="brand-mark">N</span><span><b>NETWORTH</b><small>CAPITAL & CONSEQUENCE</small></span></a><div class="side-rule"></div><div class="nav-groups">'+GROUPS.map(group=>'<section class="nav-group"><label>'+esc(group.label)+'</label><nav>'+group.pages.map(page=>navLink(page,active)).join("")+'</nav></section>').join("")+'</div><div class="side-bottom"><b>EARLY ACCESS SHELL</b><small>BUILD 0.11.0 / PHASE 10</small><p>A world of decisions.<br>A future of your making.</p></div></aside>';
 }
@@ -23,7 +23,7 @@ function render(){
  let id=getPageIdFromHash(location.hash);
  if(!location.hash||!PAGES.some(page=>"#/"+page.id===location.hash)){history.replaceState(null,"","#/overview");id="overview";}
  const page=getPage(id);
- root.innerHTML=sidebar(id)+'<div class="main-column">'+topbar(page)+'<main class="main"><a class="skip" href="#content">Skip to content</a><div id="content">'+heading(page)+'<div class="content">'+(id==="overview"?renderOverview(currentGame)+renderGamePanel(currentGame,saveSlots,storageError,feedbackMessage):id==="personal"?renderPersonalView(currentGame):id==="finance"?renderFinanceView(currentGame):id==="markets"?renderMarketsView(currentGame):id==="assets"?renderAssetsView(currentGame):id==="businesses"?renderBusinessesView(currentGame):renderSection(id))+'</div></div><footer class="page-footer"><span>NETWORTH · CAPITAL & CONSEQUENCE</span><span>PHASE 10 / OWNERSHIP & ENTERPRISE · LOCAL GAME STATE</span></footer></main></div>';
+ root.innerHTML=sidebar(id)+'<div class="main-column">'+topbar(page)+'<main class="main"><a class="skip" href="#content">Skip to content</a><div id="content">'+heading(page)+'<div class="content">'+(id==="overview"?renderOverview(currentGame)+renderGamePanel(currentGame,saveSlots,storageError||autoSaveError,feedbackMessage):id==="personal"?renderPersonalView(currentGame):id==="finance"?renderFinanceView(currentGame):id==="markets"?renderMarketsView(currentGame):id==="assets"?renderAssetsView(currentGame):id==="businesses"?renderBusinessesView(currentGame):renderSection(id))+'</div></div><footer class="page-footer"><span>NETWORTH · CAPITAL & CONSEQUENCE</span><span>PHASE 10 / OWNERSHIP & ENTERPRISE · LOCAL GAME STATE</span></footer></main></div>';
  document.title=page.label+" — Networth";setupSearch();setupGameControls();setupPersonalControls();setupCareerControls();setupFinanceControls();setupBankingControls();setupMarketControls();setupAssetControls();setupBusinessControls();root.classList.add("ready");
 }
 function closeSearch(){const input=document.querySelector("#globalSearch"),results=document.querySelector("#searchResults");if(results)results.hidden=true;if(input)input.setAttribute("aria-expanded","false");}
@@ -36,6 +36,28 @@ function setupSearch(){
 }
 async function refreshSlots(){try{saveSlots=await listSaveSlots();storageError="";}catch(error){storageError=error.message;}}
 function setFeedback(message){feedbackMessage=message;}
+function scheduleAutoSave(){
+ if(!currentGame)return;
+ const snapshot=typeof structuredClone==="function"?structuredClone(currentGame):JSON.parse(JSON.stringify(currentGame));
+ autoSaveQueue=autoSaveQueue.catch(()=>{}).then(()=>saveAutoGame(snapshot)).then(()=>{
+  autoSaveError="";
+ }).catch(error=>{
+  autoSaveError=error.message;
+ });
+}
+async function restoreAutoSave(){
+ try{
+  const restored=await loadAutoGame();
+  if(!currentGame&&restored){
+   currentGame=restored;
+   setFeedback(`Recovered your latest automatic save at turn ${currentGame.calendar.turn} (${currentGame.calendar.currentDate}).`);
+   render();
+  }
+ }catch(error){
+  autoSaveError=error.message;
+  render();
+ }
+}
 function downloadExport(){
  const blob=new Blob([createExport(currentGame)],{type:"application/json"}),url=URL.createObjectURL(blob),link=document.createElement("a");
  link.href=url;link.download=`networth-${currentGame.meta.gameId}-turn-${currentGame.calendar.turn}.json`;link.click();URL.revokeObjectURL(url);
@@ -43,9 +65,9 @@ function downloadExport(){
 async function handleGameAction(action,slot){
  if(busy)return;busy=true;
  try{
-  if(action==="advance"){const result=resolveAction(currentGame,{type:"ADVANCE_TURN"});if(!result.ok)throw new Error(result.reason);currentGame=result.state;setFeedback(`Advanced to turn ${currentGame.calendar.turn} (${currentGame.calendar.currentDate}). Save to keep this progress.`);}
-  else if(action==="save"){await saveGame(slot,currentGame);await refreshSlots();setFeedback(`Game successfully saved to slot ${slot}.`);}
-  else if(action==="load"){currentGame=await loadGame(slot);setFeedback(`Loaded slot ${slot} at turn ${currentGame.calendar.turn}.`);}
+  if(action==="advance"){const result=resolveAction(currentGame,{type:"ADVANCE_TURN"});if(!result.ok)throw new Error(result.reason);currentGame=result.state;scheduleAutoSave();setFeedback(`Advanced to turn ${currentGame.calendar.turn} (${currentGame.calendar.currentDate}). Automatic recovery is enabled; use manual slots for additional checkpoints.`);}
+  else if(action==="save"){await saveGame(slot,currentGame);scheduleAutoSave();await refreshSlots();setFeedback(`Game successfully saved to slot ${slot}.`);}
+  else if(action==="load"){currentGame=await loadGame(slot);scheduleAutoSave();setFeedback(`Loaded slot ${slot} at turn ${currentGame.calendar.turn}.`);}
   else if(action==="delete"){await deleteSave(slot);await refreshSlots();setFeedback(`Save slot ${slot} deleted.`);}
   else if(action==="export"){downloadExport();setFeedback("JSON backup exported.");}
   storageError="";
@@ -54,14 +76,14 @@ async function handleGameAction(action,slot){
 }
 function setupGameControls(){
  const form=document.querySelector("#newGameForm");
- form?.addEventListener("submit",event=>{event.preventDefault();const data=new FormData(form);try{currentGame=createGameState({seed:String(data.get("seed")),startDate:String(data.get("startDate"))});setFeedback("New simulation created. Advance turns and save your progress locally.");render();}catch(error){setFeedback(error.message);render();}});
+ form?.addEventListener("submit",event=>{event.preventDefault();const data=new FormData(form);try{currentGame=createGameState({seed:String(data.get("seed")),startDate:String(data.get("startDate"))});scheduleAutoSave();setFeedback("New simulation created. Automatic local recovery is enabled; manual save slots remain available.");render();}catch(error){setFeedback(error.message);render();}});
  document.querySelectorAll("[data-game-action]").forEach(button=>button.addEventListener("click",()=>handleGameAction(button.dataset.gameAction,Number(button.dataset.slot))));
- document.querySelector("#saveImport")?.addEventListener("change",async event=>{const file=event.target.files?.[0];if(!file)return;try{currentGame=parseImport(await file.text());setFeedback("Backup validated and restored into the active session. Save it to a local slot to persist it.");storageError="";}catch(error){setFeedback(error.message);}render();});
+ document.querySelector("#saveImport")?.addEventListener("change",async event=>{const file=event.target.files?.[0];if(!file)return;try{currentGame=parseImport(await file.text());scheduleAutoSave();setFeedback("Backup validated and restored. It will be kept in the automatic recovery save; manual save slots remain available.");storageError="";}catch(error){setFeedback(error.message);}render();});
 }
 
 function applyLifeAction(action,successMessage){
  const result=resolveAction(currentGame,action);if(!result.ok)throw new Error(result.reason);
- currentGame=result.state;setFeedback(successMessage);render();
+ currentGame=result.state;scheduleAutoSave();setFeedback(successMessage);render();
 }
 function setupPersonalControls(){
  const characterForm=document.querySelector("#characterForm");
@@ -82,7 +104,7 @@ function setupPersonalControls(){
 root.addEventListener("click",event=>{if(event.target.closest("a[data-route]"))closeSearch();else if(!event.target.closest("#searchWrap"))closeSearch();});
 window.addEventListener("hashchange",render);
 window.addEventListener("keydown",event=>{if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==="k"){event.preventDefault();document.querySelector("#globalSearch")?.focus();}});
-render();refreshSlots().then(render);
+render();refreshSlots().then(render);restoreAutoSave();
 
 function parseCredits(value){
  const text=String(value??"").trim();
@@ -99,7 +121,7 @@ function setupFinanceControls(){
    let action={type};
    if(type==="SET_BUDGET"){const amount=String(data.get("amount")??"").trim();if(!/^\d+(?:\.\d{1,2})?$/.test(amount))throw new Error("Enter a valid monthly budget with up to two decimal places.");const [whole,decimal=""]=amount.split(".");action.category=String(data.get("category"));action.monthlyLimitMinor=Number(whole)*100+Number((decimal+"00").slice(0,2));if(!Number.isSafeInteger(action.monthlyLimitMinor))throw new Error("Budget is outside the supported range.");}
    else{action.amountMinor=parseCredits(data.get("amount"));if(type==="TRANSFER_FUNDS"){action.from=String(data.get("from"));action.to=String(data.get("to"));}if(type==="RECORD_UNREALIZED_CHANGE")action.direction=String(data.get("direction"));if(data.get("description"))action.description=String(data.get("description"));}
-   const result=resolveAction(currentGame,action);if(!result.ok)throw new Error(result.reason);currentGame=result.state;setFeedback(type==="SET_BUDGET"?"Monthly budget updated.": "Finance journal entry posted.");render();
+   const result=resolveAction(currentGame,action);if(!result.ok)throw new Error(result.reason);currentGame=result.state;scheduleAutoSave();setFeedback(type==="SET_BUDGET"?"Monthly budget updated.": "Finance journal entry posted.");render();
   }catch(error){setFeedback(error.message);const target=document.querySelector("#financeFeedback");if(target)target.textContent=error.message;}
  }));
 }
@@ -113,7 +135,7 @@ function setupCareerControls(){
   if(type==="ENROLL_COURSE")action.courseId=button.dataset.courseId;
   try{
    const result=resolveAction(currentGame,action);if(!result.ok)throw new Error(result.reason);
-   currentGame=result.state;setFeedback(result.event?.summary??"Career decision recorded.");render();
+   currentGame=result.state;scheduleAutoSave();setFeedback(result.event?.summary??"Career decision recorded.");render();
    const feedback=document.querySelector("#careerFeedback");if(feedback)feedback.textContent=feedbackMessage;
   }catch(error){setFeedback(error.message);const feedback=document.querySelector("#careerFeedback");if(feedback)feedback.textContent=error.message;}
  }));
@@ -133,7 +155,7 @@ function setupBankingControls(){
    if(type==="APPLY_FOR_CREDIT_CARD"){action.bankId=String(data.get("bankId"));action.limitMinor=parseCredits(data.get("limit"));}
    if(type==="USE_CREDIT_CARD"||type==="PAY_CREDIT_CARD")action.cardId=String(data.get("cardId"));
    const result=resolveAction(currentGame,action);if(!result.ok)throw new Error(result.reason);
-   currentGame=result.state;setFeedback("Banking decision recorded and posted to the household ledger.");render();
+   currentGame=result.state;scheduleAutoSave();setFeedback("Banking decision recorded and posted to the household ledger.");render();
   }catch(error){setFeedback(error.message);const target=document.querySelector("#bankingFeedback");if(target)target.textContent=error.message;}
  }));
 }
@@ -153,11 +175,11 @@ function setupMarketControls(){
    if(!["MARKET_BUY","MARKET_SELL"].includes(type))throw new Error("Choose Buy or Sell to submit an order.");
    const result=resolveAction(currentGame,{type,securityId:String(data.get("securityId")),quantityUnits:parseMarketQuantity(data.get("quantity"))});
    if(!result.ok)throw new Error(result.reason);
-   currentGame=result.state;setFeedback(type==="MARKET_BUY"?"Market purchase completed. Check your holdings and journal.":"Market sale completed. Proceeds and realized return were posted to Finance.");render();
+   currentGame=result.state;scheduleAutoSave();setFeedback(type==="MARKET_BUY"?"Market purchase completed. Check your holdings and journal.":"Market sale completed. Proceeds and realized return were posted to Finance.");render();
   }catch(error){setFeedback(error.message);const target=document.querySelector("#marketFeedback");if(target)target.textContent=error.message;}
  }));
  document.querySelectorAll("[data-market-watch]").forEach(button=>button.addEventListener("click",()=>{
-  if(!currentGame)return;const result=resolveAction(currentGame,{type:"MARKET_WATCHLIST",securityId:button.dataset.marketWatch});if(result.ok){currentGame=result.state;render();}
+  if(!currentGame)return;const result=resolveAction(currentGame,{type:"MARKET_WATCHLIST",securityId:button.dataset.marketWatch});if(result.ok){currentGame=result.state;scheduleAutoSave();render();}
  }));
  document.querySelectorAll("[data-market-select]").forEach(button=>button.addEventListener("click",()=>{
   const select=document.querySelector('[data-market-form] [name="securityId"]');if(select){select.value=button.dataset.marketSelect;select.scrollIntoView({behavior:"smooth",block:"center"});select.focus();}
@@ -186,6 +208,7 @@ function setupAssetControls() {
    const result = resolveAction(currentGame, action);
    if (!result.ok) throw new Error(result.reason);
    currentGame = result.state;
+   scheduleAutoSave();
    setFeedback(type === "ASSET_SET_PROPERTY_USE" ? "Property use updated." : "Asset acquisition recorded in the Finance ledger.");
    render();
   } catch (error) {
@@ -205,6 +228,7 @@ function setupAssetControls() {
    const result = resolveAction(currentGame, action);
    if (!result.ok) throw new Error(result.reason);
    currentGame = result.state;
+   scheduleAutoSave();
    setFeedback(type.includes("SELL") ? "Asset sale recorded. Review the sale proceeds and ledger entries." : "Maintenance was completed and the updated valuation was posted.");
    render();
   } catch (error) {
@@ -223,6 +247,7 @@ function setupBusinessControls() {
    const result = resolveAction(currentGame, { type: "BUSINESS_ACCEPT_MANDATE", companyId: button.dataset.businessAccept });
    if (!result.ok) throw new Error(result.reason);
    currentGame = result.state;
+   scheduleAutoSave();
    setFeedback(result.event?.summary ?? "Business operating mandate accepted.");
    render();
   } catch (error) {
@@ -253,6 +278,7 @@ function setupBusinessControls() {
    const result = resolveAction(currentGame, action);
    if (!result.ok) throw new Error(result.reason);
    currentGame = result.state;
+   scheduleAutoSave();
    setFeedback(result.event?.summary ?? "Business decision recorded.");
    render();
   } catch (error) {
@@ -268,6 +294,7 @@ function setupBusinessControls() {
    const result = resolveAction(currentGame, { type: button.dataset.businessAction });
    if (!result.ok) throw new Error(result.reason);
    currentGame = result.state;
+   scheduleAutoSave();
    setFeedback(result.event?.summary ?? "Business mandate updated.");
    render();
   } catch (error) {
@@ -311,7 +338,7 @@ function setupBusinessControls() {
    }
    const result = resolveAction(currentGame, action);
    if (!result.ok) throw new Error(result.reason);
-   currentGame = result.state; setFeedback(result.event?.summary ?? "Ownership decision recorded."); render();
+   currentGame = result.state; scheduleAutoSave(); setFeedback(result.event?.summary ?? "Ownership decision recorded."); render();
   } catch (error) {
    setFeedback(error.message);
    const target = document.querySelector("#ownershipFeedback");
@@ -331,7 +358,7 @@ function setupBusinessControls() {
   try {
    const result = resolveAction(currentGame, action);
    if (!result.ok) throw new Error(result.reason);
-   currentGame = result.state; setFeedback(result.event?.summary ?? "Ownership action completed."); render();
+   currentGame = result.state; scheduleAutoSave(); setFeedback(result.event?.summary ?? "Ownership action completed."); render();
   } catch (error) {
    setFeedback(error.message);
    const target = document.querySelector("#ownershipFeedback");
