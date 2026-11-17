@@ -4,7 +4,7 @@ export const GROUPS = [
     { id: "personal", label: "Personal", icon: "user", title: "Personal Dossier", description: "Your career, education, circumstances, capabilities and personal goals." },
     { id: "finance", label: "Finance", icon: "wallet", title: "Finance", description: "Accounts, obligations, banking, credit, cash flow and the foundations of your balance sheet." },
     { id: "markets", label: "Markets", icon: "chart", title: "Markets", description: "Equities, bonds, commodities, digital assets, orders and portfolio performance." },
-    { id: "businesses", label: "Businesses", icon: "building", title: "Businesses", description: "Companies, operations and the ownership decisions behind them." },
+    { id: "businesses", label: "Businesses", icon: "building", title: "Businesses", description: "Company operating mandates, products, pricing, suppliers, staff, sales and branch performance." },
     { id: "assets", label: "Assets", icon: "gem", title: "Assets", description: "Property ownership, rental operations, mortgages, collectibles and asset valuations." }
   ] },
   { label: "Intelligence", pages: [
