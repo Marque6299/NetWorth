@@ -188,4 +188,4 @@ The first functional milestone is implemented on branch `phase-10-ownership`:
 - NPC shareholders do not submit autonomous votes; the current governance milestone records the player's share-weighted vote and applies the configured quorum/majority rule.
 - Generic non-dividend resolutions are recorded and voted on but do not yet trigger their corresponding corporate action.
 - Weekly operating profit is a deterministic abstraction based on paid-in capital and character operating/management skills; it is not yet connected to the detailed Phase 9 branch ledger.
-- The first milestone's automated test suite and browser acceptance checks must pass before this phase can be accepted.
+- The first milestone now passes the GitHub Actions automated suite (132 tests) and JavaScript syntax checks. Cloudflare Pages preview deployment also reports success. Browser acceptance remains pending before this phase can be accepted.
