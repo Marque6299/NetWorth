@@ -69,7 +69,7 @@ function calculateOfferChance(job,character,career){
  return Math.round(clamp(20+skillFit*45+experienceFit*12+educationFit*15+character.reputation*0.08,5,95));
 }
 
-export function applyCareerAction(career,character,finance,action,{turn,roll=0}={}){
+export function applyCareerAction(career,character,finance,action,{turn,roll=0,date,sequence}={}){
  const next=clone(career);let event;
  if(action.type==="APPLY_FOR_JOB"){
   const job=jobById(action.jobId),chance=calculateOfferChance(job,character,next),offered=roll<chance;
@@ -90,7 +90,7 @@ export function applyCareerAction(career,character,finance,action,{turn,roll=0}=
   event={type:"JOB_RESIGNED",summary:`You resigned from ${previous.employer}.`,details:{jobId:previous.jobId}};
  }else if(action.type==="ENROLL_COURSE"){
   const course=courseById(action.courseId);
-  const updatedFinance=applyFinanceAction(finance,{type:"RECORD_EXPENSE",amountMinor:course.tuitionMinor,description:`Tuition — ${course.title}`,category:"education"},{date:action.date,turn,sequence:action.sequence});
+  const updatedFinance=applyFinanceAction(finance,{type:"RECORD_EXPENSE",amountMinor:course.tuitionMinor,description:`Tuition — ${course.title}`,category:"education"},{date,turn,sequence});
   next.activeCourse={courseId:course.id,title:course.title,provider:course.provider,progressWeeks:0,enrolledAtTurn:turn,tuitionMinor:course.tuitionMinor};
   return {career:next,finance:updatedFinance,event:{type:"COURSE_ENROLLED",summary:`You enrolled in ${course.title}.`,details:{courseId:course.id,tuitionMinor:course.tuitionMinor}}};
  }
