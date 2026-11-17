@@ -172,13 +172,13 @@ Operating companies and financial assumptions are fictional. Phase 10 adds a sep
 - Found fictional companies using household cash in exchange for founder shares.
 - Separate household private-equity assets and shareholder-loan receivables from cash, income and expenses.
 - Maintain authorized, issued and outstanding shares plus a shareholder register and ownership percentages.
-- Support additional capital contributions, new share issues to fictional investors, dilution and company share buybacks.
+- Support additional capital contributions, new share issues to fictional investors, dilution, company share buybacks and negotiated transfers between existing shareholders.
 - Model deterministic weekly operating profit and indicative equity valuation; estimated value is not cash or guaranteed sale proceeds.
 - Advance shareholder loans and receive company repayments.
 - Propose dividends, record weighted shareholder votes and settle approved distributions pro rata from retained earnings after debt and reserve checks.
 - Acquire minority or controlling stakes in selected fictional companies using household cash.
-- Record executive appointments and shareholder resolutions.
-- Schema v8 → v9 initializes ownership; schema v9 → v10 adds reconciled company double-entry ledgers.
+- Record executive appointments, executable capital-expansion and executive-appointment resolutions, shareholder voting preferences, board elections and fixed director terms.
+- Schema v8 → v9 initializes ownership; schema v9 → v10 adds reconciled company double-entry ledgers, migration-safe election state and governance history.
 - Ownership data, Finance entries and governance records persist through IndexedDB saves and JSON backup/import.
 
 **Current boundaries:** secondary share transfers between arbitrary holders, minority-stake acquisitions, investor voting automation, board-seat elections and full resolution execution remain future Phase 10 work. Existing Phase 9 branch mandates remain separate.
