@@ -230,6 +230,14 @@ export function validateOwnershipAction(state, finance, character, action) {
     }
     return { valid: true };
   }
+  if (action.type === "OWNERSHIP_TRANSFER_SHARES") {
+    const seller = shareholderById(company, action.sellerId), buyer = shareholderById(company, action.buyerId);
+    if (!seller || !buyer || seller.id === buyer.id || !Number.isInteger(action.shares) || action.shares < 1 || action.shares > seller.shares || !safePositive(action.pricePerShareMinor)) return { valid: false, reason: "Choose two different existing shareholders, a valid share quantity and a positive negotiated price." };
+    const proceeds = action.shares * action.pricePerShareMinor;
+    const buyerCash = buyer.id === "player" ? cash : (Number.isSafeInteger(buyer.cashMinor) ? buyer.cashMinor : (investorById(buyer.id)?.capacityMinor ?? 0));
+    if (!safePositive(proceeds) || proceeds > buyerCash) return { valid: false, reason: "The buyer does not have enough available funds for this negotiated transfer." };
+    return { valid: true };
+  }
   if (action.type === "OWNERSHIP_ISSUE_SHARES") {
     const investor = investorById(action.investorId);
     if (!playerControls(company) || !investor || !Number.isInteger(action.shares) || action.shares < 1 || action.shares > 1000000) return { valid: false, reason: "A controlling shareholder must select a valid investor and share quantity." };
@@ -432,6 +440,26 @@ export function applyOwnershipAction(state, finance, character, action, { date, 
     company.board = company.board.filter(item => !(item.holderId === action.candidateId && item.seat === "Director"));
     transaction(next, company, turn, date, "DIRECTOR_REMOVED", "Removed a director from the board", 0, { holderId: action.candidateId });
     return { ownership: next, finance, event: { type: "DIRECTOR_REMOVED", summary: "Board director removed.", details: { companyId: company.id, holderId: action.candidateId } } };
+  }
+  if (action.type === "OWNERSHIP_TRANSFER_SHARES") {
+    const seller = shareholderById(company, action.sellerId), buyer = shareholderById(company, action.buyerId);
+    const shares = action.shares, proceeds = shares * action.pricePerShareMinor;
+    const basis = Math.floor(seller.costBasisMinor * shares / seller.shares), gain = proceeds - basis;
+    seller.shares -= shares; seller.costBasisMinor -= basis;
+    if (seller.id !== "player") seller.cashMinor = (seller.cashMinor ?? investorById(seller.id)?.capacityMinor ?? 0) + proceeds;
+    if (buyer) { buyer.shares += shares; buyer.costBasisMinor += proceeds; if (buyer.id !== "player") buyer.cashMinor = (buyer.cashMinor ?? investorById(buyer.id)?.capacityMinor ?? 0) - proceeds; }
+    else company.shareholders.push({ id: "player", name: "You", type: "Shareholder", shares, costBasisMinor: proceeds, isPlayer: true });
+    if (seller.shares === 0) company.shareholders = company.shareholders.filter(item => item.id !== seller.id);
+    if (action.sellerId === "player") {
+      const lines = [{ accountId: "cash", debitMinor: proceeds, creditMinor: 0 }, { accountId: "privateEquity", debitMinor: 0, creditMinor: basis }];
+      if (gain > 0) lines.push({ accountId: "income", debitMinor: 0, creditMinor: gain });
+      if (gain < 0) lines.push({ accountId: "expense", debitMinor: -gain, creditMinor: 0 });
+      postHousehold(finance, { id: postId("negotiated-sale"), date, turn, kind: "NEGOTIATED_EQUITY_SALE", description: "Negotiated share transfer in " + company.name, amountMinor: proceeds, relatedId: company.id, lines });
+    } else if (action.buyerId === "player") {
+      postHousehold(finance, { id: postId("negotiated-purchase"), date, turn, kind: "NEGOTIATED_EQUITY_PURCHASE", description: "Purchased shares in " + company.name, amountMinor: proceeds, relatedId: company.id, lines: [{ accountId: "privateEquity", debitMinor: proceeds, creditMinor: 0 }, { accountId: "cash", debitMinor: 0, creditMinor: proceeds }] });
+    }
+    transaction(next, company, turn, date, "NEGOTIATED_SHARE_TRANSFER", "Transferred shares between " + action.sellerId + " and " + action.buyerId, proceeds, { sellerId: action.sellerId, buyerId: action.buyerId, shares, pricePerShareMinor: action.pricePerShareMinor, realizedGainMinor: action.sellerId === "player" ? gain : null });
+    return { ownership: next, finance, event: { type: "NEGOTIATED_SHARE_TRANSFER", summary: "Negotiated transfer of " + shares.toLocaleString("en-US") + " shares settled for " + money(proceeds) + " Credits.", details: { companyId: company.id, sellerId: action.sellerId, buyerId: action.buyerId, shares, proceedsMinor: proceeds, realizedGainMinor: action.sellerId === "player" ? gain : null } } };
   }
   throw new Error("Unsupported ownership action.");
 }
