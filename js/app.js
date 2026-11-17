@@ -298,6 +298,8 @@ function setupBusinessControls() {
     action.buyerId = String(data.get("buyerId")); action.shares = Number(data.get("shares")); action.pricePerShareMinor = parseCredits(data.get("price"));
    } else if (type === "OWNERSHIP_TRANSFER_SHARES") {
      action.sellerId = String(data.get("sellerId")); action.buyerId = String(data.get("buyerId")); action.shares = Number(data.get("shares")); action.pricePerShareMinor = parseCredits(data.get("price"));
+    } else if (type === "OWNERSHIP_OPEN_BOARD_ELECTION") {
+     action.termTurns = Number(data.get("termTurns"));
     } else if (type === "OWNERSHIP_CREATE_RESOLUTION") {
     action.title = String(data.get("title")); action.resolutionType = String(data.get("resolutionType"));
    } else if (type === "OWNERSHIP_APPOINT_EXECUTIVE") {
