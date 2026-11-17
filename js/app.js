@@ -86,7 +86,7 @@ render();refreshSlots().then(render);
 
 function parseCredits(value){
  const text=String(value??"").trim();
- if(!/^\\d+(?:\\.\\d{1,2})?$/.test(text))throw new Error("Enter a valid positive amount with up to two decimal places.");
+ if(!/^\d+(?:\.\d{1,2})?$/.test(text))throw new Error("Enter a valid positive amount with up to two decimal places.");
  const [whole,decimal=""]=text.split("."),minor=Number(whole)*100+Number((decimal+"00").slice(0,2));
  if(!Number.isSafeInteger(minor)||minor<=0)throw new Error("Amount must be greater than zero and within the supported range.");
  return minor;
@@ -97,7 +97,7 @@ function setupFinanceControls(){
   const data=new FormData(form),type=form.dataset.financeForm;
   try{
    let action={type};
-   if(type==="SET_BUDGET"){const amount=String(data.get("amount")??"").trim();if(!/^\\d+(?:\\.\\d{1,2})?$/.test(amount))throw new Error("Enter a valid monthly budget with up to two decimal places.");const [whole,decimal=""]=amount.split(".");action.category=String(data.get("category"));action.monthlyLimitMinor=Number(whole)*100+Number((decimal+"00").slice(0,2));if(!Number.isSafeInteger(action.monthlyLimitMinor))throw new Error("Budget is outside the supported range.");}
+   if(type==="SET_BUDGET"){const amount=String(data.get("amount")??"").trim();if(!/^\d+(?:\.\d{1,2})?$/.test(amount))throw new Error("Enter a valid monthly budget with up to two decimal places.");const [whole,decimal=""]=amount.split(".");action.category=String(data.get("category"));action.monthlyLimitMinor=Number(whole)*100+Number((decimal+"00").slice(0,2));if(!Number.isSafeInteger(action.monthlyLimitMinor))throw new Error("Budget is outside the supported range.");}
    else{action.amountMinor=parseCredits(data.get("amount"));if(type==="TRANSFER_FUNDS"){action.from=String(data.get("from"));action.to=String(data.get("to"));}if(type==="RECORD_UNREALIZED_CHANGE")action.direction=String(data.get("direction"));if(data.get("description"))action.description=String(data.get("description"));}
    const result=resolveAction(currentGame,action);if(!result.ok)throw new Error(result.reason);currentGame=result.state;setFeedback(type==="SET_BUDGET"?"Monthly budget updated.": "Finance journal entry posted.");render();
   }catch(error){setFeedback(error.message);const target=document.querySelector("#financeFeedback");if(target)target.textContent=error.message;}
@@ -140,7 +140,7 @@ function setupBankingControls(){
 
 function parseMarketQuantity(value){
  const text=String(value??"").trim();
- if(!/^\\d+(?:\\.\\d{1,4})?$/.test(text))throw new Error("Enter a positive quantity with up to four decimal places.");
+ if(!/^\d+(?:\.\d{1,4})?$/.test(text))throw new Error("Enter a positive quantity with up to four decimal places.");
  const [whole,decimal=""]=text.split("."),units=Number(whole)*10000+Number((decimal+"0000").slice(0,4));
  if(!Number.isSafeInteger(units)||units<=0)throw new Error("Quantity must be greater than zero and within the supported range.");
  return units;
