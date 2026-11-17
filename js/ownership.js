@@ -314,7 +314,7 @@ export function validateOwnership(state, finance) {
       if (!holder || typeof holder.id !== "string" || shareholderIds.has(holder.id) || !Number.isSafeInteger(holder.shares) || holder.shares < 0 || !safeNonNegative(holder.costBasisMinor)) errors.push("A shareholder holding is invalid.");
       else { shareholderIds.add(holder.id); shares += holder.shares; }
     }
-    if (shares !== company.outstandingShares || !company.shareholders.some(item => item.id === "player" && item.shares > 0) && !company.acquired) errors.push("The shareholder register does not reconcile to outstanding shares.");
+    if (shares !== company.outstandingShares) errors.push("The shareholder register does not reconcile to outstanding shares.");
     for (const key of ["cashMinor", "paidInCapitalMinor", "loanBalanceMinor", "retainedEarningsMinor", "cumulativeProfitMinor", "cumulativeDividendsMinor", "estimatedValueMinor", "sharePriceMinor"]) if (!safeNonNegative(company[key])) errors.push("A company financial balance is invalid.");
     if (company.cashMinor !== company.paidInCapitalMinor + company.loanBalanceMinor + company.retainedEarningsMinor) errors.push("Company cash does not reconcile to paid-in capital, shareholder loans and retained earnings.");
     if (company.retainedEarningsMinor !== company.cumulativeProfitMinor - company.cumulativeDividendsMinor) errors.push("Company retained earnings do not reconcile to profit and distributions.");
