@@ -121,7 +121,7 @@ export function parseImport(text){
  let payload;
  try{payload=JSON.parse(text);}
  catch{throw new Error("The selected file is not valid JSON.");}
- if(!payload||payload.format!=="networth-save"||![1,2,3,4,5,6,7,8,9,10,SAVE_SCHEMA_VERSION].includes(payload.schemaVersion)||!payload.state||payload.state.schemaVersion!==payload.schemaVersion)throw new Error("This file is not a supported Networth save.");
+ if(!payload||payload.format!=="networth-save"||![1,2,3,4,5,6,7,8,9,10,11,SAVE_SCHEMA_VERSION].includes(payload.schemaVersion)||!payload.state||payload.state.schemaVersion!==payload.schemaVersion)throw new Error("This file is not a supported Networth save.");
  if(checksum(payload.state)!==payload.checksum)throw new Error("The save file failed its integrity check.");
  let state;
  try{state=migrateGameState(payload.state);}
