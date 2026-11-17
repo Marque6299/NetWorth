@@ -4,6 +4,7 @@ import { createGameState, resolveAction, validateGameState, migrateGameState } f
 import { getFinanceSummary, validateFinance } from "../js/finance.js";
 import { getOwnershipPortfolio, validateOwnership } from "../js/ownership.js";
 import { createExport, parseImport } from "../js/persistence.js";
+import { renderBusinessesView } from "../js/views.js";
 
 const makeGame = (profileId = "early-career", seed = "phase-ten") => {
   const result = resolveAction(createGameState({ seed }), { type: "CREATE_CHARACTER", name: "Alex Morgan", age: 29, profileId });
@@ -148,4 +149,9 @@ test("schema v8 saves migrate to schema v9 with an empty ownership subsystem", (
   assert.equal(migrated.schemaVersion, 9);
   assert.deepEqual(migrated.ownership.companies, []);
   assert.equal(validateGameState(migrated).valid, true);
+});
+
+test("Businesses workspace exposes company formation, ownership portfolio and acquisition controls", () => {
+  const html = renderBusinessesView(makeGame());
+  for (const label of ["OWNERSHIP PORTFOLIO / PHASE 10", "Found your own company", "Acquire an established company", "data-ownership-form", "data-ownership-action"]) assert.ok(html.includes(label), label);
 });
