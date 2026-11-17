@@ -82,7 +82,7 @@ function progressLife(state){
  skills.negotiation=clamp(skills.negotiation+allocation.networking*0.1,0,100);
  skills.operations=clamp(skills.operations+allocation.sideWork*0.2,0,100);
  skills.sales=clamp(skills.sales+allocation.sideWork*0.1,0,100);
- for(const goal of state.life.goals){if(goal.status==="completed")continue;let current=0;if(goal.metric.startsWith("skill:"))current=skills[goal.metric.split(":")[1]];else if(goal.metric.startsWith("wellbeing:"))current=stats[goal.metric.split(":")[1]];else current=state.calendar.turn;if(current>=goal.target){goal.status="completed";goal.completedAtTurn=state.calendar.turn;state.eventLog.push({id:`goal-${goal.id}-completed`,turn:state.calendar.turn,date:state.calendar.currentDate,type:"GOAL_COMPLETED",summary:`Goal completed: ${goal.title}`,details:{goalId:goal.id,metric:goal.metric,target:goal.target}});}}
+ for(const goal of state.life.goals){if(goal.status==="completed")continue;let current=0;if(goal.metric.startsWith("skill:"))current=skills[goal.metric.split(":")[1]];else if(goal.metric.startsWith("wellbeing:"))current=stats[goal.metric.split(":")[1]];else current=state.calendar.turn;if(goal.metric==="wellbeing:stress"?current<=goal.target:current>=goal.target){goal.status="completed";goal.completedAtTurn=state.calendar.turn;state.eventLog.push({id:`goal-${goal.id}-completed`,turn:state.calendar.turn,date:state.calendar.currentDate,type:"GOAL_COMPLETED",summary:`Goal completed: ${goal.title}`,details:{goalId:goal.id,metric:goal.metric,target:goal.target}});}}
 }
 export function resolveAction(state,action){
  const validation=validateAction(state,action);if(!validation.valid)return {ok:false,reason:validation.reason,state};
