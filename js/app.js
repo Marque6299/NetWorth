@@ -1,6 +1,6 @@
 import { GROUPS, PAGES, getPage, getPageIdFromHash } from "./navigation.js";
 import { esc, icon, navLink } from "./components.js";
-import { renderOverview, renderSection, renderPersonalView, renderStartingProfilePreview } from "./views.js";
+import { renderOverview, renderSection, renderPersonalView, renderStartingProfilePreview, renderFinanceView } from "./views.js";
 import { TIME_KEYS } from "./simulation-core.js";
 import { createGameState, resolveAction } from "./simulation-core.js";
 import { createExport, deleteSave, listSaveSlots, loadGame, parseImport, saveGame } from "./persistence.js";
@@ -9,7 +9,7 @@ import { renderGamePanel } from "./game-ui.js";
 const root=document.querySelector("#app");
 let currentGame=null,saveSlots=[],storageError="",feedbackMessage="",busy=false;
 function sidebar(active){
- return '<aside class="sidebar"><a class="brand" href="#/overview" data-route="overview"><span class="brand-mark">N</span><span><b>NETWORTH</b><small>CAPITAL & CONSEQUENCE</small></span></a><div class="side-rule"></div><div class="nav-groups">'+GROUPS.map(group=>'<section class="nav-group"><label>'+esc(group.label)+'</label><nav>'+group.pages.map(page=>navLink(page,active)).join("")+'</nav></section>').join("")+'</div><div class="side-bottom"><b>EARLY ACCESS SHELL</b><small>BUILD 0.3.0 / PHASE 03</small><p>A world of decisions.<br>A future of your making.</p></div></aside>';
+ return '<aside class="sidebar"><a class="brand" href="#/overview" data-route="overview"><span class="brand-mark">N</span><span><b>NETWORTH</b><small>CAPITAL & CONSEQUENCE</small></span></a><div class="side-rule"></div><div class="nav-groups">'+GROUPS.map(group=>'<section class="nav-group"><label>'+esc(group.label)+'</label><nav>'+group.pages.map(page=>navLink(page,active)).join("")+'</nav></section>').join("")+'</div><div class="side-bottom"><b>EARLY ACCESS SHELL</b><small>BUILD 0.4.0 / PHASE 04</small><p>A world of decisions.<br>A future of your making.</p></div></aside>';
 }
 function topbar(page){
  const saveLabel=currentGame?`TURN ${currentGame.calendar.turn} · ${currentGame.calendar.currentDate}`:"NO SAVE LOADED";
@@ -23,8 +23,8 @@ function render(){
  let id=getPageIdFromHash(location.hash);
  if(!location.hash||!PAGES.some(page=>"#/"+page.id===location.hash)){history.replaceState(null,"","#/overview");id="overview";}
  const page=getPage(id);
- root.innerHTML=sidebar(id)+'<div class="main-column">'+topbar(page)+'<main class="main"><a class="skip" href="#content">Skip to content</a><div id="content">'+heading(page)+'<div class="content">'+(id==="overview"?renderOverview(currentGame)+renderGamePanel(currentGame,saveSlots,storageError,feedbackMessage):id==="personal"?renderPersonalView(currentGame):renderSection(id))+'</div></div><footer class="page-footer"><span>NETWORTH · CAPITAL & CONSEQUENCE</span><span>PHASE 03 / CHARACTER & LIFE · LOCAL GAME STATE</span></footer></main></div>';
- document.title=page.label+" — Networth";setupSearch();setupGameControls();setupPersonalControls();root.classList.add("ready");
+ root.innerHTML=sidebar(id)+'<div class="main-column">'+topbar(page)+'<main class="main"><a class="skip" href="#content">Skip to content</a><div id="content">'+heading(page)+'<div class="content">'+(id==="overview"?renderOverview(currentGame)+renderGamePanel(currentGame,saveSlots,storageError,feedbackMessage):id==="personal"?renderPersonalView(currentGame):id==="finance"?renderFinanceView(currentGame):renderSection(id))+'</div></div><footer class="page-footer"><span>NETWORTH · CAPITAL & CONSEQUENCE</span><span>PHASE 03 / CHARACTER & LIFE · LOCAL GAME STATE</span></footer></main></div>';
+ document.title=page.label+" — Networth";setupSearch();setupGameControls();setupPersonalControls();setupFinanceControls();root.classList.add("ready");
 }
 function closeSearch(){const input=document.querySelector("#globalSearch"),results=document.querySelector("#searchResults");if(results)results.hidden=true;if(input)input.setAttribute("aria-expanded","false");}
 function setupSearch(){
@@ -83,3 +83,23 @@ root.addEventListener("click",event=>{if(event.target.closest("a[data-route]"))c
 window.addEventListener("hashchange",render);
 window.addEventListener("keydown",event=>{if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==="k"){event.preventDefault();document.querySelector("#globalSearch")?.focus();}});
 render();refreshSlots().then(render);
+
+function parseCredits(value){
+ const text=String(value??"").trim();
+ if(!/^\\d+(?:\\.\\d{1,2})?$/.test(text))throw new Error("Enter a valid positive amount with up to two decimal places.");
+ const [whole,decimal=""]=text.split("."),minor=Number(whole)*100+Number((decimal+"00").slice(0,2));
+ if(!Number.isSafeInteger(minor)||minor<=0)throw new Error("Amount must be greater than zero and within the supported range.");
+ return minor;
+}
+function setupFinanceControls(){
+ document.querySelectorAll("[data-finance-form]").forEach(form=>form.addEventListener("submit",event=>{
+  event.preventDefault();if(!currentGame){setFeedback("Start a simulation first.");render();return;}
+  const data=new FormData(form),type=form.dataset.financeForm;
+  try{
+   let action={type};
+   if(type==="SET_BUDGET"){const amount=String(data.get("amount")??"").trim();if(!/^\\d+(?:\\.\\d{1,2})?$/.test(amount))throw new Error("Enter a valid monthly budget with up to two decimal places.");const [whole,decimal=""]=amount.split(".");action.category=String(data.get("category"));action.monthlyLimitMinor=Number(whole)*100+Number((decimal+"00").slice(0,2));if(!Number.isSafeInteger(action.monthlyLimitMinor))throw new Error("Budget is outside the supported range.");}
+   else{action.amountMinor=parseCredits(data.get("amount"));if(type==="TRANSFER_FUNDS"){action.from=String(data.get("from"));action.to=String(data.get("to"));}if(type==="RECORD_UNREALIZED_CHANGE")action.direction=String(data.get("direction"));if(data.get("description"))action.description=String(data.get("description"));}
+   const result=resolveAction(currentGame,action);if(!result.ok)throw new Error(result.reason);currentGame=result.state;setFeedback(type==="SET_BUDGET"?"Monthly budget updated.": "Finance journal entry posted.");render();
+  }catch(error){setFeedback(error.message);const target=document.querySelector("#financeFeedback");if(target)target.textContent=error.message;}
+ }));
+}
