@@ -213,6 +213,17 @@ test("approved capital expansion transfers cash into a capital asset with balanc
   assert.equal(validateGameState(state).valid, true);
 });
 
+test("elected director seats expire at the end of their fixed term", () => {
+  let state = found(makeGame()), companyId = state.ownership.companies[0].id;
+  state = act(state, { type: "OWNERSHIP_OPEN_BOARD_ELECTION", companyId, termTurns: 4 });
+  const electionId = state.ownership.companies[0].elections[0].id;
+  state = act(state, { type: "OWNERSHIP_VOTE_BOARD_ELECTION", companyId, electionId, candidateId: "player" });
+  state = act(state, { type: "OWNERSHIP_CLOSE_BOARD_ELECTION", companyId, electionId });
+  assert.ok(state.ownership.companies[0].board.some(item => item.seat === "Director" && item.holderId === "player"));
+  for (let i = 0; i < 4; i++) state = act(state, { type: "ADVANCE_TURN" });
+  assert.equal(state.ownership.companies[0].board.some(item => item.seat === "Director"), false);
+  assert.equal(validateGameState(state).valid, true);
+});
 test("approved executive appointment resolution changes the company executive register", () => {
   let state = found(makeGame()), companyId = state.ownership.companies[0].id;
   state = act(state, { type: "OWNERSHIP_ISSUE_SHARES", companyId, investorId: "mira-chen", shares: 20000 });
@@ -259,7 +270,7 @@ test("Businesses workspace exposes company formation, ownership portfolio and ac
   companyState = act(companyState, { type: "OWNERSHIP_ISSUE_SHARES", companyId, investorId: "mira-chen", shares: 20000 });
   companyState = act(companyState, { type: "OWNERSHIP_APPOINT_DIRECTOR", companyId, candidateId: "mira-chen", seat: "Director" });
   const owned = renderBusinessesView(companyState);
-  for (const label of ["OWNERSHIP_SELL_SHARES", "OWNERSHIP_APPOINT_DIRECTOR", "OWNERSHIP_REMOVE_DIRECTOR", "OWNERSHIP_PROPOSE_DIVIDEND"]) assert.ok(owned.includes(label), label);
+  for (const label of ["OWNERSHIP_SELL_SHARES", "OWNERSHIP_TRANSFER_SHARES", "OWNERSHIP_OPEN_BOARD_ELECTION", "OWNERSHIP_VOTE_BOARD_ELECTION", "Company journal", "OWNERSHIP_APPOINT_DIRECTOR", "OWNERSHIP_REMOVE_DIRECTOR", "OWNERSHIP_PROPOSE_DIVIDEND"]) assert.ok(owned.includes(label), label);
 });
 
 test("minority acquisition records the actual stake and leaves the seller on the cap table", () => {
