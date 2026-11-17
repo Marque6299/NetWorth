@@ -132,7 +132,7 @@ GitHub Actions runs the same tests and syntax checks on pushes and pull requests
 
 ## Current status
 
-**Phases 1–9 are accepted; Phase 10 remains in progress.** Company ownership, company ledgers, governance actions and portfolio-wide investor cash tracking are implemented. Schema v10 saves migrate to v11 with a conservative global investor cash balance initialization. Final company-economics balancing and browser acceptance remain pending.
+**Phases 1–9 are accepted; Phase 10 remains in progress.** Company ownership, company ledgers, governance, portfolio-wide investor liquidity and a first operation-driven company P&L model are implemented. Schema v10 saves migrate through v11 investor liquidity and v12 company operations. Full Phase 9 operating-system integration and browser acceptance remain pending.
 
  
 ## Phase 8 — Property & collectibles
@@ -174,13 +174,13 @@ Operating companies and financial assumptions are fictional. Phase 10 adds a sep
 - Separate household private-equity assets and shareholder-loan receivables from cash, income and expenses.
 - Maintain authorized, issued and outstanding shares plus a shareholder register and ownership percentages.
 - Support additional capital contributions, new share issues to fictional investors, dilution, company share buybacks and negotiated transfers between existing shareholders.
-- Model deterministic weekly operating profit and indicative equity valuation; estimated value is not cash or guaranteed sale proceeds.
+- Model weekly company revenue and operating result from sector demand, pricing, staff capacity, cost of goods, payroll and overhead; track unpaid operating costs as liabilities. Estimated equity value is not cash or guaranteed sale proceeds.
 - Advance shareholder loans and receive company repayments.
 - Propose dividends, record weighted shareholder votes and settle approved distributions pro rata from retained earnings after debt and reserve checks.
 - Acquire minority or controlling stakes in selected fictional companies using household cash.
 - Record executive appointments, executable capital-expansion and executive-appointment resolutions, shareholder voting preferences, board elections and fixed director terms.
 - A portfolio-wide investor cash ledger prevents the same fictional investor funds being reused across different companies. Primary share issues and secondary purchases debit the global balance; investor share sales and dividends credit it.
-- Schema v8 → v9 initializes ownership; schema v9 → v10 adds reconciled company ledgers; schema v10 → v11 initializes global investor cash balances.
+- Schema v8 → v9 initializes ownership; schema v9 → v10 adds reconciled company ledgers; schema v10 → v11 initializes global investor cash balances; schema v11 → v12 adds company operating profiles and journal accounts.
 - Ownership data, investor balances, Finance entries and governance records persist through IndexedDB saves and JSON backup/import.
 
-**Current boundaries:** company operating profit remains a deterministic capital-and-skill abstraction rather than a fully integrated revenue, cost, staffing and demand model. Phase 9 branch mandates remain separate from Phase 10 ownership pending the broader company operating-economics upgrade.
+**Current boundaries:** the current private-company model is a deterministic sector-level operating simulation, not yet a full integration of Phase 9 product catalogues, inventory, supplier lead times, branch marketing and full working-capital cycles. Owned-company operations remain separate from Phase 9 management mandates. Full integration and browser acceptance are still required before Phase 10 is complete.
