@@ -120,7 +120,7 @@ export function validateAssetAction(assets, finance, banking, career, action) {
     if (!property) return { valid: false, reason: "Choose a property you currently own." };
     const gross = property.marketValueMinor, saleFee = fee(gross, 300);
     const loan = property.mortgageId ? banking.loans.find(item => item.id === property.mortgageId) : null;
-    const debt = loan && loan.status === "active" ? loan.principalMinor + loan.interestAccruedMinor : 0;
+    const debt = loan && ["active", "defaulted"].includes(loan.status) ? loan.principalMinor + loan.interestAccruedMinor : 0;
     if (cash + gross - saleFee < debt) return { valid: false, reason: "The expected sale proceeds and available cash are not enough to settle this mortgage and selling costs." };
     return { valid: true };
   }
@@ -191,7 +191,7 @@ export function applyAssetAction(assets, finance, banking, action, { date, turn,
     else if (unrealized < 0) post(f, { id: entryId + "-reserve", date, turn, kind: "PROPERTY_REALIZED_LOSS", description: "Realized property depreciation — " + property.name, amountMinor: -unrealized, lines: [line("expense", -unrealized), line("unrealizedGain", 0, -unrealized)], relatedId: property.id });
     if (saleFee) post(f, { id: entryId + "-fee", date, turn, kind: "PROPERTY_SALE_FEE", description: "Property selling costs — " + property.name, amountMinor: saleFee, lines: [line("expense", saleFee), line("cash", 0, saleFee)], relatedId: property.id });
     const loan = property.mortgageId ? b.loans.find(item => item.id === property.mortgageId) : null;
-    if (loan && loan.status === "active") {
+    if (loan && ["active", "defaulted"].includes(loan.status)) {
       const debt = loan.principalMinor + loan.interestAccruedMinor;
       if (debt) post(f, { id: entryId + "-mortgage", date, turn, kind: "MORTGAGE_SETTLEMENT", description: "Mortgage settled from sale — " + property.name, amountMinor: debt, lines: [line(loan.ledgerAccountId, debt), line("cash", 0, debt)], relatedId: property.id });
       loan.principalMinor = 0; loan.interestAccruedMinor = 0; loan.remainingPayments = 0; loan.status = "paid";
