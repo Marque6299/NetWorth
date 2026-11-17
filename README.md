@@ -2,16 +2,16 @@
 
 Networth is a turn-based financial life simulation, economic strategy and business management game. Players begin as ordinary individuals with different backgrounds, resources, obligations and opportunities. Through work, education, saving, borrowing, investing, entrepreneurship, acquisitions and relationships, they pursue financial independence and may continue into building a business and investment empire.
 
-This repository currently contains **Phases 1–7**: Core Shell, Simulation Core, Character & Life, Household Finance & Ledger, Employment & Education, Banking & Credit, and Investment Markets. Later phases remain gated by the implementation roadmap.
+This repository currently contains **Phases 1–8**: Core Shell, Simulation Core, Character & Life, Household Finance & Ledger, Employment & Education, Banking & Credit, and Investment Markets. Later phases remain gated by the implementation roadmap.
 
 ## Workspaces
 
 - **Overview** — financial command center and simulation controls.
 - **Personal** — character dossier, career opportunities, job applications, employment contracts, education programs, skills, time allocation, well-being and goals.
-- **Finance** — cash, bank checking/savings, fixed deposits, loans, credit cards, credit score, investment holdings, liabilities, budgets, double-entry journal, cash flow and net worth.
+- **Finance** — cash, bank checking/savings, fixed deposits, loans, mortgages, credit cards, credit score, investment holdings, property, collectibles, liabilities, budgets, double-entry journal, cash flow and net worth.
 - **Markets** — fictional equities, government/corporate bonds, commodity benchmarks, digital assets, research indicators, market orders, watchlists, weekly pricing, dividends/coupons and portfolio performance.
 - **Businesses** — company directory, business operations and ownership placeholders (Phases 9–10).
-- **Assets** — asset portfolio, property and collectibles placeholders (Phase 8).
+- **Assets** — property listings and ownership, rental income, upkeep, taxes, mortgage-linked financing, appraisals, maintenance, collectible acquisitions, liquidity discounts and sales.
 - **Network** — people, company relationships and ownership-network placeholders.
 - **News** — news feed, economic events and cause-and-effect placeholders (Phase 11).
 - **Reports** — financial statements, performance and forecast placeholders.
@@ -122,9 +122,24 @@ GitHub Actions runs the same tests and syntax checks on pushes and pull requests
 - [Phase 4 — Household Finance & Ledger](docs/PHASE_4_HOUSEHOLD_FINANCE.md)
 - [Phase 5 — Employment & Education](docs/PHASE_5_EMPLOYMENT_AND_EDUCATION.md)
 - [Phase 6 — Banking & Credit](docs/PHASE_6_BANKING_AND_CREDIT.md)
-- [Phase 7 — Investment Markets](docs/PHASE_7_INVESTMENT_MARKETS.md)
+- [Phase 7 — Investment Markets](docs/PHASE_7_INVESTMENT_MARKETS.md)\n- [Phase 8 — Property & Collectibles](docs/PHASE_8_PROPERTY_COLLECTIBLES.md)
 - [Implementation Roadmap](docs/IMPLEMENTATION_ROADMAP.md)
 
 ## Current status
 
-**Phases 1–6 are accepted; Phase 7 is implemented and awaiting user acceptance.** Later phases remain gated by the roadmap.
+**Phases 1–7 are accepted; Phase 8 is implemented and awaiting user acceptance.** Later phases remain gated by the roadmap.
+
+ 
+## Phase 8 — Property & collectibles
+ 
+- Five fictional property listings and five collectible catalogue items.
+- Owner-occupied or rental property, with 20% minimum down payment, configurable higher deposits and 1.5% closing costs.
+- Mortgages use the existing Banking liability and repayment system; sale requires mortgage settlement.
+- Rental income, weekly upkeep, quarterly property tax, vacancies and tenant changes.
+- Property valuations, condition wear and maintenance improvements.
+- Collectible appraisals, condition wear, care costs and liquidity-discounted resale.
+- Separate property and collectible ledger assets; deterministic valuation changes post to unrealized equity rather than cash flow.
+- Purchases, upkeep, taxes, fees, rental income and sales post balanced entries to the existing Finance journal.
+- Schema v6 → v7 migration preserves existing game state and initializes the new Assets subsystem.
+ 
+Asset catalogue data, prices and appraisal assumptions are fictional. No real-world property inventory, maps or property feeds are used.
