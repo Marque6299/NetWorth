@@ -8,8 +8,8 @@ This repository currently contains **Phases 1–7**: Core Shell, Simulation Core
 
 - **Overview** — financial command center and simulation controls.
 - **Personal** — character dossier, career opportunities, job applications, employment contracts, education programs, skills, time allocation, well-being and goals.
-- **Finance** — cash, bank checking/savings, fixed deposits, loans, credit cards, credit score, investment holdings, liabilities, budgets, double-entry journal, cash flow and net worth.\n- **Markets** — fictional equities, government/corporate bonds, commodity benchmarks, digital assets, research indicators, market orders, watchlists, weekly pricing, dividends/coupons and portfolio performance.
-- **Markets** — instrument directory, research, orders and holdings placeholders (Phase 7).
+- **Finance** — cash, bank checking/savings, fixed deposits, loans, credit cards, credit score, investment holdings, liabilities, budgets, double-entry journal, cash flow and net worth.
+- **Markets** — fictional equities, government/corporate bonds, commodity benchmarks, digital assets, research indicators, market orders, watchlists, weekly pricing, dividends/coupons and portfolio performance.
 - **Businesses** — company directory, business operations and ownership placeholders (Phases 9–10).
 - **Assets** — asset portfolio, property and collectibles placeholders (Phase 8).
 - **Network** — people, company relationships and ownership-network placeholders.
@@ -63,7 +63,30 @@ The monthly expense context is a budget baseline, not an automatic charge. Banki
 
 Employment salaries and education tuition use the existing Finance ledger. Salary is gross in-game Credits. Payroll taxes, benefits, commissions, student loans, bank products and credit scoring are not included in this phase.
 
-## Phase 6 — Banking & credit\n\n- Five fictional institution categories: National, Local, Microfinance, Investment and Predatory.\n- Checking and savings accounts, fixed deposits, deposit interest, account fees and withdrawals.\n- Personal, mortgage, business and microfinance loans with eligibility rules, amortization, interest accrual and scheduled repayment.\n- Credit cards, purchase limits, interest and repayments.\n- Credit score with a recorded reason for each score change.\n- Dedicated ledger accounts for bank deposits, fixed deposits, loans and credit cards; bank transactions reconcile to the household double-entry ledger.\n- Schema v4 → v5 migration preserves earlier saves and backups.\n\nBank products and rates are fictional. Deposit-insurance eligibility is disclosed, but bank failure and insurance settlement remain planned economy-system extensions.\n\n## Phase 7 — Investment markets\n\n- Fourteen fictional instruments across equities, government and corporate bonds, commodities and digital assets.\n- Market and portfolio terminal with research descriptions, risk labels, price histories, watchlists, order entry and holdings.\n- Buy/sell orders with fractional units, a 0.15% fee, partial sales and realized return accounting.\n- Deterministic weekly prices, market regime/sentiment cycle, broad index and quarterly dividends/coupons.\n- Unrealized market valuation remains separate from cash flow; all investment activity posts to the Phase 4 double-entry ledger.\n- Schema v5 → v6 migration preserves all prior game systems and save data.\n\nThe market universe and pricing are fictional simulation data, not live quotes or investment advice.\n\n## Run locally
+## Phase 6 — Banking & credit
+
+- Five fictional institution categories: National, Local, Microfinance, Investment and Predatory.
+- Checking and savings accounts, fixed deposits, deposit interest, account fees and withdrawals.
+- Personal, mortgage, business and microfinance loans with eligibility rules, amortization, interest accrual and scheduled repayment.
+- Credit cards, purchase limits, interest and repayments.
+- Credit score with a recorded reason for each score change.
+- Dedicated ledger accounts for bank deposits, fixed deposits, loans and credit cards; bank transactions reconcile to the household double-entry ledger.
+- Schema v4 → v5 migration preserves earlier saves and backups.
+
+Bank products and rates are fictional. Deposit-insurance eligibility is disclosed, but bank failure and insurance settlement remain planned economy-system extensions.
+
+## Phase 7 — Investment markets
+
+- Fourteen fictional instruments across equities, government and corporate bonds, commodities and digital assets.
+- Market and portfolio terminal with research descriptions, risk labels, price histories, watchlists, order entry and holdings.
+- Buy/sell orders with fractional units, a 0.15% fee, partial sales and realized return accounting.
+- Deterministic weekly prices, market regime/sentiment cycle, broad index and quarterly dividends/coupons.
+- Unrealized market valuation remains separate from cash flow; all investment activity posts to the Phase 4 double-entry ledger.
+- Schema v5 → v6 migration preserves all prior game systems and save data.
+
+The market universe and pricing are fictional simulation data, not live quotes or investment advice.
+
+## Run locally
 
 Requirements: Node.js 18 or newer. There are no runtime dependencies to install.
 
@@ -98,7 +121,8 @@ GitHub Actions runs the same tests and syntax checks on pushes and pull requests
 - [Phase 3 — Character & Life](docs/PHASE_3_CHARACTER_AND_LIFE.md)
 - [Phase 4 — Household Finance & Ledger](docs/PHASE_4_HOUSEHOLD_FINANCE.md)
 - [Phase 5 — Employment & Education](docs/PHASE_5_EMPLOYMENT_AND_EDUCATION.md)
-- [Phase 6 — Banking & Credit](docs/PHASE_6_BANKING_AND_CREDIT.md)\n- [Phase 7 — Investment Markets](docs/PHASE_7_INVESTMENT_MARKETS.md)
+- [Phase 6 — Banking & Credit](docs/PHASE_6_BANKING_AND_CREDIT.md)
+- [Phase 7 — Investment Markets](docs/PHASE_7_INVESTMENT_MARKETS.md)
 - [Implementation Roadmap](docs/IMPLEMENTATION_ROADMAP.md)
 
 ## Current status
