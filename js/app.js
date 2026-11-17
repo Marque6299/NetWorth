@@ -1,6 +1,6 @@
 import { GROUPS, PAGES, getPage, getPageIdFromHash } from "./navigation.js";
 import { esc, icon, navLink } from "./components.js";
-import { renderOverview, renderSection, renderPersonalView, renderStartingProfilePreview, renderFinanceView } from "./views.js";
+import { renderOverview, renderSection, renderPersonalView, renderStartingProfilePreview, renderFinanceView, renderMarketsView } from "./views.js";
 import { TIME_KEYS } from "./simulation-core.js";
 import { createGameState, resolveAction } from "./simulation-core.js";
 import { createExport, deleteSave, listSaveSlots, loadGame, parseImport, saveGame } from "./persistence.js";
@@ -9,7 +9,7 @@ import { renderGamePanel } from "./game-ui.js";
 const root=document.querySelector("#app");
 let currentGame=null,saveSlots=[],storageError="",feedbackMessage="",busy=false;
 function sidebar(active){
- return '<aside class="sidebar"><a class="brand" href="#/overview" data-route="overview"><span class="brand-mark">N</span><span><b>NETWORTH</b><small>CAPITAL & CONSEQUENCE</small></span></a><div class="side-rule"></div><div class="nav-groups">'+GROUPS.map(group=>'<section class="nav-group"><label>'+esc(group.label)+'</label><nav>'+group.pages.map(page=>navLink(page,active)).join("")+'</nav></section>').join("")+'</div><div class="side-bottom"><b>EARLY ACCESS SHELL</b><small>BUILD 0.6.0 / PHASE 06</small><p>A world of decisions.<br>A future of your making.</p></div></aside>';
+ return '<aside class="sidebar"><a class="brand" href="#/overview" data-route="overview"><span class="brand-mark">N</span><span><b>NETWORTH</b><small>CAPITAL & CONSEQUENCE</small></span></a><div class="side-rule"></div><div class="nav-groups">'+GROUPS.map(group=>'<section class="nav-group"><label>'+esc(group.label)+'</label><nav>'+group.pages.map(page=>navLink(page,active)).join("")+'</nav></section>').join("")+'</div><div class="side-bottom"><b>EARLY ACCESS SHELL</b><small>BUILD 0.7.0 / PHASE 07</small><p>A world of decisions.<br>A future of your making.</p></div></aside>';
 }
 function topbar(page){
  const saveLabel=currentGame?`TURN ${currentGame.calendar.turn} · ${currentGame.calendar.currentDate}`:"NO SAVE LOADED";
@@ -17,14 +17,14 @@ function topbar(page){
  return '<header class="topbar"><div class="crumb">NETWORTH '+icon("right")+' <b>'+esc(page.label.toUpperCase())+'</b></div><div class="top-actions"><div class="search" id="searchWrap">'+icon("search")+'<input id="globalSearch" type="search" placeholder="Find a workspace" aria-label="Find a workspace" aria-controls="searchResults" aria-expanded="false" autocomplete="off"><kbd>⌘ K</kbd><div id="searchResults" class="results" role="listbox" hidden></div></div><div class="save"><i></i><span><small>SAVE STATUS</small><b>'+esc(saveLabel)+'</b></span></div><span class="avatar" aria-label="Player profile">'+avatar+'</span></div></header>';
 }
 function heading(page){
- return '<div class="page-heading"><div><label>'+(page.id==="overview"?"YOUR FINANCIAL COMMAND CENTER":"NETWORTH WORKSPACE / "+page.id.toUpperCase())+'</label><h1>'+esc(page.title)+'</h1><p>'+esc(page.description)+'</p></div><span class="phase">◇ PHASE 06 <small>BANKING & CREDIT / 09 SECTIONS</small></span></div>';
+ return '<div class="page-heading"><div><label>'+(page.id==="overview"?"YOUR FINANCIAL COMMAND CENTER":"NETWORTH WORKSPACE / "+page.id.toUpperCase())+'</label><h1>'+esc(page.title)+'</h1><p>'+esc(page.description)+'</p></div><span class="phase">◇ PHASE 07 <small>INVESTMENT MARKETS / 09 SECTIONS</small></span></div>';
 }
 function render(){
  let id=getPageIdFromHash(location.hash);
  if(!location.hash||!PAGES.some(page=>"#/"+page.id===location.hash)){history.replaceState(null,"","#/overview");id="overview";}
  const page=getPage(id);
- root.innerHTML=sidebar(id)+'<div class="main-column">'+topbar(page)+'<main class="main"><a class="skip" href="#content">Skip to content</a><div id="content">'+heading(page)+'<div class="content">'+(id==="overview"?renderOverview(currentGame)+renderGamePanel(currentGame,saveSlots,storageError,feedbackMessage):id==="personal"?renderPersonalView(currentGame):id==="finance"?renderFinanceView(currentGame):renderSection(id))+'</div></div><footer class="page-footer"><span>NETWORTH · CAPITAL & CONSEQUENCE</span><span>PHASE 06 / BANKING & CREDIT · LOCAL GAME STATE</span></footer></main></div>';
- document.title=page.label+" — Networth";setupSearch();setupGameControls();setupPersonalControls();setupCareerControls();setupFinanceControls();setupBankingControls();root.classList.add("ready");
+ root.innerHTML=sidebar(id)+'<div class="main-column">'+topbar(page)+'<main class="main"><a class="skip" href="#content">Skip to content</a><div id="content">'+heading(page)+'<div class="content">'+(id==="overview"?renderOverview(currentGame)+renderGamePanel(currentGame,saveSlots,storageError,feedbackMessage):id==="personal"?renderPersonalView(currentGame):id==="finance"?renderFinanceView(currentGame):id==="markets"?renderMarketsView(currentGame):renderSection(id))+'</div></div><footer class="page-footer"><span>NETWORTH · CAPITAL & CONSEQUENCE</span><span>PHASE 07 / INVESTMENT MARKETS · LOCAL GAME STATE</span></footer></main></div>';
+ document.title=page.label+" — Networth";setupSearch();setupGameControls();setupPersonalControls();setupCareerControls();setupFinanceControls();setupBankingControls();setupMarketControls();root.classList.add("ready");
 }
 function closeSearch(){const input=document.querySelector("#globalSearch"),results=document.querySelector("#searchResults");if(results)results.hidden=true;if(input)input.setAttribute("aria-expanded","false");}
 function setupSearch(){
@@ -135,5 +135,31 @@ function setupBankingControls(){
    const result=resolveAction(currentGame,action);if(!result.ok)throw new Error(result.reason);
    currentGame=result.state;setFeedback("Banking decision recorded and posted to the household ledger.");render();
   }catch(error){setFeedback(error.message);const target=document.querySelector("#bankingFeedback");if(target)target.textContent=error.message;}
+ }));
+}
+
+function parseMarketQuantity(value){
+ const text=String(value??"").trim();
+ if(!/^\\d+(?:\\.\\d{1,4})?$/.test(text))throw new Error("Enter a positive quantity with up to four decimal places.");
+ const [whole,decimal=""]=text.split("."),units=Number(whole)*10000+Number((decimal+"0000").slice(0,4));
+ if(!Number.isSafeInteger(units)||units<=0)throw new Error("Quantity must be greater than zero and within the supported range.");
+ return units;
+}
+function setupMarketControls(){
+ document.querySelectorAll("[data-market-form]").forEach(form=>form.addEventListener("submit",event=>{
+  event.preventDefault();if(!currentGame){setFeedback("Start a simulation and create a character first.");render();return;}
+  const data=new FormData(form),type=event.submitter?.value;
+  try{
+   if(!["MARKET_BUY","MARKET_SELL"].includes(type))throw new Error("Choose Buy or Sell to submit an order.");
+   const result=resolveAction(currentGame,{type,securityId:String(data.get("securityId")),quantityUnits:parseMarketQuantity(data.get("quantity"))});
+   if(!result.ok)throw new Error(result.reason);
+   currentGame=result.state;setFeedback(type==="MARKET_BUY"?"Market purchase completed. Check your holdings and journal.":"Market sale completed. Proceeds and realized return were posted to Finance.");render();
+  }catch(error){setFeedback(error.message);const target=document.querySelector("#marketFeedback");if(target)target.textContent=error.message;}
+ }));
+ document.querySelectorAll("[data-market-watch]").forEach(button=>button.addEventListener("click",()=>{
+  if(!currentGame)return;const result=resolveAction(currentGame,{type:"MARKET_WATCHLIST",securityId:button.dataset.marketWatch});if(result.ok){currentGame=result.state;render();}
+ }));
+ document.querySelectorAll("[data-market-select]").forEach(button=>button.addEventListener("click",()=>{
+  const select=document.querySelector('[data-market-form] [name="securityId"]');if(select){select.value=button.dataset.marketSelect;select.scrollIntoView({behavior:"smooth",block:"center"});select.focus();}
  }));
 }
