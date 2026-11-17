@@ -2,8 +2,9 @@ import { createOpeningFinance, validateFinance, validateFinanceAction, applyFina
 import { createCareerState, validateCareer, validateCareerAction, applyCareerAction, advanceCareer } from "./career.js";
 import { createBankingState, validateBanking, validateBankingAction, applyBankingAction, advanceBanking } from "./banking.js";
 import { createMarketState, validateMarkets, validateMarketAction, applyMarketAction, advanceMarkets } from "./markets.js";
-export const SAVE_SCHEMA_VERSION = 6;
-export const SIMULATION_VERSION = "0.7.0";
+import { createAssetState, validateAssets, validateAssetAction, applyAssetAction, advanceAssets } from "./assets.js";
+export const SAVE_SCHEMA_VERSION = 7;
+export const SIMULATION_VERSION = "0.8.0";
 export const DAYS_PER_TURN = 7;
 export const WEEKLY_TIME_BUDGET = 112;
 export const SKILL_KEYS = ["financialLiteracy","negotiation","management","sales","technical","research","leadership","networking","operations"];
@@ -23,7 +24,7 @@ export function normalizeSeed(seed){if(typeof seed==="number"&&Number.isFinite(s
 export function createGameState({seed="networth",startDate="2026-01-05"}={}){
  if(!isIsoDate(startDate))throw new Error("Start date must be a valid YYYY-MM-DD date.");
  const normalizedSeed=normalizeSeed(seed),now=new Date().toISOString();
- return {schemaVersion:SAVE_SCHEMA_VERSION,simulationVersion:SIMULATION_VERSION,meta:{gameId:`nw-${normalizedSeed.toString(16).padStart(8,"0")}`,seed:normalizedSeed,createdAt:now,updatedAt:now},calendar:{currentDate:startDate,turn:0,daysPerTurn:DAYS_PER_TURN},rng:{state:normalizedSeed},life:{character:null,timeAllocation:null,goals:[]},finance:null,career:null,banking:null,markets:null,eventLog:[{id:"system-0",turn:0,date:startDate,type:"GAME_CREATED",summary:"A new Networth simulation was created.",details:{seed:normalizedSeed}}],actionCount:0};
+ return {schemaVersion:SAVE_SCHEMA_VERSION,simulationVersion:SIMULATION_VERSION,meta:{gameId:`nw-${normalizedSeed.toString(16).padStart(8,"0")}`,seed:normalizedSeed,createdAt:now,updatedAt:now},calendar:{currentDate:startDate,turn:0,daysPerTurn:DAYS_PER_TURN},rng:{state:normalizedSeed},life:{character:null,timeAllocation:null,goals:[]},finance:null,career:null,banking:null,markets:null,assets:null,eventLog:[{id:"system-0",turn:0,date:startDate,type:"GAME_CREATED",summary:"A new Networth simulation was created.",details:{seed:normalizedSeed}}],actionCount:0};
 }
 export function drawRandom(rng,maxExclusive){if(!rng||!Number.isInteger(rng.state)||!Number.isInteger(maxExclusive)||maxExclusive<1)throw new Error("A valid RNG state and positive integer range are required.");let value=(rng.state+0x6D2B79F5)>>>0;let t=value;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return {value:Math.floor(((t^(t>>>14))>>>0)/4294967296*maxExclusive),rng:{state:value}};}
 function appendEvent(state,type,summary,details={}){const id=state.actionCount+1;state.actionCount=id;state.eventLog.push({id:`action-${id}`,turn:state.calendar.turn,date:state.calendar.currentDate,type,summary,details});}
@@ -66,6 +67,7 @@ export function validateAction(state,action){
  if(action.type.startsWith("RECORD_")||["TRANSFER_FUNDS","BORROW_MONEY","REPAY_DEBT","SET_BUDGET"].includes(action.type))return validateFinanceAction(state.finance,action);
  if(["OPEN_BANK_ACCOUNT","CREATE_FIXED_DEPOSIT","WITHDRAW_BANK_FUNDS","APPLY_FOR_LOAN","PAY_LOAN_INSTALLMENT","APPLY_FOR_CREDIT_CARD","USE_CREDIT_CARD","PAY_CREDIT_CARD"].includes(action.type))return validateBankingAction(state.banking,state.finance,state.life?.character,state.career,action,state.calendar.turn);
  if(["MARKET_BUY","MARKET_SELL","MARKET_WATCHLIST"].includes(action.type))return validateMarketAction(state.markets,state.finance,action);
+  if(["ASSET_BUY_PROPERTY","ASSET_SELL_PROPERTY","ASSET_SET_PROPERTY_USE","ASSET_MAINTAIN_PROPERTY","ASSET_BUY_COLLECTIBLE","ASSET_SELL_COLLECTIBLE","ASSET_MAINTAIN_COLLECTIBLE"].includes(action.type))return validateAssetAction(state.assets,state.finance,state.banking,state.career,action);
  if(["APPLY_FOR_JOB","ACCEPT_JOB_OFFER","RESIGN_FROM_JOB","ENROLL_COURSE"].includes(action.type))return validateCareerAction(state.career,state.life?.character,state.finance,action,state.calendar.turn);
  if(action.type==="ADD_GOAL"){
   if(!state.life?.character)return {valid:false,reason:"Create a character before adding goals."};
@@ -99,13 +101,13 @@ export function resolveAction(state,action){
   const previousDate=next.calendar.currentDate;next.calendar.turn+=1;next.calendar.currentDate=addDays(previousDate,next.calendar.daysPerTurn);next.actionCount+=1;
   const previousMonth=previousDate.slice(0,7),currentMonth=next.calendar.currentDate.slice(0,7);
   if(previousMonth!==currentMonth)next.eventLog.push({id:`month-${currentMonth}-turn-${next.calendar.turn}`,turn:next.calendar.turn,date:next.calendar.currentDate,type:"MONTH_BOUNDARY",summary:`A new in-game month began (${currentMonth}).`,details:{previousMonth,currentMonth}});
-  progressLife(next);advanceCareer(next);advanceBanking(next);if(next.markets){const marketResult=advanceMarkets(next.markets,next.finance,{date:next.calendar.currentDate,turn:next.calendar.turn,sequence:next.actionCount});next.markets=marketResult.markets;next.finance=marketResult.finance;for(const event of marketResult.events)next.eventLog.push({id:"market-event-"+next.calendar.turn+"-"+event.type,turn:next.calendar.turn,date:next.calendar.currentDate,type:event.type,summary:event.summary,details:event.details});}next.eventLog.push({id:`turn-${next.calendar.turn}-advance`,turn:next.calendar.turn,date:next.calendar.currentDate,type:"TURN_ADVANCED",summary:`Turn ${next.calendar.turn} began.`,details:{previousDate,currentDate:next.calendar.currentDate,daysElapsed:next.calendar.daysPerTurn}});
+  progressLife(next);advanceCareer(next);if(next.assets){const assetResult=advanceAssets(next.assets,next.finance,{date:next.calendar.currentDate,turn:next.calendar.turn,regime:next.markets?.regime});next.assets=assetResult.assets;next.finance=assetResult.finance;for(const event of assetResult.events)next.eventLog.push({id:"asset-event-"+next.calendar.turn+"-"+event.type+"-"+next.eventLog.length,turn:next.calendar.turn,date:next.calendar.currentDate,type:event.type,summary:event.summary,details:event.details});}advanceBanking(next);if(next.markets){const marketResult=advanceMarkets(next.markets,next.finance,{date:next.calendar.currentDate,turn:next.calendar.turn,sequence:next.actionCount});next.markets=marketResult.markets;next.finance=marketResult.finance;for(const event of marketResult.events)next.eventLog.push({id:"market-event-"+next.calendar.turn+"-"+event.type,turn:next.calendar.turn,date:next.calendar.currentDate,type:event.type,summary:event.summary,details:event.details});}next.eventLog.push({id:`turn-${next.calendar.turn}-advance`,turn:next.calendar.turn,date:next.calendar.currentDate,type:"TURN_ADVANCED",summary:`Turn ${next.calendar.turn} began.`,details:{previousDate,currentDate:next.calendar.currentDate,daysElapsed:next.calendar.daysPerTurn}});
  }else if(action.type==="CREATE_CHARACTER"){
   const profile=STARTING_PROFILES.find(item=>item.id===action.profileId);
   next.life.character={id:`character-${next.meta.seed.toString(16)}`,name:action.name.trim(),age:action.age,profileId:profile.id,profileName:profile.name,education:profile.education,experienceYears:profile.experienceYears,employment:profile.employment,startingContext:{capital:profile.startingCapital,debt:profile.startingDebt,monthlyExpense:profile.monthlyExpenseContext,dependents:profile.dependents},skills:clone(profile.skills),wellbeing:{health:profile.health,energy:profile.energy,stress:profile.stress,happiness:profile.happiness},reputation:profile.reputation,contacts:profile.contacts,createdAtTurn:next.calendar.turn};
   next.life.timeAllocation=clone(DEFAULT_TIME_ALLOCATION);
   next.finance=createOpeningFinance(next.life.character.startingContext,next.calendar.currentDate,next.calendar.turn);
-  next.career=createCareerState(next.life.character);next.banking=createBankingState(next.life.character);next.markets=createMarketState(next.meta.seed);
+  next.career=createCareerState(next.life.character);next.banking=createBankingState(next.life.character);next.markets=createMarketState(next.meta.seed);next.assets=createAssetState(next.meta.seed);
   appendEvent(next,"CHARACTER_CREATED",`${action.name.trim()} began as a ${profile.name.toLowerCase()}.`,{profileId:profile.id,age:action.age});
  }else if(action.type==="SET_TIME_ALLOCATION"){
   next.life.timeAllocation={...Object.fromEntries(TIME_KEYS.map(key=>[key,action.allocation[key]])),studyFocus:action.allocation.studyFocus};
@@ -120,7 +122,9 @@ export function resolveAction(state,action){
   const result=applyBankingAction(next.banking,next.finance,action,{date:next.calendar.currentDate,turn:next.calendar.turn,sequence:next.actionCount+1});next.banking=result.banking;next.finance=result.finance;appendEvent(next,action.type,action.type.replaceAll("_"," ").toLowerCase(),{amountMinor:action.amountMinor??action.limitMinor??null,bankId:action.bankId??null});
  }else if(["MARKET_BUY","MARKET_SELL","MARKET_WATCHLIST"].includes(action.type)){
   const result=applyMarketAction(next.markets,next.finance,action,{date:next.calendar.currentDate,turn:next.calendar.turn,sequence:next.actionCount+1});next.markets=result.markets;next.finance=result.finance;appendEvent(next,action.type,action.type==="MARKET_WATCHLIST"?"Market watchlist updated.":action.type==="MARKET_BUY"?"Market purchase executed.":"Market sale executed.",{securityId:action.securityId,quantityUnits:action.quantityUnits??null});
- }else if(["APPLY_FOR_JOB","ACCEPT_JOB_OFFER","RESIGN_FROM_JOB","ENROLL_COURSE"].includes(action.type)){
+ }else if(["ASSET_BUY_PROPERTY","ASSET_SELL_PROPERTY","ASSET_SET_PROPERTY_USE","ASSET_MAINTAIN_PROPERTY","ASSET_BUY_COLLECTIBLE","ASSET_SELL_COLLECTIBLE","ASSET_MAINTAIN_COLLECTIBLE"].includes(action.type)){
+   const result=applyAssetAction(next.assets,next.finance,next.banking,action,{date:next.calendar.currentDate,turn:next.calendar.turn,sequence:next.actionCount+1});next.assets=result.assets;next.finance=result.finance;next.banking=result.banking;appendEvent(next,action.type,action.type.replaceAll("_"," ").toLowerCase(),{propertyId:action.propertyId??null,collectibleId:action.collectibleId??null,listingId:action.listingId??null,catalogId:action.catalogId??null});
+  }else if(["APPLY_FOR_JOB","ACCEPT_JOB_OFFER","RESIGN_FROM_JOB","ENROLL_COURSE"].includes(action.type)){
   let roll=0;if(action.type==="APPLY_FOR_JOB"){const draw=drawRandom(next.rng,100);roll=draw.value;next.rng=draw.rng;}
   const result=applyCareerAction(next.career,next.life.character,next.finance,action,{turn:next.calendar.turn,roll,date:next.calendar.currentDate,sequence:next.actionCount+1});
   next.career=result.career;if(result.finance)next.finance=result.finance;
@@ -134,7 +138,8 @@ export function migrateGameState(input){
  if(state.schemaVersion===2){state.finance=state.life?.character?createOpeningFinance(state.life.character.startingContext,state.calendar.currentDate,state.calendar.turn):null;state.schemaVersion=3;}
  if(state.schemaVersion===3){state.career=state.life?.character?createCareerState(state.life.character):null;state.schemaVersion=4;}
  if(state.schemaVersion===4){state.banking=state.life?.character?createBankingState(state.life.character):null;state.schemaVersion=5;}
- if(state.schemaVersion===5){state.markets=state.life?.character?createMarketState(state.meta.seed):null;state.schemaVersion=6;state.simulationVersion=SIMULATION_VERSION;}
+ if(state.schemaVersion===5){state.markets=state.life?.character?createMarketState(state.meta.seed):null;state.schemaVersion=6;}
+ if(state.schemaVersion===6){state.assets=state.life?.character?createAssetState(state.meta.seed):null;state.schemaVersion=7;state.simulationVersion=SIMULATION_VERSION;}
  if(state.schemaVersion!==SAVE_SCHEMA_VERSION)throw new Error(`Unsupported save schema version: ${state.schemaVersion}`);
  return state;
 }
@@ -149,7 +154,7 @@ export function validateGameState(state){
  if(!state.life||!Array.isArray(state.life.goals))errors.push("Character and life data is invalid.");
  if(state.life?.character){const c=state.life.character;if(!validName(c.name)||!Number.isInteger(c.age)||!c.skills||!c.wellbeing||!c.startingContext)errors.push("Character profile is invalid.");else{for(const key of SKILL_KEYS)if(!Number.isFinite(c.skills[key])||c.skills[key]<0||c.skills[key]>100)errors.push(`Character skill ${key} is invalid.`);for(const key of WELLBEING_KEYS)if(!Number.isFinite(c.wellbeing[key])||c.wellbeing[key]<0||c.wellbeing[key]>100)errors.push(`Character well-being ${key} is invalid.`);}if(!state.life.timeAllocation||!validateAllocation(state.life.timeAllocation).valid)errors.push("Character time allocation is invalid.");}
  for(const goal of state.life?.goals??[]){if(!validateGoal(goal).valid||!["active","completed"].includes(goal.status))errors.push("A character goal is invalid.");}
- if(state.life?.character){const financeCheck=validateFinance(state.finance);if(!financeCheck.valid)errors.push(...financeCheck.errors);const careerCheck=validateCareer(state.career);if(!careerCheck.valid)errors.push(...careerCheck.errors);const bankingCheck=validateBanking(state.banking,state.finance);if(!bankingCheck.valid)errors.push(...bankingCheck.errors);const marketCheck=validateMarkets(state.markets,state.finance);if(!marketCheck.valid)errors.push(...marketCheck.errors);}else if(state.finance!==null||state.career!==null||state.banking!==null||state.markets!==null)errors.push("Finance, career, banking and markets must remain uninitialized until a character is created.");
+ if(state.life?.character){const financeCheck=validateFinance(state.finance);if(!financeCheck.valid)errors.push(...financeCheck.errors);const careerCheck=validateCareer(state.career);if(!careerCheck.valid)errors.push(...careerCheck.errors);const bankingCheck=validateBanking(state.banking,state.finance);if(!bankingCheck.valid)errors.push(...bankingCheck.errors);const marketCheck=validateMarkets(state.markets,state.finance);if(!marketCheck.valid)errors.push(...marketCheck.errors);const assetCheck=validateAssets(state.assets,state.finance,state.banking);if(!assetCheck.valid)errors.push(...assetCheck.errors);}else if(state.finance!==null||state.career!==null||state.banking!==null||state.markets!==null||state.assets!==null)errors.push("Finance, career, banking and markets must remain uninitialized until a character is created.");
  return {valid:errors.length===0,errors};
 }
 export function stableStringify(value){if(value===null||typeof value!=="object")return JSON.stringify(value);if(Array.isArray(value))return `[${value.map(stableStringify).join(",")}]`;return `{${Object.keys(value).sort().map(key=>`${JSON.stringify(key)}:${stableStringify(value[key])}`).join(",")}}`;}
