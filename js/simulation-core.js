@@ -4,9 +4,9 @@ import { createBankingState, validateBanking, validateBankingAction, applyBankin
 import { createMarketState, validateMarkets, validateMarketAction, applyMarketAction, advanceMarkets } from "./markets.js";
 import { createAssetState, validateAssets, validateAssetAction, applyAssetAction, advanceAssets } from "./assets.js";
 import { createBusinessState, validateBusinesses, validateBusinessAction, applyBusinessAction, advanceBusinesses } from "./businesses.js";
-import { createOwnershipState, validateOwnership, validateOwnershipAction, applyOwnershipAction, advanceOwnership } from "./ownership.js";
-export const SAVE_SCHEMA_VERSION = 9;
-export const SIMULATION_VERSION = "0.10.0";
+import { createOwnershipState, migrateOwnershipLedger, validateOwnership, validateOwnershipAction, applyOwnershipAction, advanceOwnership } from "./ownership.js";
+export const SAVE_SCHEMA_VERSION = 10;
+export const SIMULATION_VERSION = "0.10.1";
 export const DAYS_PER_TURN = 7;
 export const WEEKLY_TIME_BUDGET = 112;
 export const SKILL_KEYS = ["financialLiteracy","negotiation","management","sales","technical","research","leadership","networking","operations"];
@@ -150,6 +150,7 @@ export function migrateGameState(input){
  if(state.schemaVersion===6){state.assets=state.life?.character?createAssetState(state.meta.seed):null;state.schemaVersion=7;}
  if(state.schemaVersion===7){state.businesses=state.life?.character?createBusinessState(state.meta.seed):null;state.schemaVersion=8;state.simulationVersion=SIMULATION_VERSION;}
  if(state.schemaVersion===8){state.ownership=state.life?.character?createOwnershipState():null;state.schemaVersion=9;state.simulationVersion=SIMULATION_VERSION;}
+ if(state.schemaVersion===9){if(state.ownership)migrateOwnershipLedger(state.ownership);state.schemaVersion=10;state.simulationVersion=SIMULATION_VERSION;}
  if(state.schemaVersion!==SAVE_SCHEMA_VERSION)throw new Error(`Unsupported save schema version: ${state.schemaVersion}`);
  return state;
 }
