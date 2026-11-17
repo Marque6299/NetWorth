@@ -4,6 +4,34 @@ const safeNonNegative = value => Number.isSafeInteger(value) && value >= 0;
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const money = value => (value / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const COMPANY_SECTORS = ["Technology", "Consumer", "Professional services", "Healthcare", "Logistics", "Hospitality", "Manufacturing"];
+const COMPANY_OPERATING_PROFILES = Object.freeze({
+  Technology: { productLabel: "Client projects", basePriceMinor: 1800, unitCostMinor: 500, baseDemandUnits: 6, startingStaff: 2, capacityPerEmployee: 4, wagePerEmployeeMinor: 1000, weeklyOverheadMinor: 1000 },
+  Consumer: { productLabel: "Retail orders", basePriceMinor: 1300, unitCostMinor: 800, baseDemandUnits: 6, startingStaff: 2, capacityPerEmployee: 4, wagePerEmployeeMinor: 900, weeklyOverheadMinor: 1100 },
+  "Professional services": { productLabel: "Professional engagements", basePriceMinor: 1800, unitCostMinor: 300, baseDemandUnits: 4, startingStaff: 2, capacityPerEmployee: 3, wagePerEmployeeMinor: 1300, weeklyOverheadMinor: 800 },
+  Healthcare: { productLabel: "Patient services", basePriceMinor: 2000, unitCostMinor: 900, baseDemandUnits: 5, startingStaff: 2, capacityPerEmployee: 4, wagePerEmployeeMinor: 1600, weeklyOverheadMinor: 1800 },
+  Logistics: { productLabel: "Delivery contracts", basePriceMinor: 1600, unitCostMinor: 900, baseDemandUnits: 6, startingStaff: 3, capacityPerEmployee: 5, wagePerEmployeeMinor: 950, weeklyOverheadMinor: 1500 },
+  Hospitality: { productLabel: "Guest bookings", basePriceMinor: 1400, unitCostMinor: 700, baseDemandUnits: 6, startingStaff: 3, capacityPerEmployee: 4, wagePerEmployeeMinor: 850, weeklyOverheadMinor: 1700 },
+  Manufacturing: { productLabel: "Production orders", basePriceMinor: 2000, unitCostMinor: 1200, baseDemandUnits: 5, startingStaff: 3, capacityPerEmployee: 4, wagePerEmployeeMinor: 950, weeklyOverheadMinor: 1800 }
+});
+function createCompanyOperations(sector) {
+  const profile = COMPANY_OPERATING_PROFILES[sector] ?? COMPANY_OPERATING_PROFILES.Technology;
+  return {
+    ...profile,
+    priceMinor: profile.basePriceMinor,
+    staffCount: profile.startingStaff,
+    customerSatisfaction: 70,
+    lastTurn: 0,
+    lastDemandUnits: 0,
+    lastUnitsSold: 0,
+    lastRevenueMinor: 0,
+    lastCostOfGoodsMinor: 0,
+    lastPayrollMinor: 0,
+    lastOverheadMinor: 0,
+    lastExpensesMinor: 0,
+    lastProfitMinor: 0,
+    history: []
+  };
+}
 const INVESTORS = Object.freeze([
   { id: "cedar-ridge-capital", name: "Cedar Ridge Capital", type: "Institutional investor", capacityMinor: 250000000, dividendBias: 72, growthBias: 48, riskTolerance: 42 },
   { id: "northstar-ventures", name: "Northstar Ventures", type: "Venture investor", capacityMinor: 120000000, dividendBias: 25, growthBias: 92, riskTolerance: 88 },
@@ -72,16 +100,28 @@ function postHousehold(finance, { id, date, turn, kind, description, amountMinor
 }
 function initializeCompanyLedger(company) {
   if (!Number.isSafeInteger(company.capitalAssetsMinor)) company.capitalAssetsMinor = 0;
+  if (!safeNonNegative(company.operatingPayablesMinor)) company.operatingPayablesMinor = 0;
   if (Array.isArray(company.ledger) && Array.isArray(company.ledgerAccounts)) {
-    if (!company.ledgerAccounts.some(account => account.id === "capitalAssets")) company.ledgerAccounts.push({ id: "capitalAssets", name: "Capital assets", type: "asset", balanceMinor: company.capitalAssetsMinor });
+    const specs = [
+      ["capitalAssets", "Capital assets", "asset", company.capitalAssetsMinor],
+      ["operatingPayables", "Operating payables", "liability", company.operatingPayablesMinor],
+      ["operatingRevenue", "Operating revenue", "income", 0],
+      ["operatingExpenses", "Operating expenses", "expense", 0]
+    ];
+    for (const [id, name, type, balanceMinor] of specs) {
+      if (!company.ledgerAccounts.some(account => account.id === id)) company.ledgerAccounts.push({ id, name, type, balanceMinor });
+    }
     return company;
   }
   company.ledgerSequence = 1;
   company.ledgerAccounts = [
     { id: "cash", name: "Cash", type: "asset", balanceMinor: 0 },
     { id: "shareholderLoans", name: "Shareholder loans payable", type: "liability", balanceMinor: 0 },
+    { id: "operatingPayables", name: "Operating payables", type: "liability", balanceMinor: 0 },
     { id: "shareCapital", name: "Share capital", type: "equity", balanceMinor: 0 },
-    { id: "retainedEarnings", name: "Retained earnings", type: "equity", balanceMinor: 0 }
+    { id: "retainedEarnings", name: "Retained earnings", type: "equity", balanceMinor: 0 },
+    { id: "operatingRevenue", name: "Operating revenue", type: "income", balanceMinor: 0 },
+    { id: "operatingExpenses", name: "Operating expenses", type: "expense", balanceMinor: 0 }
   ];
   company.ledger = [];
   if (!Number.isSafeInteger(company.capitalAssetsMinor)) company.capitalAssetsMinor = 0;
@@ -95,6 +135,7 @@ function initializeCompanyLedger(company) {
       { accountId: "capitalAssets", debitMinor: company.capitalAssetsMinor, creditMinor: 0 },
       { accountId: "shareCapital", debitMinor: 0, creditMinor: company.paidInCapitalMinor },
       { accountId: "shareholderLoans", debitMinor: 0, creditMinor: company.loanBalanceMinor },
+      { accountId: "operatingPayables", debitMinor: 0, creditMinor: company.operatingPayablesMinor },
       { accountId: "retainedEarnings", debitMinor: 0, creditMinor: company.retainedEarningsMinor }
     ]
   });
@@ -134,6 +175,15 @@ function postCompanyTransaction(company, kind, amountMinor, date, turn, descript
 }
 export function migrateOwnershipLedger(state) {
   for (const company of state?.companies ?? []) { initializeCompanyLedger(company); if (!Array.isArray(company.elections)) company.elections = []; }
+  return state;
+}
+export function migrateOwnershipOperations(state) {
+  if (!state || !Array.isArray(state.companies)) return state;
+  for (const company of state.companies) {
+    if (!safeNonNegative(company.operatingPayablesMinor)) company.operatingPayablesMinor = 0;
+    if (!company.operations || typeof company.operations !== "object") company.operations = createCompanyOperations(company.sector);
+    initializeCompanyLedger(company);
+  }
   return state;
 }
 export function migrateInvestorLiquidity(state) {
@@ -181,8 +231,8 @@ function makeCompany({ id, name, sector, description, capitalMinor, shares, turn
     id, name, sector, description, status: "active", foundedAtTurn: turn, acquired,
     authorizedShares: Math.max(shares, 1000000), issuedShares: shares, outstandingShares: shares,
     shareholders: [{ id: "player", name: "You", type: "Founder", shares, costBasisMinor: capitalMinor, isPlayer: true }],
-    cashMinor: capitalMinor, capitalAssetsMinor: 0, paidInCapitalMinor: capitalMinor, loanBalanceMinor: 0, retainedEarningsMinor: 0,
-    cumulativeProfitMinor: 0, cumulativeDividendsMinor: 0, weeklyProfitBps,
+    cashMinor: capitalMinor, capitalAssetsMinor: 0, operatingPayablesMinor: 0, paidInCapitalMinor: capitalMinor, loanBalanceMinor: 0, retainedEarningsMinor: 0,
+    cumulativeProfitMinor: 0, cumulativeDividendsMinor: 0, weeklyProfitBps, operations: createCompanyOperations(sector),
     estimatedValueMinor: capitalMinor, sharePriceMinor: Math.max(1, Math.floor(capitalMinor / shares)),
     board: [{ seat: "Chair", holderId: "player", appointedAtTurn: turn }],
     executives: [{ role: "CEO", holderId: "player", appointedAtTurn: turn }, { role: "CFO", holderId: "player", appointedAtTurn: turn }],
@@ -192,8 +242,11 @@ function makeCompany({ id, name, sector, description, capitalMinor, shares, turn
       { id: "cash", name: "Cash", type: "asset", balanceMinor: 0 },
       { id: "capitalAssets", name: "Capital assets", type: "asset", balanceMinor: 0 },
       { id: "shareholderLoans", name: "Shareholder loans payable", type: "liability", balanceMinor: 0 },
+      { id: "operatingPayables", name: "Operating payables", type: "liability", balanceMinor: 0 },
       { id: "shareCapital", name: "Share capital", type: "equity", balanceMinor: 0 },
-      { id: "retainedEarnings", name: "Retained earnings", type: "equity", balanceMinor: 0 }
+      { id: "retainedEarnings", name: "Retained earnings", type: "equity", balanceMinor: 0 },
+      { id: "operatingRevenue", name: "Operating revenue", type: "income", balanceMinor: 0 },
+      { id: "operatingExpenses", name: "Operating expenses", type: "expense", balanceMinor: 0 }
     ],
     ledger: []
   };
