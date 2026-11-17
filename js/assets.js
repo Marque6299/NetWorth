@@ -265,6 +265,7 @@ export function advanceAssets(assets, finance, { date, turn, regime = "Expansion
 
   for (const property of a.properties) {
     const oldCondition = property.condition;
+    if (turn % 13 === 0 && property.condition > 0) property.condition = clamp(property.condition - 1, 0, 100);
     if (property.use === "rental" && turn % 13 === 0) {
       const vacancy = draw(rng, 1000); rng.state = vacancy.state;
       if (property.occupied && vacancy.value < 150) {
@@ -303,8 +304,10 @@ export function advanceAssets(assets, finance, { date, turn, regime = "Expansion
   }
 
   for (const holding of a.collectibles) {
+    const oldCondition = holding.condition;
+    if (turn % 13 === 0 && holding.condition > 0) holding.condition = clamp(holding.condition - 1, 0, 100);
     const movement = draw(rng, holding.volatilityBps * 2 + 1); rng.state = movement.state;
-    const shock = movement.value - holding.volatilityBps, changeBps = clamp(regimeDrift + shock, -1000, 1000);
+    const shock = movement.value - holding.volatilityBps, conditionEffect = (holding.condition - oldCondition) * 15, changeBps = clamp(regimeDrift + shock + conditionEffect, -1000, 1000);
     const newValue = Math.max(1, roundDiv(holding.marketValueMinor * (10000 + changeBps), 10000)), delta = newValue - holding.marketValueMinor;
     holding.marketValueMinor = newValue;
     postValuation(f, { id: "journal-collectible-mark-" + turn + "-" + holding.id, date, turn, kind: delta >= 0 ? "COLLECTIBLE_UNREALIZED_GAIN" : "COLLECTIBLE_UNREALIZED_LOSS", description: "Collectible valuation update — " + holding.name, accountId: "collectibleAssets", delta, relatedId: holding.id });
