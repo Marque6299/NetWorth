@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { renderOverview, renderSection, renderMarketsView, renderAssetsView } from "../js/views.js";
+import { renderOverview, renderSection, renderMarketsView, renderAssetsView, renderBusinessesView } from "../js/views.js";
 import { createGameState, resolveAction } from "../js/simulation-core.js";
 import { PAGE_IDS } from "../js/navigation.js";
 
@@ -36,4 +36,24 @@ test("Assets workspace renders property and collectible catalogues and acquisiti
   for (const text of ["Owned properties", "Available property listings", "Harborview Starter Studio", "Meridian Street Retail Suite", "Owned collectibles", "Vintage Rangefinder Camera", "Classic Collector Automobile", "PROPERTY MORTGAGES"]) assert.ok(html.includes(text), text);
   assert.match(html, /data-asset-form="ASSET_BUY_PROPERTY"/);
   assert.match(html, /data-asset-form="ASSET_BUY_COLLECTIBLE"/);
+});
+
+test("Business workspace renders an operating company directory for eligible profiles", () => {
+  let state = createGameState({ seed: "business-directory-view" });
+  state = resolveAction(state, { type: "CREATE_CHARACTER", name: "Taylor Morgan", age: 29, profileId: "career-switcher" }).state;
+  const html = renderBusinessesView(state);
+  for (const text of ["Run the operation", "Meridian Retail Group", "Brightline Commerce", "Cobalt Insights", "Northstar Services", "Aster Industrial"]) assert.ok(html.includes(text), text);
+  assert.match(html, /data-business-accept="meridian-essentials"/);
+});
+
+test("Active Business workspace renders pricing, staffing, marketing, suppliers and performance controls", () => {
+  let state = createGameState({ seed: "business-active-view" });
+  state = resolveAction(state, { type: "CREATE_CHARACTER", name: "Taylor Morgan", age: 29, profileId: "career-switcher" }).state;
+  state = resolveAction(state, { type: "BUSINESS_ACCEPT_MANDATE", companyId: "meridian-essentials" }).state;
+  const html = renderBusinessesView(state);
+  for (const text of ["Meridian Essentials Market", "Pricing and inventory", "Available suppliers", "Operating results", "Branch journal", "Operating mandate only"]) assert.ok(html.includes(text), text);
+  assert.match(html, /data-business-form="BUSINESS_SET_PRICE"/);
+  assert.match(html, /data-business-form="BUSINESS_ORDER_INVENTORY"/);
+  assert.match(html, /data-business-form="BUSINESS_MARKETING_CAMPAIGN"/);
+  assert.match(html, /data-business-action="BUSINESS_END_MANDATE"/);
 });
