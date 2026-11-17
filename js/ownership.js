@@ -52,7 +52,11 @@ function postHousehold(finance, { id, date, turn, kind, description, amountMinor
   finance.ledger.push({ id, date, turn, kind, description, amountMinor, category: "private-equity", relatedId, lines: clone(lines) });
 }
 function initializeCompanyLedger(company) {
-  if (Array.isArray(company.ledger) && Array.isArray(company.ledgerAccounts)) return company;
+  if (!Number.isSafeInteger(company.capitalAssetsMinor)) company.capitalAssetsMinor = 0;
+  if (Array.isArray(company.ledger) && Array.isArray(company.ledgerAccounts)) {
+    if (!company.ledgerAccounts.some(account => account.id === "capitalAssets")) company.ledgerAccounts.push({ id: "capitalAssets", name: "Capital assets", type: "asset", balanceMinor: company.capitalAssetsMinor });
+    return company;
+  }
   company.ledgerSequence = 1;
   company.ledgerAccounts = [
     { id: "cash", name: "Cash", type: "asset", balanceMinor: 0 },
