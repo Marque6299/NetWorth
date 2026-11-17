@@ -2,8 +2,9 @@ import { MONEY_SCALE } from "./finance.js";
 const clone=value=>typeof structuredClone==="function"?structuredClone(value):JSON.parse(JSON.stringify(value));
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
 const roundDiv=(n,d)=>Math.floor((n+d/2)/d);
-const unitValue=(priceMinor,quantityUnits)=>roundDiv(priceMinor*quantityUnits,10000);
-const feeFor=amount=>Math.ceil(amount*15/10000);
+const mulDiv=(a,b,d)=>Number((BigInt(a)*BigInt(b)+BigInt(Math.floor(d/2)))/BigInt(d));
+const unitValue=(priceMinor,quantityUnits)=>mulDiv(priceMinor,quantityUnits,10000);
+const feeFor=amount=>Number((BigInt(amount)*15n+9999n)/10000n);
 const instruments=[
  {id:"equity-northstar",symbol:"NSTR",name:"Northstar Services",kind:"equity",sector:"Business services",description:"A diversified outsourced operations and customer-support group expanding through automation and enterprise contracts.",priceMinor:18450,volatilityBps:420,yieldBps:180,risk:"Medium",quality:86,trendBps:30},
  {id:"equity-cobalt",symbol:"CBLT",name:"Cobalt Insights",kind:"equity",sector:"Technology",description:"A data analytics and enterprise software company with high reinvestment needs and recurring subscription revenue.",priceMinor:32600,volatilityBps:610,yieldBps:0,risk:"High",quality:78,trendBps:55},
@@ -53,7 +54,8 @@ export function validateMarketAction(markets,finance,action){
  const security=markets.securities.find(x=>x.id===action.securityId);
  if(action.type==="MARKET_BUY"){
   if(!security||!Number.isSafeInteger(action.quantityUnits)||action.quantityUnits<=0)return {valid:false,reason:"Select a valid instrument and a positive quantity (up to four decimal places)."};
-  const value=unitValue(security.priceMinor,action.quantityUnits),fee=feeFor(value);
+  const value=unitValue(security.priceMinor,action.quantityUnits),fee=feeFor(value),existing=markets.positions.find(x=>x.securityId===security.id);
+  if(!Number.isSafeInteger(value)||!Number.isSafeInteger(fee)||existing&&(!Number.isSafeInteger(existing.quantityUnits+action.quantityUnits)||!Number.isSafeInteger(existing.costBasisMinor+value)||!Number.isSafeInteger(existing.marketValueMinor+value)))return {valid:false,reason:"This order exceeds the supported investment quantity or value."};
   const cash=finance.accounts.find(x=>x.id==="cash")?.balanceMinor??0;
   if(value<=0||!Number.isSafeInteger(value+fee)||value+fee>cash)return {valid:false,reason:"There is not enough available cash to cover this purchase and its trading fee."};
   return {valid:true};
@@ -82,7 +84,7 @@ export function applyMarketAction(markets,finance,action,{date,turn,sequence}){
   else m.positions.push({securityId:security.id,quantityUnits:action.quantityUnits,costBasisMinor:value,marketValueMinor:value,unrealizedMinor:0,openedTurn:turn});
   tx("BUY",value,"Purchased "+security.symbol);tx("FEE",fee,"Trading fee");
  }else{
-  const soldValue=unitValue(security.priceMinor,action.quantityUnits),carrying=roundDiv(position.marketValueMinor*action.quantityUnits,position.quantityUnits),cost=roundDiv(position.costBasisMinor*action.quantityUnits,position.quantityUnits),unrealized=carrying-cost,realized=soldValue-cost;
+  const soldValue=unitValue(security.priceMinor,action.quantityUnits),carrying=mulDiv(position.marketValueMinor,action.quantityUnits,position.quantityUnits),cost=mulDiv(position.costBasisMinor,action.quantityUnits,position.quantityUnits),unrealized=carrying-cost,realized=soldValue-cost;
   const lines=[line("cash",soldValue),line("investment",0,carrying)];
   if(realized>0)lines.push(line("income",0,realized));
   else if(realized<0)lines.push(line("expense",-realized));
