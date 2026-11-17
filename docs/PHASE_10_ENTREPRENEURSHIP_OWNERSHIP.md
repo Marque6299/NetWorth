@@ -184,8 +184,8 @@ The first functional milestone is implemented on branch `phase-10-ownership`:
 
 ### Known boundaries before Phase 10 acceptance
 
-- Share transfers between arbitrary shareholders and minority-stake acquisition offers are not implemented yet.
-- NPC shareholders do not submit autonomous votes; the current governance milestone records the player's share-weighted vote and applies the configured quorum/majority rule.
-- Generic non-dividend resolutions are recorded and voted on but do not yet trigger their corresponding corporate action.
+- Share transfers are supported between the player and the fictional investor directory; fully open-ended counterparties and negotiated transfer agreements remain future work. Minority-stake acquisitions are supported from the target directory.
+- NPC shareholders now submit deterministic votes based on proposal type and company financial conditions. Their preferences are intentionally simple and require further balancing.
+- Board seats can be appointed and removed, and executive appointments are supported. Generic non-dividend resolutions are recorded and voted on but do not yet trigger their corresponding corporate action; board elections and director terms remain future work.
 - Weekly operating profit is a deterministic abstraction based on paid-in capital and character operating/management skills; it is not yet connected to the detailed Phase 9 branch ledger.
 - The first milestone now passes the GitHub Actions automated suite (132 tests) and JavaScript syntax checks. Cloudflare Pages preview deployment also reports success. Browser acceptance remains pending before this phase can be accepted.
