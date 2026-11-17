@@ -9,8 +9,8 @@ The project is delivered one phase at a time. Each phase has an acceptance gate;
 | 2 | Simulation core: turn/date, seeded randomness, action validation, event log and local save/load | **Implemented** |
 | 3 | Character, life, skills, time allocation, well-being and goals | **Accepted** |
 | 4 | Household finance, ledger, budgets, cash flow, debt and net worth | **Accepted** |
-| 5 | Employment and education | **Implemented — awaiting acceptance** |
-| 6 | Banking and credit | Not started |
+| 5 | Employment and education | **Accepted** |
+| 6 | Banking and credit | **Implemented — awaiting acceptance** |
 | 7 | Investment markets | Not started |
 | 8 | Property and collectibles | Not started |
 | 9 | Business operations | Not started |
