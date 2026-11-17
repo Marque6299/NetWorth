@@ -37,7 +37,7 @@ test("investor cash is shared across companies and cannot be reused", () => {
   const wallet = state.ownership.investorAccounts.find(item => item.investorId === "mira-chen");
   wallet.cashMinor = 25000;
   state = act(state, { type: "OWNERSHIP_ISSUE_SHARES", companyId: firstCompanyId, investorId: "mira-chen", shares: 20000 });
-  assert.equal(wallet.cashMinor, 5000);
+  assert.equal(state.ownership.investorAccounts.find(item => item.investorId === "mira-chen").cashMinor, 5000);
   const before = structuredClone(state);
   const rejected = resolveAction(state, { type: "OWNERSHIP_ISSUE_SHARES", companyId: secondCompanyId, investorId: "mira-chen", shares: 10000 });
   assert.equal(rejected.ok, false);
@@ -274,6 +274,7 @@ test("schema v9 ownership saves gain a balanced opening company ledger during mi
   let old = found(makeGame());
   old.schemaVersion = 9;
   old.simulationVersion = "0.10.0";
+  delete old.ownership.investorAccounts;
   for (const company of old.ownership.companies) {
     delete company.ledger;
     delete company.ledgerAccounts;
