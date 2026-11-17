@@ -11,8 +11,8 @@ The project is delivered one phase at a time. Each phase has an acceptance gate;
 | 4 | Household finance, ledger, budgets, cash flow, debt and net worth | **Accepted** |
 | 5 | Employment and education | **Accepted** |
 | 6 | Banking and credit | **Accepted** |
-| 7 | Investment markets | **Implemented — awaiting acceptance** |
-| 8 | Property and collectibles | Not started |
+| 7 | Investment markets | **Accepted** |
+| 8 | Property and collectibles | **Implemented — awaiting acceptance** |
 | 9 | Business operations | Not started |
 | 10 | Entrepreneurship, equity, acquisitions and governance | Not started |
 | 11 | News, events and interconnected economy | Not started |
