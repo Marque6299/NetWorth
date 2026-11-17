@@ -154,7 +154,7 @@ test("schema v7 saves migrate to schema v9 with an empty business subsystem", ()
   old.simulationVersion = "0.8.0";
   delete old.businesses;
   const migrated = migrateGameState(old);
-  assert.equal(migrated.schemaVersion, 8);
+  assert.equal(migrated.schemaVersion, 9);
   assert.equal(migrated.businesses.mandate, null);
   assert.deepEqual(migrated.assets, old.assets);
   assert.equal(validateGameState(migrated).valid, true);
