@@ -2,12 +2,12 @@
 
 Networth is a turn-based financial life simulation, economic strategy and business management game. Players begin as ordinary individuals with different backgrounds, resources, obligations and opportunities. Through work, education, saving, borrowing, investing, entrepreneurship, acquisitions and relationships, they pursue financial independence and may continue into building a business and investment empire.
 
-This repository currently contains **Phases 1–4**: Core Shell, Simulation Core, Character & Life, and Household Finance & Ledger. Later phases remain gated by the implementation roadmap.
+This repository currently contains **Phases 1–5**: Core Shell, Simulation Core, Character & Life, Household Finance & Ledger, and Employment & Education. Later phases remain gated by the implementation roadmap.
 
 ## Workspaces
 
 - **Overview** — financial command center and simulation controls.
-- **Personal** — character dossier, starting circumstances, skills, time allocation, well-being and goals.
+- **Personal** — character dossier, career opportunities, job applications, employment contracts, education programs, skills, time allocation, well-being and goals.
 - **Finance** — cash, savings, investment valuation, liabilities, budgets, double-entry journal, cash flow and net worth (Phase 4).
 - **Markets** — instrument directory, research, orders and holdings placeholders (Phase 7).
 - **Businesses** — company directory, business operations and ownership placeholders (Phases 9–10).
@@ -39,9 +39,9 @@ The design uses dashboards, directories, profiles, terminals, reports and relati
 - Measurable goals for skills, well-being and turn milestones, including lower-is-better stress goals.
 - Schema v1 → v2 migration for Phase 2 local saves and JSON backups.
 
-Starting capital and debt become opening ledger balances in Phase 4. Monthly expenses become a planning budget, not an automatic charge. Employment, compensation and job outcomes remain Phase 5.
+Starting capital and debt become opening ledger balances in Phase 4. Monthly expenses become a planning budget, not an automatic charge. Phase 5 adds functional employment and education.
 
-## Phase 4 — Household finance & ledger\n\n- Neutral in-game Credits, stored as integer minor units.\n- Opening cash, debt and monthly budget initialized from each character profile.\n- Balanced double-entry journal with account reconciliation.\n- Income, expense, transfer, borrowing, principal repayment and unrealized valuation actions.\n- Transfers and borrowing are excluded from income; principal repayment is not an expense; unrealized gains are not cash.\n- Net worth, liquid net worth, recorded cash flow and monthly budgets.\n- Schema v2 → v3 migration for existing Phase 3 saves and backups.\n\nThe monthly expense context is a budget baseline, not an automatic charge. Interest, payroll, scheduled debt service and market pricing remain later-phase systems.\n\n## Run locally
+## Phase 4 — Household finance & ledger\n\n- Neutral in-game Credits, stored as integer minor units.\n- Opening cash, debt and monthly budget initialized from each character profile.\n- Balanced double-entry journal with account reconciliation.\n- Income, expense, transfer, borrowing, principal repayment and unrealized valuation actions.\n- Transfers and borrowing are excluded from income; principal repayment is not an expense; unrealized gains are not cash.\n- Net worth, liquid net worth, recorded cash flow and monthly budgets.\n- Schema v2 → v3 migration for existing Phase 3 saves and backups.\n\nThe monthly expense context is a budget baseline, not an automatic charge. Interest, bank products, scheduled debt service and market pricing remain later-phase systems.\n\n## Run locally
 
 Requirements: Node.js 18 or newer. There are no runtime dependencies to install.
 
@@ -78,4 +78,4 @@ GitHub Actions runs the same tests and syntax checks on pushes and pull requests
 
 ## Current status
 
-**Phases 1–3 are accepted; Phase 4 is implemented and awaiting user acceptance.** Later phases remain gated by the roadmap.
+**Phases 1–4 are accepted; Phase 5 is implemented and awaiting user acceptance.** Later phases remain gated by the roadmap.
