@@ -1,7 +1,7 @@
 export const SAVE_SCHEMA_VERSION = 1;
 export const SIMULATION_VERSION = "0.2.0";
 export const DAYS_PER_TURN = 7;
-const isIsoDate = value => typeof value === "string" && /^\\d{4}-\\d{2}-\\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00.000Z`)) && new Date(`${value}T00:00:00.000Z`).toISOString().slice(0,10) === value;
+const isIsoDate = value => typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00.000Z`)) && new Date(`${value}T00:00:00.000Z`).toISOString().slice(0,10) === value;
 const clone = value => typeof structuredClone === "function" ? structuredClone(value) : JSON.parse(JSON.stringify(value));
 export function normalizeSeed(seed) {
   if (typeof seed === "number" && Number.isFinite(seed)) return seed >>> 0;
