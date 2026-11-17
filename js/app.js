@@ -1,6 +1,7 @@
 import { GROUPS, PAGES, getPage, getPageIdFromHash } from "./navigation.js";
 import { esc, icon, navLink } from "./components.js";
-import { renderOverview, renderSection } from "./views.js";
+import { renderOverview, renderSection, renderPersonalView, renderStartingProfilePreview } from "./views.js";
+import { TIME_KEYS } from "./simulation-core.js";
 import { createGameState, resolveAction } from "./simulation-core.js";
 import { createExport, deleteSave, listSaveSlots, loadGame, parseImport, saveGame } from "./persistence.js";
 import { renderGamePanel } from "./game-ui.js";
@@ -8,21 +9,22 @@ import { renderGamePanel } from "./game-ui.js";
 const root=document.querySelector("#app");
 let currentGame=null,saveSlots=[],storageError="",feedbackMessage="",busy=false;
 function sidebar(active){
- return '<aside class="sidebar"><a class="brand" href="#/overview" data-route="overview"><span class="brand-mark">N</span><span><b>NETWORTH</b><small>CAPITAL & CONSEQUENCE</small></span></a><div class="side-rule"></div><div class="nav-groups">'+GROUPS.map(group=>'<section class="nav-group"><label>'+esc(group.label)+'</label><nav>'+group.pages.map(page=>navLink(page,active)).join("")+'</nav></section>').join("")+'</div><div class="side-bottom"><b>EARLY ACCESS SHELL</b><small>BUILD 0.2.0 / PHASE 02</small><p>A world of decisions.<br>A future of your making.</p></div></aside>';
+ return '<aside class="sidebar"><a class="brand" href="#/overview" data-route="overview"><span class="brand-mark">N</span><span><b>NETWORTH</b><small>CAPITAL & CONSEQUENCE</small></span></a><div class="side-rule"></div><div class="nav-groups">'+GROUPS.map(group=>'<section class="nav-group"><label>'+esc(group.label)+'</label><nav>'+group.pages.map(page=>navLink(page,active)).join("")+'</nav></section>').join("")+'</div><div class="side-bottom"><b>EARLY ACCESS SHELL</b><small>BUILD 0.3.0 / PHASE 03</small><p>A world of decisions.<br>A future of your making.</p></div></aside>';
 }
 function topbar(page){
  const saveLabel=currentGame?`TURN ${currentGame.calendar.turn} · ${currentGame.calendar.currentDate}`:"NO SAVE LOADED";
- return '<header class="topbar"><div class="crumb">NETWORTH '+icon("right")+' <b>'+esc(page.label.toUpperCase())+'</b></div><div class="top-actions"><div class="search" id="searchWrap">'+icon("search")+'<input id="globalSearch" type="search" placeholder="Find a workspace" aria-label="Find a workspace" aria-controls="searchResults" aria-expanded="false" autocomplete="off"><kbd>⌘ K</kbd><div id="searchResults" class="results" role="listbox" hidden></div></div><div class="save"><i></i><span><small>SAVE STATUS</small><b>'+esc(saveLabel)+'</b></span></div><span class="avatar" aria-label="Player profile not created">—</span></div></header>';
+ const avatar=currentGame?.life?.character?.name?.slice(0,1)?.toUpperCase()??"—";
+ return '<header class="topbar"><div class="crumb">NETWORTH '+icon("right")+' <b>'+esc(page.label.toUpperCase())+'</b></div><div class="top-actions"><div class="search" id="searchWrap">'+icon("search")+'<input id="globalSearch" type="search" placeholder="Find a workspace" aria-label="Find a workspace" aria-controls="searchResults" aria-expanded="false" autocomplete="off"><kbd>⌘ K</kbd><div id="searchResults" class="results" role="listbox" hidden></div></div><div class="save"><i></i><span><small>SAVE STATUS</small><b>'+esc(saveLabel)+'</b></span></div><span class="avatar" aria-label="Player profile">${avatar}</span></div></header>';
 }
 function heading(page){
- return '<div class="page-heading"><div><label>'+(page.id==="overview"?"YOUR FINANCIAL COMMAND CENTER":"NETWORTH WORKSPACE / "+page.id.toUpperCase())+'</label><h1>'+esc(page.title)+'</h1><p>'+esc(page.description)+'</p></div><span class="phase">◇ PHASE 02 <small>SIMULATION CORE / 09 SECTIONS</small></span></div>';
+ return '<div class="page-heading"><div><label>'+(page.id==="overview"?"YOUR FINANCIAL COMMAND CENTER":"NETWORTH WORKSPACE / "+page.id.toUpperCase())+'</label><h1>'+esc(page.title)+'</h1><p>'+esc(page.description)+'</p></div><span class="phase">◇ PHASE 03 <small>CHARACTER & LIFE / 09 SECTIONS</small></span></div>';
 }
 function render(){
  let id=getPageIdFromHash(location.hash);
  if(!location.hash||!PAGES.some(page=>"#/"+page.id===location.hash)){history.replaceState(null,"","#/overview");id="overview";}
  const page=getPage(id);
- root.innerHTML=sidebar(id)+'<div class="main-column">'+topbar(page)+'<main class="main"><a class="skip" href="#content">Skip to content</a><div id="content">'+heading(page)+'<div class="content">'+(id==="overview"?renderOverview()+renderGamePanel(currentGame,saveSlots,storageError,feedbackMessage):renderSection(id))+'</div></div><footer class="page-footer"><span>NETWORTH · CAPITAL & CONSEQUENCE</span><span>PHASE 02 / SIMULATION CORE · LOCAL GAME STATE</span></footer></main></div>';
- document.title=page.label+" — Networth";setupSearch();setupGameControls();root.classList.add("ready");
+ root.innerHTML=sidebar(id)+'<div class="main-column">'+topbar(page)+'<main class="main"><a class="skip" href="#content">Skip to content</a><div id="content">'+heading(page)+'<div class="content">'+(id==="overview"?renderOverview()+renderGamePanel(currentGame,saveSlots,storageError,feedbackMessage):id==="personal"?renderPersonalView(currentGame):renderSection(id))+'</div></div><footer class="page-footer"><span>NETWORTH · CAPITAL & CONSEQUENCE</span><span>PHASE 03 / CHARACTER & LIFE · LOCAL GAME STATE</span></footer></main></div>';
+ document.title=page.label+" — Networth";setupSearch();setupGameControls();setupPersonalControls();root.classList.add("ready");
 }
 function closeSearch(){const input=document.querySelector("#globalSearch"),results=document.querySelector("#searchResults");if(results)results.hidden=true;if(input)input.setAttribute("aria-expanded","false");}
 function setupSearch(){
@@ -56,6 +58,27 @@ function setupGameControls(){
  document.querySelectorAll("[data-game-action]").forEach(button=>button.addEventListener("click",()=>handleGameAction(button.dataset.gameAction,Number(button.dataset.slot))));
  document.querySelector("#saveImport")?.addEventListener("change",async event=>{const file=event.target.files?.[0];if(!file)return;try{currentGame=parseImport(await file.text());setFeedback("Backup validated and restored into the active session. Save it to a local slot to persist it.");storageError="";}catch(error){setFeedback(error.message);}render();});
 }
+
+function applyLifeAction(action,successMessage){
+ const result=resolveAction(currentGame,action);if(!result.ok)throw new Error(result.reason);
+ currentGame=result.state;setFeedback(successMessage);render();
+}
+function setupPersonalControls(){
+ const characterForm=document.querySelector("#characterForm");
+ characterForm?.addEventListener("submit",event=>{event.preventDefault();const data=new FormData(characterForm);try{applyLifeAction({type:"CREATE_CHARACTER",name:String(data.get("name")),age:Number(data.get("age")),profileId:String(data.get("profileId"))},"Character created. Your starting circumstances and personal development systems are now active.");}catch(error){setFeedback(error.message);render();}});
+ const profileSelect=document.querySelector("#profileSelect");
+ profileSelect?.addEventListener("change",()=>{const preview=renderStartingProfilePreview(profileSelect.value);const box=document.querySelector("#profilePreview"),tagline=document.querySelector("#profileTagline");if(box)box.innerHTML=preview.html;if(tagline)tagline.textContent=preview.tagline;});
+ const timeForm=document.querySelector("#timeAllocationForm");
+ const updateTimeTotal=()=>{if(!timeForm)return;const data=new FormData(timeForm),total=TIME_KEYS.reduce((sum,key)=>sum+Number(data.get(key)||0),0),remaining=112-total;const totalNode=document.querySelector("#timeTotal"),note=document.querySelector("#allocationNote");if(totalNode)totalNode.textContent=`${total} / 112 HRS`;if(note)note.textContent=remaining>=0?`${remaining} hours remain unallocated. Going beyond the weekly limit is not allowed.`:`${Math.abs(remaining)} hours over the weekly limit. Reduce your allocation before saving.`;if(totalNode)totalNode.classList.toggle("over-limit",remaining<0);};
+ timeForm?.querySelectorAll("[data-time-hour]").forEach(input=>input.addEventListener("input",updateTimeTotal));
+ timeForm?.addEventListener("submit",event=>{event.preventDefault();const data=new FormData(timeForm);const allocation=Object.fromEntries(TIME_KEYS.map(key=>[key,Number(data.get(key))]));allocation.studyFocus=String(data.get("studyFocus"));try{applyLifeAction({type:"SET_TIME_ALLOCATION",allocation},"Weekly time allocation saved. Its effects will apply during turn progression.");}catch(error){setFeedback(error.message);render();}});
+ const goalForm=document.querySelector("#goalForm");
+ const metric=goalForm?.querySelector('[name="metric"]'),target=goalForm?.querySelector('[name="target"]');
+ const updateGoalTarget=()=>{if(!metric||!target)return;const isTurn=metric.value==="turns:turn";target.max=isTurn?"500":"100";target.min="1";target.value=isTurn?"10":"50";};
+ metric?.addEventListener("change",updateGoalTarget);
+ goalForm?.addEventListener("submit",event=>{event.preventDefault();const data=new FormData(goalForm);try{applyLifeAction({type:"ADD_GOAL",goal:{title:String(data.get("title")),metric:String(data.get("metric")),target:Number(data.get("target"))}},"Goal added to your personal milestones.");}catch(error){setFeedback(error.message);render();}});
+}
+
 root.addEventListener("click",event=>{if(event.target.closest("a[data-route]"))closeSearch();else if(!event.target.closest("#searchWrap"))closeSearch();});
 window.addEventListener("hashchange",render);
 window.addEventListener("keydown",event=>{if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==="k"){event.preventDefault();document.querySelector("#globalSearch")?.focus();}});
