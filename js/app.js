@@ -9,7 +9,7 @@ import { renderGamePanel } from "./game-ui.js";
 const root=document.querySelector("#app");
 let currentGame=null,saveSlots=[],storageError="",feedbackMessage="",autoSaveError="",autoSaveQueue=Promise.resolve(),busy=false;
 function sidebar(active){
- return '<aside class="sidebar"><a class="brand" href="#/overview" data-route="overview"><span class="brand-mark">N</span><span><b>NETWORTH</b><small>CAPITAL & CONSEQUENCE</small></span></a><div class="side-rule"></div><div class="nav-groups">'+GROUPS.map(group=>'<section class="nav-group"><label>'+esc(group.label)+'</label><nav>'+group.pages.map(page=>navLink(page,active)).join("")+'</nav></section>').join("")+'</div><div class="side-bottom"><b>EARLY ACCESS SHELL</b><small>BUILD 0.11.0 / PHASE 10</small><p>A world of decisions.<br>A future of your making.</p></div></aside>';
+ return '<aside class="sidebar"><a class="brand" href="#/overview" data-route="overview"><span class="brand-mark">N</span><span><b>NETWORTH</b><small>CAPITAL & CONSEQUENCE</small></span></a><div class="side-rule"></div><div class="nav-groups">'+GROUPS.map(group=>'<section class="nav-group"><label>'+esc(group.label)+'</label><nav>'+group.pages.map(page=>navLink(page,active)).join("")+'</nav></section>').join("")+'</div><div class="side-bottom"><b>EARLY ACCESS SHELL</b><small>BUILD 0.12.0 / PHASE 10</small><p>A world of decisions.<br>A future of your making.</p></div></aside>';
 }
 function topbar(page){
  const saveLabel=currentGame?`TURN ${currentGame.calendar.turn} · ${currentGame.calendar.currentDate}`:"NO SAVE LOADED";
