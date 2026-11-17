@@ -28,3 +28,6 @@
 .event-list{display:grid;gap:8px}.event-list article{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #f0f1ed}.event-list article>.icon{width:16px;height:16px;color:var(--muted)}.event-list article b{display:block;font-size:11px;font-weight:600}.event-list article small{display:block;margin-top:5px;color:var(--muted);font-size:9px;letter-spacing:.06em}.import-label{display:inline-block;margin-top:14px;color:var(--muted);font-size:11px}.import-label input{display:block;max-width:100%;margin-top:7px;font-size:11px}.game-feedback{margin:18px 0 0;color:var(--muted);font-size:11px}.storage-warning{padding:10px 12px;color:#9a572b;background:#c67b3718;border:1px solid #c67b3740;border-radius:6px;font-size:12px}
 @media(max-width:820px){.new-game-form{grid-template-columns:1fr 1fr}.new-game-form .primary-button{grid-column:1/-1}.game-columns{grid-template-columns:1fr;gap:20px}}
 @media(max-width:560px){.game-panel{padding:16px}.game-panel-head{align-items:flex-start;gap:10px;flex-direction:column}.game-status-grid{gap:6px}.game-status-grid>div{padding:10px 8px}.game-status-grid strong{font-size:16px}.new-game-form{grid-template-columns:1fr}.new-game-form .primary-button{grid-column:auto}}
+
+/* Phase 2 event icon alignment */
+.event-list article>i{display:grid;place-items:center;color:var(--muted)}.event-list article>i .icon{width:16px;height:16px}
