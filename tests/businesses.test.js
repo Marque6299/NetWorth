@@ -148,7 +148,7 @@ test("business state and manager compensation survive JSON export and import", (
   assert.equal(validateGameState(restored).valid, true);
 });
 
-test("schema v7 saves migrate to schema v8 with an empty business subsystem", () => {
+test("schema v7 saves migrate to schema v9 with an empty business subsystem", () => {
   const old = makeGame();
   old.schemaVersion = 7;
   old.simulationVersion = "0.8.0";
