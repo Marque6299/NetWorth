@@ -97,7 +97,8 @@ GitHub Actions runs the same tests and syntax checks on pushes and pull requests
 - [Phase 2 — Simulation Core](docs/PHASE_2_SIMULATION_CORE.md)
 - [Phase 3 — Character & Life](docs/PHASE_3_CHARACTER_AND_LIFE.md)
 - [Phase 4 — Household Finance & Ledger](docs/PHASE_4_HOUSEHOLD_FINANCE.md)
-- [Phase 5 — Employment & Education](docs/PHASE_5_EMPLOYMENT_AND_EDUCATION.md)\n- [Phase 6 — Banking & Credit](docs/PHASE_6_BANKING_AND_CREDIT.md)
+- [Phase 5 — Employment & Education](docs/PHASE_5_EMPLOYMENT_AND_EDUCATION.md)
+- [Phase 6 — Banking & Credit](docs/PHASE_6_BANKING_AND_CREDIT.md)
 - [Implementation Roadmap](docs/IMPLEMENTATION_ROADMAP.md)
 
 ## Current status
