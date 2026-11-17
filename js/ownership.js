@@ -109,7 +109,11 @@ export function validateOwnershipAction(state, finance, character, action) {
   if (company.status !== "active") return { valid: false, reason: "This company is not active." };
   if (action.type === "OWNERSHIP_CONTRIBUTE_CAPITAL" || action.type === "OWNERSHIP_TAKE_LOAN") {
     if (!safePositive(amount) || amount > cash) return { valid: false, reason: "Enter a positive amount within available household cash." };
-    if (action.type === "OWNERSHIP_CONTRIBUTE_CAPITAL" && amount < sharePrice(company)) return { valid: false, reason: "The contribution must be enough to subscribe for at least one new share." };
+    if (action.type === "OWNERSHIP_CONTRIBUTE_CAPITAL") {
+      const newShares = Math.floor(amount / sharePrice(company));
+      if (newShares < 1 || company.issuedShares + newShares > company.authorizedShares) return { valid: false, reason: "The contribution would exceed the company's authorized share limit." };
+    }
+    if (action.type === "OWNERSHIP_TAKE_LOAN" && !playerShares(company)) return { valid: false, reason: "Only a current shareholder can advance a shareholder loan." };
     return { valid: true };
   }
   if (action.type === "OWNERSHIP_REPAY_LOAN") {
@@ -138,6 +142,11 @@ export function validateOwnershipAction(state, finance, character, action) {
     const resolution = company.resolutions.find(item => item.id === action.resolutionId && item.status === "open");
     if (!resolution) return { valid: false, reason: "This shareholder resolution is not open." };
     if (!resolution.votes.some(item => item.shareholderId === "player")) return { valid: false, reason: "Cast your vote before closing the resolution." };
+    if (resolution.type === "DIVIDEND") {
+      const reserve = Math.floor(company.paidInCapitalMinor * 20 / 100);
+      const available = Math.min(company.retainedEarningsMinor, Math.max(0, company.cashMinor - company.loanBalanceMinor - reserve));
+      if (resolution.amountMinor > available) return { valid: false, reason: "The company no longer has sufficient distributable cash to settle this dividend." };
+    }
     return { valid: true };
   }
   if (action.type === "OWNERSHIP_ISSUE_SHARES") {
@@ -151,7 +160,7 @@ export function validateOwnershipAction(state, finance, character, action) {
     const shares = action.shares, holding = shareholderById(company, "player");
     if (!Number.isInteger(shares) || shares < 1 || shares > (holding?.shares ?? 0)) return { valid: false, reason: "You do not hold that many shares." };
     const proceeds = sharePrice(company) * shares, reserve = Math.floor(company.paidInCapitalMinor * 20 / 100);
-    if (proceeds > company.cashMinor - company.loanBalanceMinor - reserve) return { valid: false, reason: "The company cannot fund this buyback while preserving debt and its operating reserve." };
+    if (proceeds > company.cashMinor - company.loanBalanceMinor - reserve || proceeds > company.paidInCapitalMinor) return { valid: false, reason: "The company cannot fund this buyback while preserving debt, paid-in capital and its operating reserve." };
     return { valid: true };
   }
   if (action.type === "OWNERSHIP_APPOINT_EXECUTIVE") {
@@ -248,6 +257,7 @@ export function applyOwnershipAction(state, finance, character, action, { date, 
         holder.lastDividendMinor = (holder.lastDividendMinor ?? 0) + amount;
       });
       company.cashMinor -= total; company.retainedEarningsMinor -= total; company.cumulativeDividendsMinor += total;
+      company.estimatedValueMinor = equityValue(company); company.sharePriceMinor = sharePrice(company);
       transaction(next, company, turn, date, "DIVIDEND_PAID", "Paid shareholder dividend", total, { resolutionId: resolution.id, playerReceiptMinor: company.shareholders.find(item => item.id === "player")?.lastDividendMinor ?? 0 });
     }
     transaction(next, company, turn, date, "RESOLUTION_CLOSED", "Shareholder resolution " + resolution.status, 0, { resolutionId: resolution.id, outcome: resolution.outcome });
