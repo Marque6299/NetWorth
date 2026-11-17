@@ -1,0 +1,336 @@
+const clone = value => typeof structuredClone === "function" ? structuredClone(value) : JSON.parse(JSON.stringify(value));
+const safePositive = value => Number.isSafeInteger(value) && value > 0;
+const safeNonNegative = value => Number.isSafeInteger(value) && value >= 0;
+const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+const money = value => (value / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const COMPANY_SECTORS = ["Technology", "Consumer", "Professional services", "Healthcare", "Logistics", "Hospitality", "Manufacturing"];
+const INVESTORS = Object.freeze([
+  { id: "cedar-ridge-capital", name: "Cedar Ridge Capital", type: "Institutional investor", capacityMinor: 250000000 },
+  { id: "northstar-ventures", name: "Northstar Ventures", type: "Venture investor", capacityMinor: 120000000 },
+  { id: "mira-chen", name: "Mira Chen", type: "Angel investor", capacityMinor: 25000000 },
+  { id: "atlas-holdings", name: "Atlas Holdings", type: "Private investment group", capacityMinor: 500000000 }
+]);
+export const OWNERSHIP_TARGETS = Object.freeze([
+  { id: "cobalt-digital-works", name: "Cobalt Digital Works", sector: "Technology", description: "A compact analytics and workflow automation studio with a recurring small-business client base.", askingPriceMinor: 1850000, weeklyProfitBps: 34, risk: "Moderate" },
+  { id: "harbor-home-supply", name: "Harbor Home Supply", sector: "Consumer", description: "A neighbourhood home essentials distributor with stable repeat demand and tight margins.", askingPriceMinor: 2650000, weeklyProfitBps: 28, risk: "Moderate" },
+  { id: "apex-fulfillment", name: "Apex Fulfillment Services", sector: "Logistics", description: "A small fulfilment operator serving independent online merchants.", askingPriceMinor: 4200000, weeklyProfitBps: 39, risk: "Elevated" },
+  { id: "wellhaven-clinics", name: "Wellhaven Clinics", sector: "Healthcare", description: "A two-site outpatient services group with predictable demand and higher operating overhead.", askingPriceMinor: 6800000, weeklyProfitBps: 31, risk: "Moderate" }
+]);
+const targetById = id => OWNERSHIP_TARGETS.find(item => item.id === id);
+const investorById = id => INVESTORS.find(item => item.id === id);
+const companyById = (state, id) => state?.companies?.find(item => item.id === id);
+const shareholderById = (company, id) => company?.shareholders?.find(item => item.id === id);
+const playerShares = company => shareholderById(company, "player")?.shares ?? 0;
+const outstandingShares = company => company.shareholders.reduce((sum, item) => sum + item.shares, 0);
+const equityValue = company => Math.max(0, company.paidInCapitalMinor + company.retainedEarningsMinor);
+const sharePrice = company => Math.max(1, Math.floor(equityValue(company) / Math.max(1, outstandingShares(company))));
+const playerControls = company => playerShares(company) > outstandingShares(company) / 2;
+const validCompanyName = value => typeof value === "string" && value.trim().length >= 3 && value.trim().length <= 48 && !/[<>]/.test(value);
+
+function ensureFinanceAccounts(finance) {
+  const specs = [
+    ["privateEquity", "Private company investments", "asset", "private-equity"],
+    ["shareholderLoans", "Shareholder loan receivables", "asset", "shareholder-loans"]
+  ];
+  for (const [id, name, type, subtype] of specs) {
+    if (!finance.accounts.some(item => item.id === id)) finance.accounts.push({ id, name, type, subtype, balanceMinor: 0 });
+  }
+}
+function postHousehold(finance, { id, date, turn, kind, description, amountMinor, lines, relatedId }) {
+  const debit = lines.reduce((sum, item) => sum + item.debitMinor, 0);
+  const credit = lines.reduce((sum, item) => sum + item.creditMinor, 0);
+  if (!safePositive(amountMinor) || debit !== credit || debit <= 0) throw new Error("Ownership journal entry is not balanced.");
+  const byId = new Map(finance.accounts.map(item => [item.id, item]));
+  for (const item of lines) {
+    const account = byId.get(item.accountId);
+    if (!account || !safeNonNegative(item.debitMinor) || !safeNonNegative(item.creditMinor) || (item.debitMinor > 0 && item.creditMinor > 0)) throw new Error("Ownership journal line is invalid.");
+  }
+  for (const item of lines) {
+    const account = byId.get(item.accountId);
+    account.balanceMinor += ["asset", "expense"].includes(account.type) ? item.debitMinor - item.creditMinor : item.creditMinor - item.debitMinor;
+  }
+  finance.ledger.push({ id, date, turn, kind, description, amountMinor, category: "private-equity", relatedId, lines: clone(lines) });
+}
+function transaction(state, company, turn, date, kind, description, amountMinor, details = {}) {
+  const entry = { id: "ownership-" + state.nextId++, companyId: company.id, turn, date, kind, description, amountMinor, details: clone(details) };
+  state.transactions.unshift(entry);
+  if (state.transactions.length > 250) state.transactions.length = 250;
+  company.transactions.unshift(entry.id);
+  if (company.transactions.length > 100) company.transactions.length = 100;
+  return entry;
+}
+function makeCompany({ id, name, sector, description, capitalMinor, shares, turn, date, weeklyProfitBps, acquired = false }) {
+  return {
+    id, name, sector, description, status: "active", foundedAtTurn: turn, acquired,
+    authorizedShares: Math.max(shares, 1000000), issuedShares: shares, outstandingShares: shares,
+    shareholders: [{ id: "player", name: "You", type: "Founder", shares, costBasisMinor: capitalMinor, isPlayer: true }],
+    cashMinor: capitalMinor, paidInCapitalMinor: capitalMinor, loanBalanceMinor: 0, retainedEarningsMinor: 0,
+    cumulativeProfitMinor: 0, cumulativeDividendsMinor: 0, weeklyProfitBps,
+    estimatedValueMinor: capitalMinor, sharePriceMinor: Math.max(1, Math.floor(capitalMinor / shares)),
+    board: [{ seat: "Chair", holderId: "player", appointedAtTurn: turn }],
+    executives: [{ role: "CEO", holderId: "player", appointedAtTurn: turn }, { role: "CFO", holderId: "player", appointedAtTurn: turn }],
+    resolutions: [], transactions: [], lastAdvanceTurn: turn, createdAt: date
+  };
+}
+export function createOwnershipState() {
+  return { nextId: 1, companies: [], transactions: [], acquisitionHistory: [] };
+}
+export function getOwnershipPortfolio(state) {
+  const companies = state?.companies ?? [];
+  const holdings = companies.map(company => {
+    const shares = playerShares(company), total = outstandingShares(company), value = equityValue(company);
+    const costBasisMinor = shareholderById(company, "player")?.costBasisMinor ?? 0;
+    return { companyId: company.id, name: company.name, sector: company.sector, shares, totalShares: total, ownershipBps: total ? Math.floor(shares * 10000 / total) : 0, costBasisMinor, estimatedValueMinor: total ? Math.floor(value * shares / total) : 0, unrealizedMinor: (total ? Math.floor(value * shares / total) : 0) - costBasisMinor, cashMinor: company.cashMinor, retainedEarningsMinor: company.retainedEarningsMinor, loanBalanceMinor: company.loanBalanceMinor, sharePriceMinor: company.sharePriceMinor };
+  });
+  return { companies: holdings, companyCount: holdings.length, investedMinor: holdings.reduce((sum, item) => sum + item.costBasisMinor, 0), estimatedValueMinor: holdings.reduce((sum, item) => sum + item.estimatedValueMinor, 0), unrealizedMinor: holdings.reduce((sum, item) => sum + item.unrealizedMinor, 0) };
+}
+export function validateOwnershipAction(state, finance, character, action) {
+  if (!state || !Array.isArray(state.companies) || !finance?.initialized || !character) return { valid: false, reason: "Create a character and initialize household Finance before managing company ownership." };
+  const company = action.companyId ? companyById(state, action.companyId) : null;
+  if (action.companyId && !company) return { valid: false, reason: "The selected company could not be found." };
+  const cash = finance.accounts.find(item => item.id === "cash")?.balanceMinor ?? 0;
+  const amount = action.amountMinor;
+  if (action.type === "OWNERSHIP_FOUND_COMPANY") {
+    if (!validCompanyName(action.name) || state.companies.some(item => item.name.toLowerCase() === action.name.trim().toLowerCase())) return { valid: false, reason: "Enter a unique company name between 3 and 48 characters." };
+    if (!COMPANY_SECTORS.includes(action.sector)) return { valid: false, reason: "Choose a valid company sector." };
+    if (!safePositive(amount) || amount < 25000 || amount > cash) return { valid: false, reason: "Founding capital must be at least 250 Credits and cannot exceed available household cash." };
+    if (!Number.isInteger(action.shares) || action.shares < 1000 || action.shares > 1000000) return { valid: false, reason: "Issue between 1,000 and 1,000,000 founder shares." };
+    if (state.companies.length >= 20) return { valid: false, reason: "Your portfolio has reached the 20-company limit." };
+    return { valid: true };
+  }
+  if (action.type === "OWNERSHIP_ACQUIRE_TARGET") {
+    const target = targetById(action.targetId);
+    if (!target || state.companies.some(item => item.id === target.id)) return { valid: false, reason: "This acquisition target is unavailable or already owned." };
+    if (target.askingPriceMinor > cash) return { valid: false, reason: "There is not enough household cash to acquire this company outright." };
+    if (state.companies.length >= 20) return { valid: false, reason: "Your portfolio has reached the 20-company limit." };
+    return { valid: true };
+  }
+  if (!company) return { valid: false, reason: "Select a company first." };
+  if (company.status !== "active") return { valid: false, reason: "This company is not active." };
+  if (action.type === "OWNERSHIP_CONTRIBUTE_CAPITAL" || action.type === "OWNERSHIP_TAKE_LOAN") {
+    if (!safePositive(amount) || amount > cash) return { valid: false, reason: "Enter a positive amount within available household cash." };
+    if (action.type === "OWNERSHIP_CONTRIBUTE_CAPITAL" && amount < sharePrice(company)) return { valid: false, reason: "The contribution must be enough to subscribe for at least one new share." };
+    return { valid: true };
+  }
+  if (action.type === "OWNERSHIP_REPAY_LOAN") {
+    if (!safePositive(amount) || amount > company.loanBalanceMinor || amount > company.cashMinor) return { valid: false, reason: "Repayment must be positive and cannot exceed the loan balance or company cash." };
+    return { valid: true };
+  }
+  if (action.type === "OWNERSHIP_PROPOSE_DIVIDEND") {
+    if (!playerControls(company)) return { valid: false, reason: "A controlling shareholder is required to submit a dividend proposal." };
+    const reserve = Math.floor(company.paidInCapitalMinor * 20 / 100);
+    const available = Math.min(company.retainedEarningsMinor, Math.max(0, company.cashMinor - company.loanBalanceMinor - reserve));
+    if (!safePositive(amount) || amount > available) return { valid: false, reason: "The dividend exceeds distributable retained earnings after debt and the operating reserve." };
+    return { valid: true };
+  }
+  if (action.type === "OWNERSHIP_CREATE_RESOLUTION") {
+    if (!playerShares(company) || typeof action.title !== "string" || action.title.trim().length < 4 || action.title.trim().length > 100 || !["CAPITAL_EXPANSION", "EXECUTIVE_APPOINTMENT", "ACQUISITION", "OTHER"].includes(action.resolutionType)) return { valid: false, reason: "A valid shareholder resolution title and type are required." };
+    if (company.resolutions.some(item => item.status === "open")) return { valid: false, reason: "Close the existing shareholder resolution before opening another." };
+    return { valid: true };
+  }
+  if (action.type === "OWNERSHIP_VOTE") {
+    const resolution = company.resolutions.find(item => item.id === action.resolutionId && item.status === "open");
+    if (!resolution || !["for", "against", "abstain"].includes(action.vote)) return { valid: false, reason: "Choose an open resolution and a valid vote." };
+    if (!playerShares(company)) return { valid: false, reason: "You must own voting shares to vote." };
+    return { valid: true };
+  }
+  if (action.type === "OWNERSHIP_CLOSE_VOTE") {
+    const resolution = company.resolutions.find(item => item.id === action.resolutionId && item.status === "open");
+    if (!resolution) return { valid: false, reason: "This shareholder resolution is not open." };
+    if (!resolution.votes.some(item => item.shareholderId === "player")) return { valid: false, reason: "Cast your vote before closing the resolution." };
+    return { valid: true };
+  }
+  if (action.type === "OWNERSHIP_ISSUE_SHARES") {
+    const investor = investorById(action.investorId);
+    if (!playerControls(company) || !investor || !Number.isInteger(action.shares) || action.shares < 1 || action.shares > 1000000) return { valid: false, reason: "A controlling shareholder must select a valid investor and share quantity." };
+    const price = sharePrice(company), cost = price * action.shares;
+    if (!safePositive(cost) || cost > investor.capacityMinor || company.issuedShares + action.shares > company.authorizedShares) return { valid: false, reason: "The investor capacity or authorized share limit would be exceeded." };
+    return { valid: true };
+  }
+  if (action.type === "OWNERSHIP_BUYBACK_SHARES") {
+    const shares = action.shares, holding = shareholderById(company, "player");
+    if (!Number.isInteger(shares) || shares < 1 || shares > (holding?.shares ?? 0)) return { valid: false, reason: "You do not hold that many shares." };
+    const proceeds = sharePrice(company) * shares, reserve = Math.floor(company.paidInCapitalMinor * 20 / 100);
+    if (proceeds > company.cashMinor - company.loanBalanceMinor - reserve) return { valid: false, reason: "The company cannot fund this buyback while preserving debt and its operating reserve." };
+    return { valid: true };
+  }
+  if (action.type === "OWNERSHIP_APPOINT_EXECUTIVE") {
+    if (!playerControls(company) || !["CEO", "CFO", "COO"].includes(action.role) || !company.shareholders.some(item => item.id === action.candidateId)) return { valid: false, reason: "Only a controlling shareholder can appoint an eligible shareholder to an executive role." };
+    return { valid: true };
+  }
+  return { valid: false, reason: "Unsupported ownership action." };
+}
+export function applyOwnershipAction(state, finance, character, action, { date, turn, sequence }) {
+  const next = clone(state), company = action.companyId ? companyById(next, action.companyId) : null;
+  ensureFinanceAccounts(finance);
+  const postId = suffix => "ownership-journal-" + sequence + "-" + suffix;
+  if (action.type === "OWNERSHIP_FOUND_COMPANY") {
+    const id = "owned-company-" + next.nextId++;
+    const name = action.name.trim(), shares = action.shares, capital = action.amountMinor;
+    const created = makeCompany({ id, name, sector: action.sector, description: String(action.description ?? "").trim().slice(0, 240), capitalMinor: capital, shares, turn, date, weeklyProfitBps: 18 + Math.floor((character.skills.operations ?? 0) / 8) + Math.floor((character.skills.sales ?? 0) / 20) });
+    next.companies.push(created);
+    postHousehold(finance, { id: postId("found"), date, turn, kind: "COMPANY_FOUNDING", description: "Founding capital invested in " + name, amountMinor: capital, relatedId: id, lines: [{ accountId: "privateEquity", debitMinor: capital, creditMinor: 0 }, { accountId: "cash", debitMinor: 0, creditMinor: capital }] });
+    transaction(next, created, turn, date, "COMPANY_FOUNDED", "Founded " + name, capital, { shares, sector: action.sector });
+    return { ownership: next, finance, event: { type: "COMPANY_FOUNDED", summary: name + " was founded with " + money(capital) + " Credits of paid-in capital.", details: { companyId: id, capitalMinor: capital, shares } } };
+  }
+  if (action.type === "OWNERSHIP_ACQUIRE_TARGET") {
+    const target = targetById(action.targetId), id = target.id, capital = target.askingPriceMinor, shares = 100000;
+    const created = makeCompany({ id, name: target.name, sector: target.sector, description: target.description, capitalMinor: capital, shares, turn, date, weeklyProfitBps: target.weeklyProfitBps, acquired: true });
+    next.companies.push(created);
+    postHousehold(finance, { id: postId("acquire"), date, turn, kind: "COMPANY_ACQUISITION", description: "Acquired " + target.name + " outright", amountMinor: capital, relatedId: id, lines: [{ accountId: "privateEquity", debitMinor: capital, creditMinor: 0 }, { accountId: "cash", debitMinor: 0, creditMinor: capital }] });
+    next.acquisitionHistory.unshift({ id: "acquisition-" + id, companyId: id, companyName: target.name, turn, date, considerationMinor: capital, ownershipBps: 10000 });
+    transaction(next, created, turn, date, "COMPANY_ACQUIRED", "Acquired " + target.name, capital, { ownershipBps: 10000 });
+    return { ownership: next, finance, event: { type: "COMPANY_ACQUIRED", summary: target.name + " was acquired outright for " + money(capital) + " Credits.", details: { companyId: id, considerationMinor: capital } } };
+  }
+  if (action.type === "OWNERSHIP_CONTRIBUTE_CAPITAL") {
+    const price = sharePrice(company), shares = Math.floor(action.amountMinor / price), invested = shares * price;
+    if (!shares || !safePositive(invested)) throw new Error("The contribution cannot purchase a whole share at the current price.");
+    const holding = shareholderById(company, "player");
+    if (holding) { holding.shares += shares; holding.costBasisMinor += invested; }
+    else company.shareholders.push({ id: "player", name: "You", type: "Shareholder", shares, costBasisMinor: invested, isPlayer: true });
+    company.issuedShares += shares; company.outstandingShares += shares; company.paidInCapitalMinor += invested; company.cashMinor += invested;
+    company.estimatedValueMinor = equityValue(company); company.sharePriceMinor = sharePrice(company);
+    postHousehold(finance, { id: postId("contribution"), date, turn, kind: "EQUITY_CONTRIBUTION", description: "Additional equity contributed to " + company.name, amountMinor: invested, relatedId: company.id, lines: [{ accountId: "privateEquity", debitMinor: invested, creditMinor: 0 }, { accountId: "cash", debitMinor: 0, creditMinor: invested }] });
+    transaction(next, company, turn, date, "EQUITY_CONTRIBUTION", "Additional equity contribution", invested, { sharesIssued: shares, pricePerShareMinor: price });
+    return { ownership: next, finance, event: { type: "EQUITY_CONTRIBUTION", summary: money(invested) + " Credits invested in " + company.name + " for " + shares.toLocaleString("en-US") + " new shares.", details: { companyId: company.id, shares, amountMinor: invested } } };
+  }
+  if (action.type === "OWNERSHIP_TAKE_LOAN") {
+    company.cashMinor += action.amountMinor; company.loanBalanceMinor += action.amountMinor;
+    postHousehold(finance, { id: postId("loan"), date, turn, kind: "SHAREHOLDER_LOAN_ADVANCE", description: "Shareholder loan advanced to " + company.name, amountMinor: action.amountMinor, relatedId: company.id, lines: [{ accountId: "shareholderLoans", debitMinor: action.amountMinor, creditMinor: 0 }, { accountId: "cash", debitMinor: 0, creditMinor: action.amountMinor }] });
+    transaction(next, company, turn, date, "SHAREHOLDER_LOAN", "Shareholder loan advanced", action.amountMinor);
+    return { ownership: next, finance, event: { type: "SHAREHOLDER_LOAN", summary: "Advanced " + money(action.amountMinor) + " Credits to " + company.name + " as a repayable shareholder loan.", details: { companyId: company.id, amountMinor: action.amountMinor } } };
+  }
+  if (action.type === "OWNERSHIP_REPAY_LOAN") {
+    company.cashMinor -= action.amountMinor; company.loanBalanceMinor -= action.amountMinor;
+    postHousehold(finance, { id: postId("repayment"), date, turn, kind: "SHAREHOLDER_LOAN_REPAYMENT", description: "Shareholder loan repayment from " + company.name, amountMinor: action.amountMinor, relatedId: company.id, lines: [{ accountId: "cash", debitMinor: action.amountMinor, creditMinor: 0 }, { accountId: "shareholderLoans", debitMinor: 0, creditMinor: action.amountMinor }] });
+    transaction(next, company, turn, date, "SHAREHOLDER_LOAN_REPAYMENT", "Repaid shareholder loan", action.amountMinor);
+    return { ownership: next, finance, event: { type: "SHAREHOLDER_LOAN_REPAID", summary: company.name + " repaid " + money(action.amountMinor) + " Credits of shareholder loans.", details: { companyId: company.id, amountMinor: action.amountMinor } } };
+  }
+  if (action.type === "OWNERSHIP_PROPOSE_DIVIDEND") {
+    const id = "resolution-" + next.nextId++;
+    company.resolutions.unshift({ id, title: "Declare shareholder dividend", type: "DIVIDEND", amountMinor: action.amountMinor, status: "open", createdAtTurn: turn, votes: [], outcome: null });
+    transaction(next, company, turn, date, "DIVIDEND_PROPOSED", "Proposed shareholder dividend", action.amountMinor, { resolutionId: id });
+    return { ownership: next, finance, event: { type: "DIVIDEND_PROPOSED", summary: "Dividend proposal opened for " + money(action.amountMinor) + " Credits. Shareholders must vote before payment.", details: { companyId: company.id, resolutionId: id } } };
+  }
+  if (action.type === "OWNERSHIP_CREATE_RESOLUTION") {
+    const id = "resolution-" + next.nextId++;
+    company.resolutions.unshift({ id, title: action.title.trim(), type: action.resolutionType, amountMinor: 0, status: "open", createdAtTurn: turn, votes: [], outcome: null });
+    transaction(next, company, turn, date, "RESOLUTION_OPENED", "Opened shareholder resolution: " + action.title.trim(), 0, { resolutionId: id, resolutionType: action.resolutionType });
+    return { ownership: next, finance, event: { type: "RESOLUTION_OPENED", summary: "Shareholder resolution opened: " + action.title.trim() + ".", details: { companyId: company.id, resolutionId: id } } };
+  }
+  if (action.type === "OWNERSHIP_VOTE") {
+    const resolution = company.resolutions.find(item => item.id === action.resolutionId);
+    const existing = resolution.votes.find(item => item.shareholderId === "player");
+    const vote = { shareholderId: "player", shares: playerShares(company), choice: action.vote, turn };
+    if (existing) Object.assign(existing, vote); else resolution.votes.push(vote);
+    transaction(next, company, turn, date, "SHAREHOLDER_VOTE", "Voted " + action.vote + " on " + resolution.title, 0, { resolutionId: resolution.id, vote: action.vote, shares: vote.shares });
+    return { ownership: next, finance, event: { type: "SHAREHOLDER_VOTE", summary: "Your vote was recorded with " + vote.shares.toLocaleString("en-US") + " voting shares.", details: { companyId: company.id, resolutionId: resolution.id, vote: action.vote } } };
+  }
+  if (action.type === "OWNERSHIP_CLOSE_VOTE") {
+    const resolution = company.resolutions.find(item => item.id === action.resolutionId);
+    const cast = resolution.votes.reduce((sum, item) => sum + (item.choice === "abstain" ? 0 : item.shares), 0);
+    const yes = resolution.votes.filter(item => item.choice === "for").reduce((sum, item) => sum + item.shares, 0);
+    const quorum = cast >= Math.ceil(company.outstandingShares * 0.5);
+    const passed = quorum && yes > cast / 2;
+    resolution.status = passed ? "passed" : "rejected";
+    resolution.outcome = { turn, date, votesFor: yes, votesAgainst: resolution.votes.filter(item => item.choice === "against").reduce((sum, item) => sum + item.shares, 0), quorum, castShares: cast };
+    if (passed && resolution.type === "DIVIDEND") {
+      const total = resolution.amountMinor, shares = outstandingShares(company);
+      const reserve = Math.floor(company.paidInCapitalMinor * 20 / 100);
+      const available = Math.min(company.retainedEarningsMinor, Math.max(0, company.cashMinor - company.loanBalanceMinor - reserve));
+      if (total > available) throw new Error("The company no longer has sufficient distributable cash to settle this dividend.");
+      let paid = 0;
+      const recipients = company.shareholders.filter(item => item.shares > 0);
+      recipients.forEach((holder, index) => {
+        const amount = index === recipients.length - 1 ? total - paid : Math.floor(total * holder.shares / shares);
+        paid += amount;
+        if (holder.id === "player" && amount > 0) postHousehold(finance, { id: postId("dividend"), date, turn, kind: "COMPANY_DIVIDEND", description: "Dividend received from " + company.name, amountMinor: amount, relatedId: company.id, lines: [{ accountId: "cash", debitMinor: amount, creditMinor: 0 }, { accountId: "income", debitMinor: 0, creditMinor: amount }] });
+        holder.lastDividendMinor = (holder.lastDividendMinor ?? 0) + amount;
+      });
+      company.cashMinor -= total; company.retainedEarningsMinor -= total; company.cumulativeDividendsMinor += total;
+      transaction(next, company, turn, date, "DIVIDEND_PAID", "Paid shareholder dividend", total, { resolutionId: resolution.id, playerReceiptMinor: company.shareholders.find(item => item.id === "player")?.lastDividendMinor ?? 0 });
+    }
+    transaction(next, company, turn, date, "RESOLUTION_CLOSED", "Shareholder resolution " + resolution.status, 0, { resolutionId: resolution.id, outcome: resolution.outcome });
+    return { ownership: next, finance, event: { type: "RESOLUTION_CLOSED", summary: "Resolution " + resolution.status + (resolution.type === "DIVIDEND" && passed ? "; dividend settled to eligible shareholders." : ".") , details: { companyId: company.id, resolutionId: resolution.id, outcome: resolution.outcome } } };
+  }
+  if (action.type === "OWNERSHIP_ISSUE_SHARES") {
+    const investor = investorById(action.investorId), price = sharePrice(company), amount = price * action.shares;
+    let holder = shareholderById(company, investor.id);
+    if (holder) holder.shares += action.shares;
+    else { holder = { id: investor.id, name: investor.name, type: investor.type, shares: action.shares, costBasisMinor: amount, isPlayer: false }; company.shareholders.push(holder); }
+    company.issuedShares += action.shares; company.outstandingShares += action.shares; company.paidInCapitalMinor += amount; company.cashMinor += amount;
+    company.estimatedValueMinor = equityValue(company); company.sharePriceMinor = sharePrice(company);
+    transaction(next, company, turn, date, "SHARES_ISSUED", "Issued shares to " + investor.name, amount, { investorId: investor.id, shares: action.shares, pricePerShareMinor: price });
+    return { ownership: next, finance, event: { type: "SHARES_ISSUED", summary: "Issued " + action.shares.toLocaleString("en-US") + " shares to " + investor.name + " for " + money(amount) + " Credits.", details: { companyId: company.id, investorId: investor.id, shares: action.shares, amountMinor: amount } } };
+  }
+  if (action.type === "OWNERSHIP_BUYBACK_SHARES") {
+    const holding = shareholderById(company, "player"), price = sharePrice(company), proceeds = price * action.shares;
+    const basis = Math.floor(holding.costBasisMinor * action.shares / holding.shares), gain = proceeds - basis;
+    holding.shares -= action.shares; holding.costBasisMinor -= basis;
+    company.issuedShares -= action.shares; company.outstandingShares -= action.shares; company.cashMinor -= proceeds; company.paidInCapitalMinor -= proceeds;
+    if (holding.shares === 0) company.shareholders = company.shareholders.filter(item => item.id !== "player");
+    const lines = [{ accountId: "cash", debitMinor: proceeds, creditMinor: 0 }, { accountId: "privateEquity", debitMinor: 0, creditMinor: basis }];
+    if (gain > 0) lines.push({ accountId: "income", debitMinor: 0, creditMinor: gain });
+    if (gain < 0) lines.push({ accountId: "expense", debitMinor: -gain, creditMinor: 0 });
+    postHousehold(finance, { id: postId("buyback"), date, turn, kind: "EQUITY_BUYBACK", description: "Sold shares back to " + company.name, amountMinor: proceeds, relatedId: company.id, lines });
+    company.estimatedValueMinor = equityValue(company); company.sharePriceMinor = sharePrice(company);
+    transaction(next, company, turn, date, "SHARES_BOUGHT_BACK", "Company repurchased founder shares", proceeds, { shares: action.shares, realizedGainMinor: gain, pricePerShareMinor: price });
+    return { ownership: next, finance, event: { type: "SHARES_BOUGHT_BACK", summary: "Sold " + action.shares.toLocaleString("en-US") + " shares back to " + company.name + " for " + money(proceeds) + " Credits.", details: { companyId: company.id, shares: action.shares, realizedGainMinor: gain } } };
+  }
+  if (action.type === "OWNERSHIP_APPOINT_EXECUTIVE") {
+    const existing = company.executives.find(item => item.role === action.role);
+    const appointment = { role: action.role, holderId: action.candidateId, appointedAtTurn: turn };
+    if (existing) Object.assign(existing, appointment); else company.executives.push(appointment);
+    transaction(next, company, turn, date, "EXECUTIVE_APPOINTED", "Appointed " + shareholderById(company, action.candidateId).name + " as " + action.role, 0, appointment);
+    return { ownership: next, finance, event: { type: "EXECUTIVE_APPOINTED", summary: "Executive appointment recorded: " + action.role + ".", details: { companyId: company.id, ...appointment } } };
+  }
+  throw new Error("Unsupported ownership action.");
+}
+export function advanceOwnership(state, finance, { date, turn, character }) {
+  const next = clone(state), events = [];
+  for (const company of next.companies) {
+    if (company.status !== "active" || company.lastAdvanceTurn >= turn) continue;
+    const skillAdjustment = Math.floor((character?.skills?.operations ?? 0) / 20) + Math.floor((character?.skills?.management ?? 0) / 25);
+    const rate = clamp(company.weeklyProfitBps + skillAdjustment, 5, 100);
+    const profit = Math.max(1, Math.floor(company.paidInCapitalMinor * rate / 10000));
+    company.cashMinor += profit; company.retainedEarningsMinor += profit; company.cumulativeProfitMinor += profit;
+    company.lastAdvanceTurn = turn; company.estimatedValueMinor = equityValue(company); company.sharePriceMinor = sharePrice(company);
+    const entry = { id: "ownership-" + next.nextId++, companyId: company.id, turn, date, kind: "WEEKLY_OPERATING_PROFIT", description: "Weekly operating profit", amountMinor: profit, details: { rateBps: rate } };
+    next.transactions.unshift(entry); company.transactions.unshift(entry.id);
+    events.push({ type: "COMPANY_PROFIT", summary: company.name + " generated " + money(profit) + " Credits in weekly operating profit.", details: { companyId: company.id, profitMinor: profit, rateBps: rate } });
+  }
+  return { ownership: next, finance, events };
+}
+export function validateOwnership(state, finance) {
+  const errors = [];
+  if (!state || !Number.isInteger(state.nextId) || state.nextId < 1 || !Array.isArray(state.companies) || !Array.isArray(state.transactions) || !Array.isArray(state.acquisitionHistory)) return { valid: false, errors: ["Company ownership state is malformed."] };
+  const ids = new Set();
+  for (const company of state.companies) {
+    if (!company || typeof company.id !== "string" || ids.has(company.id) || !validCompanyName(company.name) || !COMPANY_SECTORS.includes(company.sector) || !Array.isArray(company.shareholders) || !Array.isArray(company.resolutions) || !Array.isArray(company.transactions) || !Array.isArray(company.board) || !Array.isArray(company.executives)) { errors.push("A company ownership record is malformed."); continue; }
+    ids.add(company.id);
+    if (!Number.isSafeInteger(company.authorizedShares) || !Number.isSafeInteger(company.issuedShares) || !Number.isSafeInteger(company.outstandingShares) || company.authorizedShares < company.issuedShares || company.issuedShares !== company.outstandingShares || company.outstandingShares < 1 || company.outstandingShares > 100000000) errors.push("Company share authorization and issuance do not reconcile.");
+    const shareholderIds = new Set(); let shares = 0;
+    for (const holder of company.shareholders) {
+      if (!holder || typeof holder.id !== "string" || shareholderIds.has(holder.id) || !Number.isSafeInteger(holder.shares) || holder.shares < 0 || !safeNonNegative(holder.costBasisMinor)) errors.push("A shareholder holding is invalid.");
+      else { shareholderIds.add(holder.id); shares += holder.shares; }
+    }
+    if (shares !== company.outstandingShares || !company.shareholders.some(item => item.id === "player" && item.shares > 0) && !company.acquired) errors.push("The shareholder register does not reconcile to outstanding shares.");
+    for (const key of ["cashMinor", "paidInCapitalMinor", "loanBalanceMinor", "retainedEarningsMinor", "cumulativeProfitMinor", "cumulativeDividendsMinor", "estimatedValueMinor", "sharePriceMinor"]) if (!safeNonNegative(company[key])) errors.push("A company financial balance is invalid.");
+    if (company.cashMinor !== company.paidInCapitalMinor + company.loanBalanceMinor + company.retainedEarningsMinor) errors.push("Company cash does not reconcile to paid-in capital, shareholder loans and retained earnings.");
+    if (company.retainedEarningsMinor !== company.cumulativeProfitMinor - company.cumulativeDividendsMinor) errors.push("Company retained earnings do not reconcile to profit and distributions.");
+    if (company.estimatedValueMinor !== equityValue(company) || company.sharePriceMinor !== sharePrice(company)) errors.push("Company valuation does not reconcile to its equity and share register.");
+    if (!Number.isInteger(company.weeklyProfitBps) || company.weeklyProfitBps < 1 || company.weeklyProfitBps > 100 || !Number.isInteger(company.lastAdvanceTurn) || company.lastAdvanceTurn < company.foundedAtTurn) errors.push("Company operating parameters are invalid.");
+    for (const resolution of company.resolutions) {
+      if (!resolution || typeof resolution.id !== "string" || !["open", "passed", "rejected"].includes(resolution.status) || !Array.isArray(resolution.votes) || resolution.votes.some(vote => !shareholderIds.has(vote.shareholderId) || !Number.isInteger(vote.shares) || vote.shares < 1 || !["for", "against", "abstain"].includes(vote.choice))) errors.push("A shareholder resolution or vote is invalid.");
+    }
+  }
+  if (finance?.initialized) {
+    const privateEquity = finance.accounts.find(item => item.id === "privateEquity")?.balanceMinor ?? 0;
+    const shareholderLoans = finance.accounts.find(item => item.id === "shareholderLoans")?.balanceMinor ?? 0;
+    const expectedEquity = state.companies.reduce((sum, company) => sum + (shareholderById(company, "player")?.costBasisMinor ?? 0), 0);
+    const expectedLoans = state.companies.reduce((sum, company) => sum + company.loanBalanceMinor, 0);
+    if (privateEquity !== expectedEquity) errors.push("Household private-equity cost basis does not reconcile to company holdings.");
+    if (shareholderLoans !== expectedLoans) errors.push("Household shareholder-loan receivables do not reconcile to company debt.");
+  }
+  return { valid: errors.length === 0, errors };
+}
