@@ -92,7 +92,6 @@ function postCompanyJournal(company, { date, turn, kind, description, lines }) {
     id: "company-journal-" + company.id + "-" + company.ledgerSequence++,
     date, turn, kind, description, amountMinor: debit, lines: clone(lines)
   });
-  if (company.ledger.length > 500) company.ledger.length = 500;
 }
 function postCompanyTransaction(company, kind, amountMinor, date, turn, description) {
   if (!safePositive(amountMinor)) return;
