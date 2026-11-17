@@ -18,6 +18,25 @@ export const OWNERSHIP_TARGETS = Object.freeze([
 ]);
 const targetById = id => OWNERSHIP_TARGETS.find(item => item.id === id);
 const investorById = id => INVESTORS.find(item => item.id === id);
+const investorAccountById = (state, id) => state?.investorAccounts?.find(item => item.investorId === id);
+const availableInvestorCash = (state, id) => investorAccountById(state, id)?.cashMinor ?? -1;
+function ensureInvestorAccount(state, investorId) {
+  let account = investorAccountById(state, investorId);
+  if (!account) {
+    const profile = investorById(investorId);
+    const initialCashMinor = profile?.capacityMinor ?? 0;
+    account = { investorId, initialCashMinor, cashMinor: initialCashMinor };
+    state.investorAccounts.push(account);
+  }
+  return account;
+}
+function adjustInvestorCash(state, investorId, deltaMinor) {
+  const account = ensureInvestorAccount(state, investorId);
+  const nextBalance = account.cashMinor + deltaMinor;
+  if (!Number.isSafeInteger(nextBalance) || nextBalance < 0) throw new Error("Investor cash balance would become invalid or negative.");
+  account.cashMinor = nextBalance;
+  return nextBalance;
+}
 const companyById = (state, id) => state?.companies?.find(item => item.id === id);
 const shareholderById = (company, id) => company?.shareholders?.find(item => item.id === id);
 const playerShares = company => shareholderById(company, "player")?.shares ?? 0;
@@ -117,6 +136,35 @@ export function migrateOwnershipLedger(state) {
   for (const company of state?.companies ?? []) { initializeCompanyLedger(company); if (!Array.isArray(company.elections)) company.elections = []; }
   return state;
 }
+export function migrateInvestorLiquidity(state) {
+  if (!state || !Array.isArray(state.companies)) return state;
+  const existing = new Map((Array.isArray(state.investorAccounts) ? state.investorAccounts : [])
+    .filter(account => account && typeof account.investorId === "string")
+    .map(account => [account.investorId, account]));
+  const investorIds = new Set(INVESTORS.map(investor => investor.id));
+  for (const company of state.companies) {
+    for (const holder of company.shareholders ?? []) {
+      if (holder.id !== "player") investorIds.add(holder.id);
+      delete holder.cashMinor;
+    }
+  }
+  state.investorAccounts = [...investorIds].map(investorId => {
+    const account = existing.get(investorId);
+    if (account && safeNonNegative(account.cashMinor) && safeNonNegative(account.initialCashMinor)) {
+      return { investorId, initialCashMinor: account.initialCashMinor, cashMinor: account.cashMinor };
+    }
+    const profile = investorById(investorId);
+    const initialCashMinor = profile?.capacityMinor ?? 0;
+    const investedMinor = state.companies.reduce((sum, company) => {
+      const holding = shareholderById(company, investorId);
+      return sum + (safeNonNegative(holding?.costBasisMinor) ? holding.costBasisMinor : 0);
+    }, 0);
+    // Existing saves did not track one shared wallet. Ignore unrecorded sale proceeds
+    // during migration so legacy investor cash is never overstated.
+    return { investorId, initialCashMinor, cashMinor: Math.max(0, initialCashMinor - investedMinor) };
+  });
+  return state;
+}
 function transaction(state, company, turn, date, kind, description, amountMinor, details = {}) {
   const entry = { id: "ownership-" + state.nextId++, companyId: company.id, turn, date, kind, description, amountMinor, details: clone(details) };
   postCompanyTransaction(company, kind, amountMinor, date, turn, description);
@@ -154,7 +202,17 @@ function makeCompany({ id, name, sector, description, capitalMinor, shares, turn
   return company;
 }
 export function createOwnershipState() {
-  return { nextId: 1, companies: [], transactions: [], acquisitionHistory: [] };
+  return {
+    nextId: 1,
+    companies: [],
+    transactions: [],
+    acquisitionHistory: [],
+    investorAccounts: INVESTORS.map(investor => ({
+      investorId: investor.id,
+      initialCashMinor: investor.capacityMinor,
+      cashMinor: investor.capacityMinor
+    }))
+  };
 }
 export function getOwnershipPortfolio(state) {
   const companies = state?.companies ?? [];
@@ -243,7 +301,8 @@ export function validateOwnershipAction(state, finance, character, action) {
     const seller = shareholderById(company, action.sellerId), buyer = shareholderById(company, action.buyerId);
     if (!seller || (!buyer && action.buyerId !== "player") || seller.id === action.buyerId || !Number.isInteger(action.shares) || action.shares < 1 || action.shares > seller.shares || !safePositive(action.pricePerShareMinor)) return { valid: false, reason: "Choose two different existing shareholders, a valid share quantity and a positive negotiated price." };
     const proceeds = action.shares * action.pricePerShareMinor;
-    const buyerCash = action.buyerId === "player" ? cash : (Number.isSafeInteger(buyer?.cashMinor) ? buyer.cashMinor : (investorById(action.buyerId)?.capacityMinor ?? 0));
+    if (action.sellerId !== "player" && availableInvestorCash(state, action.sellerId) < 0) return { valid: false, reason: "The selling shareholder has no valid investor cash account." };
+    const buyerCash = action.buyerId === "player" ? cash : availableInvestorCash(state, action.buyerId);
     if (!safePositive(proceeds) || proceeds > buyerCash) return { valid: false, reason: "The buyer does not have enough available funds for this negotiated transfer." };
     return { valid: true };
   }
@@ -265,7 +324,7 @@ export function validateOwnershipAction(state, finance, character, action) {
     const investor = investorById(action.investorId);
     if (!playerControls(company) || !investor || !Number.isInteger(action.shares) || action.shares < 1 || action.shares > 1000000) return { valid: false, reason: "A controlling shareholder must select a valid investor and share quantity." };
     const price = sharePrice(company), cost = price * action.shares;
-    if (!safePositive(cost) || cost > investor.capacityMinor || company.issuedShares + action.shares > company.authorizedShares) return { valid: false, reason: "The investor capacity or authorized share limit would be exceeded." };
+    if (!safePositive(cost) || cost > availableInvestorCash(state, investor.id) || company.issuedShares + action.shares > company.authorizedShares) return { valid: false, reason: "The investor's available cash or the authorized share limit would be exceeded." };
     return { valid: true };
   }
   if (action.type === "OWNERSHIP_BUYBACK_SHARES") {
@@ -279,7 +338,7 @@ export function validateOwnershipAction(state, finance, character, action) {
     const holding = shareholderById(company, "player"), buyer = investorById(action.buyerId);
     if (!buyer || !Number.isInteger(action.shares) || action.shares < 1 || action.shares > (holding?.shares ?? 0) || !safePositive(action.pricePerShareMinor)) return { valid: false, reason: "Choose a valid investor, share quantity and positive sale price." };
     const proceeds = action.shares * action.pricePerShareMinor;
-    if (!safePositive(proceeds) || proceeds > buyer.capacityMinor) return { valid: false, reason: "The buyer cannot fund this secondary share purchase." };
+    if (!safePositive(proceeds) || proceeds > availableInvestorCash(state, buyer.id)) return { valid: false, reason: "The buyer does not have enough available cash for this secondary share purchase." };
     return { valid: true };
   }
   if (action.type === "OWNERSHIP_APPOINT_EXECUTIVE") {
@@ -317,7 +376,11 @@ export function applyOwnershipAction(state, finance, character, action, { date, 
     const consideration = Math.floor(capital * ownershipBps / 10000), sellerShares = totalShares - playerShares;
     const created = makeCompany({ id, name: target.name, sector: target.sector, description: target.description, capitalMinor: capital, shares: totalShares, turn, date, weeklyProfitBps: target.weeklyProfitBps, acquired: true });
     created.shareholders = [{ id: "player", name: "You", type: "Shareholder", shares: playerShares, costBasisMinor: consideration, isPlayer: true }];
-    if (sellerShares > 0) created.shareholders.push({ id: "seller-" + id, name: "Original shareholders", type: "Existing owners", shares: sellerShares, costBasisMinor: capital - consideration, isPlayer: false });
+    if (sellerShares > 0) {
+      const sellerId = "seller-" + id;
+      created.shareholders.push({ id: sellerId, name: "Original shareholders", type: "Existing owners", shares: sellerShares, costBasisMinor: capital - consideration, isPlayer: false });
+      ensureInvestorAccount(next, sellerId);
+    }
     next.companies.push(created);
     postHousehold(finance, { id: postId("acquire"), date, turn, kind: "COMPANY_ACQUISITION", description: "Acquired " + (ownershipBps === 10000 ? "100% of " : ownershipBps / 100 + "% of ") + target.name, amountMinor: consideration, relatedId: id, lines: [{ accountId: "privateEquity", debitMinor: consideration, creditMinor: 0 }, { accountId: "cash", debitMinor: 0, creditMinor: consideration }] });
     next.acquisitionHistory.unshift({ id: "acquisition-" + id, companyId: id, companyName: target.name, turn, date, considerationMinor: consideration, ownershipBps });
@@ -391,6 +454,7 @@ export function applyOwnershipAction(state, finance, character, action, { date, 
     const passed = quorum && yes > cast / 2;
     resolution.status = passed ? "passed" : "rejected";
     resolution.outcome = { turn, date, votesFor: yes, votesAgainst: resolution.votes.filter(item => item.choice === "against").reduce((sum, item) => sum + item.shares, 0), quorum, castShares: cast };
+    const investorDividendCredits = [];
     if (passed && resolution.type === "DIVIDEND") {
       const total = resolution.amountMinor, shares = outstandingShares(company);
       const reserve = Math.floor(company.paidInCapitalMinor * 20 / 100);
@@ -401,12 +465,21 @@ export function applyOwnershipAction(state, finance, character, action, { date, 
       recipients.forEach((holder, index) => {
         const amount = index === recipients.length - 1 ? total - paid : Math.floor(total * holder.shares / shares);
         paid += amount;
-        if (holder.id === "player" && amount > 0) postHousehold(finance, { id: postId("dividend"), date, turn, kind: "COMPANY_DIVIDEND", description: "Dividend received from " + company.name, amountMinor: amount, relatedId: company.id, lines: [{ accountId: "cash", debitMinor: amount, creditMinor: 0 }, { accountId: "income", debitMinor: 0, creditMinor: amount }] });
+        if (holder.id === "player" && amount > 0) {
+          postHousehold(finance, { id: postId("dividend"), date, turn, kind: "COMPANY_DIVIDEND", description: "Dividend received from " + company.name, amountMinor: amount, relatedId: company.id, lines: [{ accountId: "cash", debitMinor: amount, creditMinor: 0 }, { accountId: "income", debitMinor: 0, creditMinor: amount }] });
+        } else if (amount > 0) {
+          adjustInvestorCash(next, holder.id, amount);
+          investorDividendCredits.push({ investorId: holder.id, amountMinor: amount });
+        }
         holder.lastDividendMinor = (holder.lastDividendMinor ?? 0) + amount;
       });
       company.cashMinor -= total; company.retainedEarningsMinor -= total; company.cumulativeDividendsMinor += total;
       company.estimatedValueMinor = equityValue(company); company.sharePriceMinor = sharePrice(company);
-      transaction(next, company, turn, date, "DIVIDEND_PAID", "Paid shareholder dividend", total, { resolutionId: resolution.id, playerReceiptMinor: company.shareholders.find(item => item.id === "player")?.lastDividendMinor ?? 0 });
+      transaction(next, company, turn, date, "DIVIDEND_PAID", "Paid shareholder dividend", total, {
+        resolutionId: resolution.id,
+        playerReceiptMinor: company.shareholders.find(item => item.id === "player")?.lastDividendMinor ?? 0,
+        investorCashCredits: investorDividendCredits
+      });
     }
     if (passed && resolution.type === "CAPITAL_EXPANSION") {
       const amount = resolution.amountMinor, reserve = Math.floor(company.paidInCapitalMinor * 20 / 100);
@@ -430,11 +503,17 @@ export function applyOwnershipAction(state, finance, character, action, { date, 
   if (action.type === "OWNERSHIP_ISSUE_SHARES") {
     const investor = investorById(action.investorId), price = sharePrice(company), amount = price * action.shares;
     let holder = shareholderById(company, investor.id);
-    if (holder) holder.shares += action.shares;
-    else { holder = { id: investor.id, name: investor.name, type: investor.type, shares: action.shares, costBasisMinor: amount, isPlayer: false }; company.shareholders.push(holder); }
+    if (holder) {
+      holder.shares += action.shares;
+      holder.costBasisMinor += amount;
+    } else {
+      holder = { id: investor.id, name: investor.name, type: investor.type, shares: action.shares, costBasisMinor: amount, isPlayer: false };
+      company.shareholders.push(holder);
+    }
+    adjustInvestorCash(next, investor.id, -amount);
     company.issuedShares += action.shares; company.outstandingShares += action.shares; company.paidInCapitalMinor += amount; company.cashMinor += amount;
     company.estimatedValueMinor = equityValue(company); company.sharePriceMinor = sharePrice(company);
-    transaction(next, company, turn, date, "SHARES_ISSUED", "Issued shares to " + investor.name, amount, { investorId: investor.id, shares: action.shares, pricePerShareMinor: price });
+    transaction(next, company, turn, date, "SHARES_ISSUED", "Issued shares to " + investor.name, amount, { investorId: investor.id, shares: action.shares, pricePerShareMinor: price, investorCashDeltaMinor: -amount });
     return { ownership: next, finance, event: { type: "SHARES_ISSUED", summary: "Issued " + action.shares.toLocaleString("en-US") + " shares to " + investor.name + " for " + money(amount) + " Credits.", details: { companyId: company.id, investorId: investor.id, shares: action.shares, amountMinor: amount } } };
   }
   if (action.type === "OWNERSHIP_BUYBACK_SHARES") {
@@ -459,11 +538,12 @@ export function applyOwnershipAction(state, finance, character, action, { date, 
     if (holding.shares === 0) company.shareholders = company.shareholders.filter(item => item.id !== "player");
     if (buyerHolding) { buyerHolding.shares += shares; buyerHolding.costBasisMinor += proceeds; }
     else company.shareholders.push({ id: buyer.id, name: buyer.name, type: buyer.type, shares, costBasisMinor: proceeds, isPlayer: false });
+    adjustInvestorCash(next, buyer.id, -proceeds);
     const lines = [{ accountId: "cash", debitMinor: proceeds, creditMinor: 0 }, { accountId: "privateEquity", debitMinor: 0, creditMinor: basis }];
     if (gain > 0) lines.push({ accountId: "income", debitMinor: 0, creditMinor: gain });
     if (gain < 0) lines.push({ accountId: "expense", debitMinor: -gain, creditMinor: 0 });
     postHousehold(finance, { id: postId("secondary-sale"), date, turn, kind: "EQUITY_SECONDARY_SALE", description: "Sold shares in " + company.name + " to " + buyer.name, amountMinor: proceeds, relatedId: company.id, lines });
-    transaction(next, company, turn, date, "SECONDARY_SHARE_SALE", "Sold shares to " + buyer.name, proceeds, { buyerId: buyer.id, shares, pricePerShareMinor: action.pricePerShareMinor, realizedGainMinor: gain });
+    transaction(next, company, turn, date, "SECONDARY_SHARE_SALE", "Sold shares to " + buyer.name, proceeds, { buyerId: buyer.id, shares, pricePerShareMinor: action.pricePerShareMinor, realizedGainMinor: gain, investorCashDeltaMinor: -proceeds });
     return { ownership: next, finance, event: { type: "SECONDARY_SHARE_SALE", summary: "Sold " + shares.toLocaleString("en-US") + " shares in " + company.name + " to " + buyer.name + " for " + money(proceeds) + " Credits.", details: { companyId: company.id, shares, proceedsMinor: proceeds, realizedGainMinor: gain } } };
   }
   if (action.type === "OWNERSHIP_APPOINT_EXECUTIVE") {
@@ -492,9 +572,12 @@ export function applyOwnershipAction(state, finance, character, action, { date, 
     const shares = action.shares, proceeds = shares * action.pricePerShareMinor;
     const basis = Math.floor(seller.costBasisMinor * shares / seller.shares), gain = proceeds - basis;
     seller.shares -= shares; seller.costBasisMinor -= basis;
-    if (seller.id !== "player") seller.cashMinor = (seller.cashMinor ?? investorById(seller.id)?.capacityMinor ?? 0) + proceeds;
-    if (buyer) { buyer.shares += shares; buyer.costBasisMinor += proceeds; if (buyer.id !== "player") buyer.cashMinor = (buyer.cashMinor ?? investorById(buyer.id)?.capacityMinor ?? 0) - proceeds; }
-    else company.shareholders.push({ id: "player", name: "You", type: "Shareholder", shares, costBasisMinor: proceeds, isPlayer: true });
+    if (seller.id !== "player") adjustInvestorCash(next, seller.id, proceeds);
+    if (buyer) {
+      buyer.shares += shares;
+      buyer.costBasisMinor += proceeds;
+      if (buyer.id !== "player") adjustInvestorCash(next, buyer.id, -proceeds);
+    } else company.shareholders.push({ id: "player", name: "You", type: "Shareholder", shares, costBasisMinor: proceeds, isPlayer: true });
     if (seller.shares === 0) company.shareholders = company.shareholders.filter(item => item.id !== seller.id);
     if (action.sellerId === "player") {
       const lines = [{ accountId: "cash", debitMinor: proceeds, creditMinor: 0 }, { accountId: "privateEquity", debitMinor: 0, creditMinor: basis }];
@@ -504,7 +587,15 @@ export function applyOwnershipAction(state, finance, character, action, { date, 
     } else if (action.buyerId === "player") {
       postHousehold(finance, { id: postId("negotiated-purchase"), date, turn, kind: "NEGOTIATED_EQUITY_PURCHASE", description: "Purchased shares in " + company.name, amountMinor: proceeds, relatedId: company.id, lines: [{ accountId: "privateEquity", debitMinor: proceeds, creditMinor: 0 }, { accountId: "cash", debitMinor: 0, creditMinor: proceeds }] });
     }
-    transaction(next, company, turn, date, "NEGOTIATED_SHARE_TRANSFER", "Transferred shares between " + action.sellerId + " and " + action.buyerId, proceeds, { sellerId: action.sellerId, buyerId: action.buyerId, shares, pricePerShareMinor: action.pricePerShareMinor, realizedGainMinor: action.sellerId === "player" ? gain : null });
+    transaction(next, company, turn, date, "NEGOTIATED_SHARE_TRANSFER", "Transferred shares between " + action.sellerId + " and " + action.buyerId, proceeds, {
+      sellerId: action.sellerId,
+      buyerId: action.buyerId,
+      shares,
+      pricePerShareMinor: action.pricePerShareMinor,
+      realizedGainMinor: action.sellerId === "player" ? gain : null,
+      sellerCashCreditMinor: action.sellerId === "player" ? 0 : proceeds,
+      buyerCashDebitMinor: action.buyerId === "player" ? 0 : proceeds
+    });
     return { ownership: next, finance, event: { type: "NEGOTIATED_SHARE_TRANSFER", summary: "Negotiated transfer of " + shares.toLocaleString("en-US") + " shares settled for " + money(proceeds) + " Credits.", details: { companyId: company.id, sellerId: action.sellerId, buyerId: action.buyerId, shares, proceedsMinor: proceeds, realizedGainMinor: action.sellerId === "player" ? gain : null } } };
   }
   if (action.type === "OWNERSHIP_OPEN_BOARD_ELECTION") {
@@ -573,7 +664,15 @@ export function advanceOwnership(state, finance, { date, turn, character }) {
 }
 export function validateOwnership(state, finance) {
   const errors = [];
-  if (!state || !Number.isInteger(state.nextId) || state.nextId < 1 || !Array.isArray(state.companies) || !Array.isArray(state.transactions) || !Array.isArray(state.acquisitionHistory)) return { valid: false, errors: ["Company ownership state is malformed."] };
+  if (!state || !Number.isInteger(state.nextId) || state.nextId < 1 || !Array.isArray(state.companies) || !Array.isArray(state.transactions) || !Array.isArray(state.acquisitionHistory) || !Array.isArray(state.investorAccounts)) return { valid: false, errors: ["Company ownership state is malformed."] };
+  const accountIds = new Set();
+  for (const account of state.investorAccounts) {
+    if (!account || typeof account.investorId !== "string" || account.investorId === "player" || accountIds.has(account.investorId) || !safeNonNegative(account.initialCashMinor) || !safeNonNegative(account.cashMinor)) errors.push("An investor cash account is invalid.");
+    else accountIds.add(account.investorId);
+  }
+  for (const investor of INVESTORS) if (!accountIds.has(investor.id)) errors.push("A configured investor is missing its portfolio cash account.");
+  const shareholderInvestorIds = new Set(state.companies.flatMap(company => (company.shareholders ?? []).filter(holder => holder.id !== "player").map(holder => holder.id)));
+  for (const investorId of shareholderInvestorIds) if (!accountIds.has(investorId)) errors.push("A non-player shareholder is missing its global cash account.");
   const ids = new Set();
   for (const company of state.companies) {
     if (!company || typeof company.id !== "string" || ids.has(company.id) || !validCompanyName(company.name) || !COMPANY_SECTORS.includes(company.sector) || !Array.isArray(company.shareholders) || !Array.isArray(company.resolutions) || !Array.isArray(company.elections) || !Array.isArray(company.transactions) || !Array.isArray(company.board) || !Array.isArray(company.executives)) { errors.push("A company ownership record is malformed."); continue; }
