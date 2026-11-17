@@ -1,13 +1,13 @@
 {
   "name": "networth-game",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "private": true,
   "type": "module",
-  "description": "Networth — deterministic financial life simulation with employment, education, banking, credit, investment markets, property and collectibles, household finance, a double-entry ledger and local saves",
+  "description": "Networth — deterministic financial life simulation with employment, education, banking, credit, investment markets, property and collectibles, business operations, household finance, a double-entry ledger and local saves",
   "scripts": {
     "dev": "node scripts/serve.mjs",
     "test": "node --test",
-    "check": "node --check js/app.js && node --check js/views.js && node --check js/components.js && node --check js/navigation.js && node --check js/finance.js && node --check js/career.js && node --check js/banking.js && node --check js/markets.js && node --check js/assets.js && node --check js/simulation-core.js && node --check js/persistence.js && node --check js/game-ui.js"
+    "check": "node --check js/app.js && node --check js/views.js && node --check js/components.js && node --check js/navigation.js && node --check js/finance.js && node --check js/career.js && node --check js/banking.js && node --check js/markets.js && node --check js/assets.js && node --check js/businesses.js && node --check js/simulation-core.js && node --check js/persistence.js && node --check js/game-ui.js"
   },
   "engines": {
     "node": ">=18"
