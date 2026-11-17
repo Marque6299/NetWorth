@@ -87,7 +87,7 @@ test("weekly asset valuations are deterministic and update unrealized equity rat
   }
   assert.deepEqual(a.assets, b.assets);
   assert.equal(a.finance.ledger.filter(item => item.kind.startsWith("COLLECTIBLE_UNREALIZED_")).length > 0, true);
-  assert.equal(getFinanceSummary(a.finance).cash, cash - (getFinanceSummary(a.finance).cash - cash));
+  assert.equal(getFinanceSummary(a.finance).cash, cash);
   assert.equal(validateGameState(a).valid, true);
 });
 
