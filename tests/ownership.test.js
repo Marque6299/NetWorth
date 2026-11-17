@@ -90,13 +90,65 @@ test("invalid founding requests are rejected without mutating the source save", 
   assert.deepEqual(state, before);
 });
 
-test("weekly company operations create retained earnings and raise estimated equity value", () => {
-  let state = found(makeGame()), company = state.ownership.companies[0], before = company.estimatedValueMinor;
+test("weekly company results derive from sales, unit costs, payroll and overhead rather than contributed capital", () => {
+  let state = found(makeGame("early-career", "operating-pnl"));
   state = act(state, { type: "ADVANCE_TURN" });
-  company = state.ownership.companies[0];
-  assert.ok(company.cumulativeProfitMinor > 0);
-  assert.ok(company.cashMinor > 50000);
-  assert.ok(company.estimatedValueMinor > before);
+  const company = state.ownership.companies[0], op = company.operations;
+  assert.ok(op.lastDemandUnits > 0);
+  assert.ok(op.lastUnitsSold > 0);
+  assert.equal(op.lastUnitsSold, Math.min(op.lastDemandUnits, op.staffCount * op.capacityPerEmployee));
+  assert.equal(op.lastRevenueMinor, op.lastUnitsSold * op.priceMinor);
+  assert.equal(op.lastCostOfGoodsMinor, op.lastUnitsSold * op.unitCostMinor);
+  assert.equal(op.lastPayrollMinor, op.staffCount * op.wagePerEmployeeMinor);
+  assert.equal(op.lastExpensesMinor, op.lastCostOfGoodsMinor + op.lastPayrollMinor + op.lastOverheadMinor);
+  assert.equal(op.lastProfitMinor, op.lastRevenueMinor - op.lastExpensesMinor);
+  assert.equal(company.retainedEarningsMinor, op.lastProfitMinor);
+  assert.equal(company.cashMinor + company.operatingPayablesMinor, 50000 + op.lastProfitMinor);
+  assert.equal(company.ledger[0].kind, "WEEKLY_OPERATING_RESULT");
+  assert.equal(validateGameState(state).valid, true);
+});
+
+test("the same operating setup earns the same result regardless of the founder's initial capital", () => {
+  const base = makeGame("early-career", "capital-is-not-revenue");
+  let small = found(base);
+  let large = act(base, { type: "OWNERSHIP_FOUND_COMPANY", name: "Large Capital Studio", sector: "Technology", amountMinor: 100000, shares: 100000 });
+  small = act(small, { type: "ADVANCE_TURN" });
+  large = act(large, { type: "ADVANCE_TURN" });
+  const smallOps = small.ownership.companies[0].operations;
+  const largeOps = large.ownership.companies[0].operations;
+  assert.equal(smallOps.lastRevenueMinor, largeOps.lastRevenueMinor);
+  assert.equal(smallOps.lastExpensesMinor, largeOps.lastExpensesMinor);
+  assert.equal(smallOps.lastProfitMinor, largeOps.lastProfitMinor);
+  assert.notEqual(small.ownership.companies[0].paidInCapitalMinor, large.ownership.companies[0].paidInCapitalMinor);
+});
+
+test("company pricing and staffing decisions change future operating results", () => {
+  let baseline = found(makeGame("independent", "company-controls"));
+  let adjusted = structuredClone(baseline);
+  const companyId = baseline.ownership.companies[0].id;
+  adjusted = act(adjusted, { type: "OWNERSHIP_SET_OPERATING_PRICE", companyId, priceMinor: 2200 });
+  adjusted = act(adjusted, { type: "OWNERSHIP_SET_OPERATING_STAFFING", companyId, staffCount: 5 });
+  assert.equal(adjusted.ownership.companies[0].operations.priceMinor, 2200);
+  assert.equal(adjusted.ownership.companies[0].operations.staffCount, 5);
+  baseline = act(baseline, { type: "ADVANCE_TURN" });
+  adjusted = act(adjusted, { type: "ADVANCE_TURN" });
+  assert.notEqual(baseline.ownership.companies[0].operations.lastRevenueMinor, adjusted.ownership.companies[0].operations.lastRevenueMinor);
+  assert.notEqual(baseline.ownership.companies[0].operations.lastExpensesMinor, adjusted.ownership.companies[0].operations.lastExpensesMinor);
+  assert.equal(validateGameState(adjusted).valid, true);
+});
+
+test("a cash-constrained company accrues operating payables instead of creating negative cash", () => {
+  let state = makeGame("early-career", "operating-payables");
+  state = act(state, { type: "OWNERSHIP_FOUND_COMPANY", name: "Cash Tight Clinics", sector: "Healthcare", amountMinor: 25000, shares: 100000 });
+  const companyId = state.ownership.companies[0].id;
+  state = act(state, { type: "OWNERSHIP_SET_OPERATING_STAFFING", companyId, staffCount: 10 });
+  state = act(state, { type: "OWNERSHIP_SET_OPERATING_PRICE", companyId, priceMinor: 1000 });
+  for (let i = 0; i < 12; i++) state = act(state, { type: "ADVANCE_TURN" });
+  const company = state.ownership.companies[0];
+  assert.ok(company.operatingPayablesMinor > 0);
+  assert.ok(company.cashMinor >= 0);
+  assert.ok(company.operations.history.length <= 52);
+  assert.ok(company.operations.lastProfitMinor < 0);
   assert.equal(validateGameState(state).valid, true);
 });
 
@@ -286,23 +338,25 @@ test("schema v9 ownership saves gain a balanced opening company ledger during mi
     delete company.ledger;
     delete company.ledgerAccounts;
     delete company.ledgerSequence;
+    delete company.operations;
+    delete company.operatingPayablesMinor;
   }
   const migrated = migrateGameState(old);
   const company = migrated.ownership.companies[0];
-  assert.equal(migrated.schemaVersion, 11);
+  assert.equal(migrated.schemaVersion, 12);
   assert.equal(company.ledger.length, 1);
   assert.equal(company.ledger[0].kind, "OPENING_BALANCE");
   assert.equal(validateGameState(migrated).valid, true);
 });
 
-test("schema v8 saves migrate to schema v10 with an empty ownership subsystem", () => {
+test("schema v8 saves migrate to schema v12 with an empty ownership subsystem", () => {
   const old = makeGame();
   old.schemaVersion = 8;
   old.simulationVersion = "0.9.0";
   delete old.ownership;
   old.finance.accounts = old.finance.accounts.filter(item => !["privateEquity", "shareholderLoans"].includes(item.id));
   const migrated = migrateGameState(old);
-  assert.equal(migrated.schemaVersion, 11);
+  assert.equal(migrated.schemaVersion, 12);
   assert.deepEqual(migrated.ownership.companies, []);
   assert.equal(validateGameState(migrated).valid, true);
 });
@@ -377,7 +431,7 @@ test("non-player shareholders cast deterministic votes and receive pro-rata divi
 });
 
 
-test("schema v10 saves migrate investor cash from portfolio holdings without reusing company-local wallets", () => {
+test("schema v10 saves migrate investor cash and company operations without reusing company-local wallets", () => {
   let old = found(makeGame());
   const companyId = old.ownership.companies[0].id;
   old = act(old, { type: "OWNERSHIP_ISSUE_SHARES", companyId, investorId: "mira-chen", shares: 20000 });
@@ -385,13 +439,36 @@ test("schema v10 saves migrate investor cash from portfolio holdings without reu
   old.simulationVersion = "0.10.1";
   delete old.ownership.investorAccounts;
   for (const company of old.ownership.companies) {
+    delete company.operations;
+    delete company.operatingPayablesMinor;
+    company.ledgerAccounts = company.ledgerAccounts.filter(account => !["operatingPayables", "operatingRevenue", "operatingExpenses"].includes(account.id));
     for (const holder of company.shareholders) delete holder.cashMinor;
   }
   const migrated = migrateGameState(old);
   const wallet = migrated.ownership.investorAccounts.find(item => item.investorId === "mira-chen");
-  assert.equal(migrated.schemaVersion, 11);
+  assert.equal(migrated.schemaVersion, 12);
   assert.equal(wallet.initialCashMinor, 25000000);
   assert.equal(wallet.cashMinor, 25000000 - 20000);
+  assert.equal(migrated.ownership.companies[0].operations.productLabel, "Client projects");
   assert.equal("cashMinor" in migrated.ownership.companies[0].shareholders.find(item => item.id === "mira-chen"), false);
+  assert.equal(validateGameState(migrated).valid, true);
+});
+
+
+test("schema v11 company records migrate to sector operations and operating journal accounts", () => {
+  let old = found(makeGame());
+  old.schemaVersion = 11;
+  old.simulationVersion = "0.11.0";
+  const company = old.ownership.companies[0];
+  delete company.operations;
+  delete company.operatingPayablesMinor;
+  company.ledgerAccounts = company.ledgerAccounts.filter(account => !["operatingPayables", "operatingRevenue", "operatingExpenses"].includes(account.id));
+  const migrated = migrateGameState(old);
+  const migratedCompany = migrated.ownership.companies[0];
+  assert.equal(migrated.schemaVersion, 12);
+  assert.equal(migratedCompany.operations.productLabel, "Client projects");
+  assert.equal(migratedCompany.operations.priceMinor, 1800);
+  assert.equal(migratedCompany.operatingPayablesMinor, 0);
+  assert.ok(migratedCompany.ledgerAccounts.some(account => account.id === "operatingRevenue"));
   assert.equal(validateGameState(migrated).valid, true);
 });
