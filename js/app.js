@@ -9,7 +9,7 @@ import { renderGamePanel } from "./game-ui.js";
 const root=document.querySelector("#app");
 let currentGame=null,saveSlots=[],storageError="",feedbackMessage="",busy=false;
 function sidebar(active){
- return '<aside class="sidebar"><a class="brand" href="#/overview" data-route="overview"><span class="brand-mark">N</span><span><b>NETWORTH</b><small>CAPITAL & CONSEQUENCE</small></span></a><div class="side-rule"></div><div class="nav-groups">'+GROUPS.map(group=>'<section class="nav-group"><label>'+esc(group.label)+'</label><nav>'+group.pages.map(page=>navLink(page,active)).join("")+'</nav></section>').join("")+'</div><div class="side-bottom"><b>EARLY ACCESS SHELL</b><small>BUILD 0.4.0 / PHASE 04</small><p>A world of decisions.<br>A future of your making.</p></div></aside>';
+ return '<aside class="sidebar"><a class="brand" href="#/overview" data-route="overview"><span class="brand-mark">N</span><span><b>NETWORTH</b><small>CAPITAL & CONSEQUENCE</small></span></a><div class="side-rule"></div><div class="nav-groups">'+GROUPS.map(group=>'<section class="nav-group"><label>'+esc(group.label)+'</label><nav>'+group.pages.map(page=>navLink(page,active)).join("")+'</nav></section>').join("")+'</div><div class="side-bottom"><b>EARLY ACCESS SHELL</b><small>BUILD 0.5.0 / PHASE 05</small><p>A world of decisions.<br>A future of your making.</p></div></aside>';
 }
 function topbar(page){
  const saveLabel=currentGame?`TURN ${currentGame.calendar.turn} · ${currentGame.calendar.currentDate}`:"NO SAVE LOADED";
@@ -17,14 +17,14 @@ function topbar(page){
  return '<header class="topbar"><div class="crumb">NETWORTH '+icon("right")+' <b>'+esc(page.label.toUpperCase())+'</b></div><div class="top-actions"><div class="search" id="searchWrap">'+icon("search")+'<input id="globalSearch" type="search" placeholder="Find a workspace" aria-label="Find a workspace" aria-controls="searchResults" aria-expanded="false" autocomplete="off"><kbd>⌘ K</kbd><div id="searchResults" class="results" role="listbox" hidden></div></div><div class="save"><i></i><span><small>SAVE STATUS</small><b>'+esc(saveLabel)+'</b></span></div><span class="avatar" aria-label="Player profile">'+avatar+'</span></div></header>';
 }
 function heading(page){
- return '<div class="page-heading"><div><label>'+(page.id==="overview"?"YOUR FINANCIAL COMMAND CENTER":"NETWORTH WORKSPACE / "+page.id.toUpperCase())+'</label><h1>'+esc(page.title)+'</h1><p>'+esc(page.description)+'</p></div><span class="phase">◇ PHASE 04 <small>HOUSEHOLD FINANCE / 09 SECTIONS</small></span></div>';
+ return '<div class="page-heading"><div><label>'+(page.id==="overview"?"YOUR FINANCIAL COMMAND CENTER":"NETWORTH WORKSPACE / "+page.id.toUpperCase())+'</label><h1>'+esc(page.title)+'</h1><p>'+esc(page.description)+'</p></div><span class="phase">◇ PHASE 05 <small>EMPLOYMENT & EDUCATION / 09 SECTIONS</small></span></div>';
 }
 function render(){
  let id=getPageIdFromHash(location.hash);
  if(!location.hash||!PAGES.some(page=>"#/"+page.id===location.hash)){history.replaceState(null,"","#/overview");id="overview";}
  const page=getPage(id);
- root.innerHTML=sidebar(id)+'<div class="main-column">'+topbar(page)+'<main class="main"><a class="skip" href="#content">Skip to content</a><div id="content">'+heading(page)+'<div class="content">'+(id==="overview"?renderOverview(currentGame)+renderGamePanel(currentGame,saveSlots,storageError,feedbackMessage):id==="personal"?renderPersonalView(currentGame):id==="finance"?renderFinanceView(currentGame):renderSection(id))+'</div></div><footer class="page-footer"><span>NETWORTH · CAPITAL & CONSEQUENCE</span><span>PHASE 04 / HOUSEHOLD FINANCE · LOCAL GAME STATE</span></footer></main></div>';
- document.title=page.label+" — Networth";setupSearch();setupGameControls();setupPersonalControls();setupFinanceControls();root.classList.add("ready");
+ root.innerHTML=sidebar(id)+'<div class="main-column">'+topbar(page)+'<main class="main"><a class="skip" href="#content">Skip to content</a><div id="content">'+heading(page)+'<div class="content">'+(id==="overview"?renderOverview(currentGame)+renderGamePanel(currentGame,saveSlots,storageError,feedbackMessage):id==="personal"?renderPersonalView(currentGame):id==="finance"?renderFinanceView(currentGame):renderSection(id))+'</div></div><footer class="page-footer"><span>NETWORTH · CAPITAL & CONSEQUENCE</span><span>PHASE 05 / HOUSEHOLD FINANCE · LOCAL GAME STATE</span></footer></main></div>';
+ document.title=page.label+" — Networth";setupSearch();setupGameControls();setupPersonalControls();setupCareerControls();setupFinanceControls();root.classList.add("ready");
 }
 function closeSearch(){const input=document.querySelector("#globalSearch"),results=document.querySelector("#searchResults");if(results)results.hidden=true;if(input)input.setAttribute("aria-expanded","false");}
 function setupSearch(){
@@ -101,5 +101,20 @@ function setupFinanceControls(){
    else{action.amountMinor=parseCredits(data.get("amount"));if(type==="TRANSFER_FUNDS"){action.from=String(data.get("from"));action.to=String(data.get("to"));}if(type==="RECORD_UNREALIZED_CHANGE")action.direction=String(data.get("direction"));if(data.get("description"))action.description=String(data.get("description"));}
    const result=resolveAction(currentGame,action);if(!result.ok)throw new Error(result.reason);currentGame=result.state;setFeedback(type==="SET_BUDGET"?"Monthly budget updated.": "Finance journal entry posted.");render();
   }catch(error){setFeedback(error.message);const target=document.querySelector("#financeFeedback");if(target)target.textContent=error.message;}
+ }));
+}
+
+function setupCareerControls(){
+ document.querySelectorAll("[data-career-action]").forEach(button=>button.addEventListener("click",()=>{
+  if(!currentGame)return;
+  const type=button.dataset.careerAction,action={type};
+  if(type==="APPLY_FOR_JOB")action.jobId=button.dataset.jobId;
+  if(type==="ACCEPT_JOB_OFFER")action.applicationId=button.dataset.applicationId;
+  if(type==="ENROLL_COURSE")action.courseId=button.dataset.courseId;
+  try{
+   const result=resolveAction(currentGame,action);if(!result.ok)throw new Error(result.reason);
+   currentGame=result.state;setFeedback(result.event?.summary??"Career decision recorded.");render();
+   const feedback=document.querySelector("#careerFeedback");if(feedback)feedback.textContent=feedbackMessage;
+  }catch(error){setFeedback(error.message);const feedback=document.querySelector("#careerFeedback");if(feedback)feedback.textContent=error.message;}
  }));
 }
