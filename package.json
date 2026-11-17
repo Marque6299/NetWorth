@@ -1,13 +1,13 @@
 {
   "name": "networth-game",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "Networth — turn-based financial life simulation and economic strategy game",
+  "description": "Networth — turn-based financial life simulation with deterministic simulation core and local saves",
   "scripts": {
     "dev": "node scripts/serve.mjs",
     "test": "node --test",
-    "check": "node --check js/app.js && node --check js/views.js && node --check js/components.js && node --check js/navigation.js"
+    "check": "node --check js/app.js && node --check js/views.js && node --check js/components.js && node --check js/navigation.js && node --check js/simulation-core.js && node --check js/persistence.js && node --check js/game-ui.js"
   },
   "engines": {
     "node": ">=18"
