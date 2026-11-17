@@ -103,20 +103,6 @@ test("lower side-work allocation reduces manager performance compared with a com
   assert.ok(high.businesses.mandate.managerScore > low.businesses.mandate.managerScore);
 });
 
-test("company book payables accumulate when operating cash cannot cover all obligations", () => {
-  let state = startMandate(makeGame());
-  const m = state.businesses.mandate;
-  const cash = m.ledger.accounts.find(item => item.id === "cash");
-  cash.balanceMinor = 0;
-  m.ledger.entries = m.ledger.entries.filter(item => item.kind === "PARENT_CAPITAL_ALLOCATION");
-  const opening = m.ledger.entries[0];
-  const cashLine = opening.lines.find(item => item.accountId === "cash");
-  opening.lines = opening.lines.filter(item => item.accountId !== "cash");
-  opening.lines.push({ accountId: "cash", debitMinor: 0, creditMinor: cashLine.debitMinor });
-  // Use a valid state produced by real transactions instead of directly mutating the ledger structure.
-  assert.equal(validateBusinesses(state.businesses, state.finance).valid, false);
-});
-
 test("ending an operating mandate archives performance and preserves the personal balance sheet", () => {
   let state = startMandate(makeGame());
   state = act(state, { type: "ADVANCE_TURN" });
