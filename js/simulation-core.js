@@ -1,5 +1,6 @@
-export const SAVE_SCHEMA_VERSION = 2;
-export const SIMULATION_VERSION = "0.3.0";
+import { createOpeningFinance, validateFinance, validateFinanceAction, applyFinanceAction } from "./finance.js";
+export const SAVE_SCHEMA_VERSION = 3;
+export const SIMULATION_VERSION = "0.4.0";
 export const DAYS_PER_TURN = 7;
 export const WEEKLY_TIME_BUDGET = 112;
 export const SKILL_KEYS = ["financialLiteracy","negotiation","management","sales","technical","research","leadership","networking","operations"];
@@ -19,7 +20,7 @@ export function normalizeSeed(seed){if(typeof seed==="number"&&Number.isFinite(s
 export function createGameState({seed="networth",startDate="2026-01-05"}={}){
  if(!isIsoDate(startDate))throw new Error("Start date must be a valid YYYY-MM-DD date.");
  const normalizedSeed=normalizeSeed(seed),now=new Date().toISOString();
- return {schemaVersion:SAVE_SCHEMA_VERSION,simulationVersion:SIMULATION_VERSION,meta:{gameId:`nw-${normalizedSeed.toString(16).padStart(8,"0")}`,seed:normalizedSeed,createdAt:now,updatedAt:now},calendar:{currentDate:startDate,turn:0,daysPerTurn:DAYS_PER_TURN},rng:{state:normalizedSeed},life:{character:null,timeAllocation:null,goals:[]},eventLog:[{id:"system-0",turn:0,date:startDate,type:"GAME_CREATED",summary:"A new Networth simulation was created.",details:{seed:normalizedSeed}}],actionCount:0};
+ return {schemaVersion:SAVE_SCHEMA_VERSION,simulationVersion:SIMULATION_VERSION,meta:{gameId:`nw-${normalizedSeed.toString(16).padStart(8,"0")}`,seed:normalizedSeed,createdAt:now,updatedAt:now},calendar:{currentDate:startDate,turn:0,daysPerTurn:DAYS_PER_TURN},rng:{state:normalizedSeed},life:{character:null,timeAllocation:null,goals:[]},finance:null,eventLog:[{id:"system-0",turn:0,date:startDate,type:"GAME_CREATED",summary:"A new Networth simulation was created.",details:{seed:normalizedSeed}}],actionCount:0};
 }
 export function drawRandom(rng,maxExclusive){if(!rng||!Number.isInteger(rng.state)||!Number.isInteger(maxExclusive)||maxExclusive<1)throw new Error("A valid RNG state and positive integer range are required.");let value=(rng.state+0x6D2B79F5)>>>0;let t=value;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return {value:Math.floor(((t^(t>>>14))>>>0)/4294967296*maxExclusive),rng:{state:value}};}
 function appendEvent(state,type,summary,details={}){const id=state.actionCount+1;state.actionCount=id;state.eventLog.push({id:`action-${id}`,turn:state.calendar.turn,date:state.calendar.currentDate,type,summary,details});}
@@ -59,6 +60,7 @@ export function validateAction(state,action){
   if(!state.life?.character)return {valid:false,reason:"Create a character before planning your time."};
   return validateAllocation(action.allocation);
  }
+ if(action.type.startsWith("RECORD_")||["TRANSFER_FUNDS","BORROW_MONEY","REPAY_DEBT","SET_BUDGET"].includes(action.type))return validateFinanceAction(state.finance,action);
  if(action.type==="ADD_GOAL"){
   if(!state.life?.character)return {valid:false,reason:"Create a character before adding goals."};
   const result=validateGoal(action.goal);return result.valid?result:{valid:false,reason:result.reason};
@@ -96,6 +98,7 @@ export function resolveAction(state,action){
   const profile=STARTING_PROFILES.find(item=>item.id===action.profileId);
   next.life.character={id:`character-${next.meta.seed.toString(16)}`,name:action.name.trim(),age:action.age,profileId:profile.id,profileName:profile.name,education:profile.education,experienceYears:profile.experienceYears,employment:profile.employment,startingContext:{capital:profile.startingCapital,debt:profile.startingDebt,monthlyExpense:profile.monthlyExpenseContext,dependents:profile.dependents},skills:clone(profile.skills),wellbeing:{health:profile.health,energy:profile.energy,stress:profile.stress,happiness:profile.happiness},reputation:profile.reputation,contacts:profile.contacts,createdAtTurn:next.calendar.turn};
   next.life.timeAllocation=clone(DEFAULT_TIME_ALLOCATION);
+  next.finance=createOpeningFinance(next.life.character.startingContext,next.calendar.currentDate,next.calendar.turn);
   appendEvent(next,"CHARACTER_CREATED",`${action.name.trim()} began as a ${profile.name.toLowerCase()}.`,{profileId:profile.id,age:action.age});
  }else if(action.type==="SET_TIME_ALLOCATION"){
   next.life.timeAllocation={...Object.fromEntries(TIME_KEYS.map(key=>[key,action.allocation[key]])),studyFocus:action.allocation.studyFocus};
@@ -103,12 +106,16 @@ export function resolveAction(state,action){
  }else if(action.type==="ADD_GOAL"){
   const goal={id:`goal-${next.actionCount+1}`,title:action.goal.title.trim(),metric:action.goal.metric,target:action.goal.target,status:"active",createdAtTurn:next.calendar.turn};
   next.life.goals.push(goal);appendEvent(next,"GOAL_ADDED",`New goal added: ${goal.title}`,{goalId:goal.id,metric:goal.metric,target:goal.target});
+ }else if(action.type.startsWith("RECORD_")||["TRANSFER_FUNDS","BORROW_MONEY","REPAY_DEBT","SET_BUDGET"].includes(action.type)){
+  next.finance=applyFinanceAction(next.finance,action,{date:next.calendar.currentDate,turn:next.calendar.turn,sequence:next.actionCount+1});
+  appendEvent(next,action.type,action.description||action.type.replaceAll("_"," ").toLowerCase(),{amountMinor:action.amountMinor??null,category:action.category??null});
  }
  return {ok:true,state:next,event:next.eventLog[next.eventLog.length-1]};
 }
 export function migrateGameState(input){
  const state=clone(input);
- if(state.schemaVersion===1){state.life={character:null,timeAllocation:null,goals:[]};state.schemaVersion=2;state.simulationVersion=SIMULATION_VERSION;}
+ if(state.schemaVersion===1){state.life={character:null,timeAllocation:null,goals:[]};state.schemaVersion=2;}
+ if(state.schemaVersion===2){state.finance=null;state.schemaVersion=3;state.simulationVersion=SIMULATION_VERSION;}
  if(state.schemaVersion!==SAVE_SCHEMA_VERSION)throw new Error(`Unsupported save schema version: ${state.schemaVersion}`);
  return state;
 }
@@ -123,6 +130,7 @@ export function validateGameState(state){
  if(!state.life||!Array.isArray(state.life.goals))errors.push("Character and life data is invalid.");
  if(state.life?.character){const c=state.life.character;if(!validName(c.name)||!Number.isInteger(c.age)||!c.skills||!c.wellbeing||!c.startingContext)errors.push("Character profile is invalid.");else{for(const key of SKILL_KEYS)if(!Number.isFinite(c.skills[key])||c.skills[key]<0||c.skills[key]>100)errors.push(`Character skill ${key} is invalid.`);for(const key of WELLBEING_KEYS)if(!Number.isFinite(c.wellbeing[key])||c.wellbeing[key]<0||c.wellbeing[key]>100)errors.push(`Character well-being ${key} is invalid.`);}if(!state.life.timeAllocation||!validateAllocation(state.life.timeAllocation).valid)errors.push("Character time allocation is invalid.");}
  for(const goal of state.life?.goals??[]){if(!validateGoal(goal).valid||!["active","completed"].includes(goal.status))errors.push("A character goal is invalid.");}
+ if(state.life?.character){const financeCheck=validateFinance(state.finance);if(!financeCheck.valid)errors.push(...financeCheck.errors);}else if(state.finance!==null)errors.push("Finance must remain uninitialized until a character is created.");
  return {valid:errors.length===0,errors};
 }
 export function stableStringify(value){if(value===null||typeof value!=="object")return JSON.stringify(value);if(Array.isArray(value))return `[${value.map(stableStringify).join(",")}]`;return `{${Object.keys(value).sort().map(key=>`${JSON.stringify(key)}:${stableStringify(value[key])}`).join(",")}}`;}
