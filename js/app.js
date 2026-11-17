@@ -286,16 +286,22 @@ function setupBusinessControls() {
     action.name = String(data.get("name")); action.sector = String(data.get("sector"));
     action.amountMinor = parseCredits(data.get("amount")); action.shares = Number(data.get("shares"));
     action.description = String(data.get("description") ?? "");
+   } else if (type === "OWNERSHIP_ACQUIRE_TARGET") {
+    action.targetId = String(data.get("targetId")); action.ownershipBps = Number(data.get("ownershipBps"));
    } else if (["OWNERSHIP_CONTRIBUTE_CAPITAL","OWNERSHIP_TAKE_LOAN","OWNERSHIP_REPAY_LOAN","OWNERSHIP_PROPOSE_DIVIDEND"].includes(type)) {
     action.amountMinor = parseCredits(data.get("amount"));
    } else if (type === "OWNERSHIP_ISSUE_SHARES") {
     action.investorId = String(data.get("investorId")); action.shares = Number(data.get("shares"));
    } else if (type === "OWNERSHIP_BUYBACK_SHARES") {
     action.shares = Number(data.get("shares"));
+   } else if (type === "OWNERSHIP_SELL_SHARES") {
+    action.buyerId = String(data.get("buyerId")); action.shares = Number(data.get("shares")); action.pricePerShareMinor = parseCredits(data.get("price"));
    } else if (type === "OWNERSHIP_CREATE_RESOLUTION") {
     action.title = String(data.get("title")); action.resolutionType = String(data.get("resolutionType"));
    } else if (type === "OWNERSHIP_APPOINT_EXECUTIVE") {
     action.role = String(data.get("role")); action.candidateId = String(data.get("candidateId"));
+   } else if (type === "OWNERSHIP_APPOINT_DIRECTOR") {
+    action.seat = String(data.get("seat")); action.candidateId = String(data.get("candidateId"));
    } else {
     throw new Error("Unsupported ownership form.");
    }
@@ -315,6 +321,7 @@ function setupBusinessControls() {
   if (button.dataset.targetId) action.targetId = button.dataset.targetId;
   if (button.dataset.resolutionId) action.resolutionId = button.dataset.resolutionId;
   if (button.dataset.vote) action.vote = button.dataset.vote;
+  if (button.dataset.candidateId) action.candidateId = button.dataset.candidateId;
   if (type === "OWNERSHIP_ACQUIRE_TARGET" && !window.confirm("Acquire this company outright using household cash? The purchase will be recorded as a private-equity asset.")) return;
   try {
    const result = resolveAction(currentGame, action);
