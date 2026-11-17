@@ -24,14 +24,16 @@ Use the Phase 10 preview build from the open draft pull request. These are manua
 3. Advance a shareholder loan of 300 Credits. Confirm household cash decreases and shareholder-loan receivables increase.
 4. Repay 100 Credits from the company. Confirm household cash increases and both company debt and the household receivable decrease by 100 Credits.
 5. Issue 10,000 new shares to a fictional investor. Confirm the investor appears in the cap table and founder ownership is diluted.
-6. If sufficient company cash is available, sell a small number of founder shares back to the company. Confirm proceeds, remaining shares and realized gain/loss are reflected in Finance.
+6. Sell a small number of founder shares to a different fictional investor at a custom price. Confirm shares move between holders, company cash is unchanged, and the household ledger records proceeds and realized gain/loss.
+7. Appoint an investor shareholder as a director, then remove the director. Confirm the board list updates and the Chair seat remains intact.
+8. If sufficient company cash is available, sell a small number of founder shares back to the company. Confirm proceeds, remaining shares and realized gain/loss are reflected in Finance.
 
 ## C. Governance and distributions
 
 1. Advance enough turns to accumulate retained earnings.
 2. Propose a dividend amount that is within distributable retained earnings and the operating reserve.
 3. Vote **for** the dividend and close the resolution.
-4. Confirm the resolution passes, the player's pro-rata dividend is posted to household cash/income, and company cash and retained earnings decrease by the full distribution.
+4. Confirm NPC shareholders cast deterministic votes, the resolution passes, distributions are split pro rata, the player's dividend is posted to household cash/income, and company cash and retained earnings decrease by the full distribution.
 5. Open a generic shareholder resolution, cast a vote and close it. Confirm the outcome and vote totals remain visible.
 6. Appoint an eligible shareholder as CEO, CFO or COO. Confirm the executive record updates.
 
