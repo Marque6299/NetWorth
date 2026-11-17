@@ -323,6 +323,10 @@ function setupBusinessControls() {
     action.description = String(data.get("description") ?? "");
    } else if (type === "OWNERSHIP_ACQUIRE_TARGET") {
     action.targetId = String(data.get("targetId")); action.ownershipBps = Number(data.get("ownershipBps"));
+   } else if (type === "OWNERSHIP_SET_OPERATING_PRICE") {
+    action.priceMinor = parseCredits(data.get("price"));
+   } else if (type === "OWNERSHIP_SET_OPERATING_STAFFING") {
+    action.staffCount = Number(data.get("staffCount"));
    } else if (["OWNERSHIP_CONTRIBUTE_CAPITAL","OWNERSHIP_TAKE_LOAN","OWNERSHIP_REPAY_LOAN","OWNERSHIP_PROPOSE_DIVIDEND"].includes(type)) {
     action.amountMinor = parseCredits(data.get("amount"));
    } else if (type === "OWNERSHIP_ISSUE_SHARES") {
