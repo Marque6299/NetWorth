@@ -21,6 +21,7 @@ test("Phase 10 schema v9 JSON backups restore company ownership and migrate the 
  old=founding.state;
  old.schemaVersion=9;
  old.simulationVersion="0.10.0";
+ delete old.ownership.investorAccounts;
  for(const company of old.ownership.companies){
   delete company.ledger;
   delete company.ledgerAccounts;
