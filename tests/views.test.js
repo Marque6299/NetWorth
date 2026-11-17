@@ -33,7 +33,7 @@ test("Assets workspace renders property and collectible catalogues and acquisiti
   let state = createGameState({ seed: "asset-view" });
   state = resolveAction(state, { type: "CREATE_CHARACTER", name: "Taylor Morgan", age: 29, profileId: "career-switcher" }).state;
   const html = renderAssetsView(state);
-  for (const text of ["Owned properties", "Available property listings", "Harborview Starter Studio", "Meridian Street Retail Suite", "Owned collectibles", "Vintage Rangefinder Camera", "Classic Collector Automobile", "Property mortgages"]) assert.ok(html.includes(text), text);
+  for (const text of ["Owned properties", "Available property listings", "Harborview Starter Studio", "Meridian Street Retail Suite", "Owned collectibles", "Vintage Rangefinder Camera", "Classic Collector Automobile", "PROPERTY MORTGAGES"]) assert.ok(html.includes(text), text);
   assert.match(html, /data-asset-form="ASSET_BUY_PROPERTY"/);
   assert.match(html, /data-asset-form="ASSET_BUY_COLLECTIBLE"/);
 });
