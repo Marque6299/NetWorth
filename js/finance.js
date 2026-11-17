@@ -21,7 +21,7 @@ export function createOpeningFinance(context,date,turn=0){
   const finance={currency:"CREDITS",accounts:[
     account("cash","Cash","asset","cash"),account("savings","Savings","asset","savings"),account("investment","Investment holdings","asset","investment"),
     account("loan","Opening personal debt","liability","loan"),account("openingEquity","Opening net position","equity","opening"),
-    account("income","Income","income","income"),account("expense","Household expenses","expense","expense"),account("unrealizedGain","Unrealized valuation changes","equity","valuation")
+    account("income","Income","income","income"),account("expense","Household expenses","expense","expense"),account("unrealizedGain","Unrealized valuation changes","equity","valuation"),account("privateEquity","Private company investments","asset","private-equity"),account("shareholderLoans","Shareholder loan receivables","asset","shareholder-loans")
   ],ledger:[],budgets:[{id:"budget-household",category:"household",label:"Household spending",monthlyLimitMinor:monthly}],monthlyBaselineMinor:monthly,initialized:true};
   const lines=[];
   if(capital)lines.push({accountId:"cash",debitMinor:capital,creditMinor:0});

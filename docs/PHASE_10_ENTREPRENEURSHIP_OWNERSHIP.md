@@ -166,3 +166,26 @@ The Network workspace should surface ownership relationships from the same under
 ## Phase boundary
 
 Phase 10 is complete only after the ownership subsystem, accounting integration, governance actions, UI, migration, automated tests and browser acceptance checks are implemented and accepted. Phase 11 remains gated until then.
+
+ 
+## Implementation checkpoint — first functional milestone
+
+The first functional milestone is implemented on branch `phase-10-ownership`:
+
+- Versioned ownership state and schema v8 → v9 migration.
+- Company formation, founder shares, authorized/issued/outstanding share reconciliation and a shareholder register.
+- Household private-equity and shareholder-loan asset accounts.
+- Additional capital contributions, investor share issuance/dilution, company buybacks and shareholder loans.
+- Deterministic weekly operating-profit accrual and indicative equity valuations.
+- Dividend proposals, share-weighted player voting, quorum/approval calculation and pro-rata settlement.
+- Full acquisition of selected fictional companies.
+- Executive appointments and generic shareholder resolutions.
+- Businesses workspace ownership portfolio, company formation, acquisitions and governance controls.
+
+### Known boundaries before Phase 10 acceptance
+
+- Share transfers are supported between the player and the fictional investor directory; fully open-ended counterparties and negotiated transfer agreements remain future work. Minority-stake acquisitions are supported from the target directory.
+- NPC shareholders now submit deterministic votes based on proposal type and company financial conditions. Their preferences are intentionally simple and require further balancing.
+- Board seats can be appointed and removed, and executive appointments are supported. Generic non-dividend resolutions are recorded and voted on but do not yet trigger their corresponding corporate action; board elections and director terms remain future work.
+- Weekly operating profit is a deterministic abstraction based on paid-in capital and character operating/management skills; it is not yet connected to the detailed Phase 9 branch ledger.
+- The first milestone now passes the GitHub Actions automated suite (136 tests) and JavaScript syntax checks. Cloudflare Pages preview deployment also reports success. Browser acceptance remains pending before this phase can be accepted.
