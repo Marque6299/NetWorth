@@ -143,8 +143,10 @@ export function migrateInvestorLiquidity(state) {
     .map(account => [account.investorId, account]));
   const investorIds = new Set(INVESTORS.map(investor => investor.id));
   for (const company of state.companies) {
-    for (const holder of company.shareholders ?? []) {
-      if (holder.id !== "player") investorIds.add(holder.id);
+    if (!company || !Array.isArray(company.shareholders)) continue;
+    for (const holder of company.shareholders) {
+      if (!holder) continue;
+      if (holder.id !== "player" && typeof holder.id === "string") investorIds.add(holder.id);
       delete holder.cashMinor;
     }
   }
@@ -671,7 +673,7 @@ export function validateOwnership(state, finance) {
     else accountIds.add(account.investorId);
   }
   for (const investor of INVESTORS) if (!accountIds.has(investor.id)) errors.push("A configured investor is missing its portfolio cash account.");
-  const shareholderInvestorIds = new Set(state.companies.flatMap(company => (company.shareholders ?? []).filter(holder => holder.id !== "player").map(holder => holder.id)));
+  const shareholderInvestorIds = new Set(state.companies.flatMap(company => (Array.isArray(company?.shareholders) ? company.shareholders : []).filter(holder => holder && holder.id !== "player").map(holder => holder.id)));
   for (const investorId of shareholderInvestorIds) if (!accountIds.has(investorId)) errors.push("A non-player shareholder is missing its global cash account.");
   const ids = new Set();
   for (const company of state.companies) {
