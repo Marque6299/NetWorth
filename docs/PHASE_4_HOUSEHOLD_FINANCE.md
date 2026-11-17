@@ -98,7 +98,7 @@ The save schema is now version 3. Migration paths:
 
 ## Known limitations
 
-- No employment income or payroll; those belong to Phase 5.
+- Employment income and payroll are now integrated by Phase 5; this phase defines the underlying household ledger.
 - No bank products, interest rates, credit scoring, scheduled debt service or interest accrual; those belong to Phase 6.
 - Investment valuation is a controlled manual simulation action until Phase 7 markets exist; it is not a live market price.
 - Budgets are planning limits only; budget-versus-actual category reporting and recurring expense automation remain future work.
