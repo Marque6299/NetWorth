@@ -134,3 +134,17 @@ test("schema v6 saves migrate to schema v7 without losing earlier systems", () =
   assert.deepEqual(migrated.banking, old.banking);
   assert.equal(validateGameState(migrated).valid, true);
 });
+
+test("property and collectible condition wears down periodically and can be restored", () => {
+  let state = act(makeGame(), { type: "ASSET_BUY_PROPERTY", listingId: "property-studio", use: "owner-occupied" });
+  state = act(state, { type: "ASSET_BUY_COLLECTIBLE", catalogId: "collectible-camera" });
+  for (let i = 0; i < 13; i++) state = act(state, { type: "ADVANCE_TURN" });
+  const property = state.assets.properties[0], collectible = state.assets.collectibles[0];
+  assert.equal(property.condition, 99);
+  assert.equal(collectible.condition, 99);
+  state = act(state, { type: "ASSET_MAINTAIN_PROPERTY", propertyId: property.id });
+  state = act(state, { type: "ASSET_MAINTAIN_COLLECTIBLE", collectibleId: collectible.id });
+  assert.ok(state.assets.properties[0].condition > 99);
+  assert.ok(state.assets.collectibles[0].condition > 99);
+  assert.equal(validateGameState(state).valid, true);
+});
