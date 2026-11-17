@@ -122,7 +122,7 @@ test("asset portfolio summarizes property and collectible value separately", () 
   assert.equal(validateGameState(state).valid, true);
 });
 
-test("schema v6 saves migrate to schema v7 without losing earlier systems", () => {
+test("schema v6 saves migrate to schema v8 without losing earlier systems", () => {
   const old = makeGame();
   old.schemaVersion = 6;
   old.simulationVersion = "0.7.0";
