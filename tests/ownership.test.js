@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createGameState, resolveAction, validateGameState, migrateGameState } from "../js/simulation-core.js";
 import { getFinanceSummary, validateFinance } from "../js/finance.js";
-import { getOwnershipPortfolio, validateOwnership } from "../js/ownership.js";
+import { getInvestorLiquidity, getOwnershipPortfolio, validateOwnership } from "../js/ownership.js";
 import { createExport, parseImport } from "../js/persistence.js";
 import { renderBusinessesView } from "../js/views.js";
 
@@ -29,6 +29,13 @@ test("Phase 10 initializes a separate ownership subsystem and global investor ca
   assert.equal(validateGameState(state).valid, true);
 });
 
+test("investor liquidity view exposes the shared available balance", () => {
+  const state = found(makeGame());
+  state.ownership.investorAccounts.find(item => item.investorId === "mira-chen").cashMinor = 123456;
+  const mira = getInvestorLiquidity(state.ownership).find(item => item.id === "mira-chen");
+  assert.equal(mira.name, "Mira Chen");
+  assert.equal(mira.cashMinor, 123456);
+});
 test("investor cash is shared across companies and cannot be reused", () => {
   let state = found(makeGame());
   const firstCompanyId = state.ownership.companies[0].id;
