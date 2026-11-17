@@ -14,7 +14,7 @@ The project is delivered one phase at a time. Each phase has an acceptance gate;
 | 7 | Investment markets | **Accepted** |
 | 8 | Property and collectibles | **Accepted** |
 | 9 | Business operations | **Accepted** |
-| 10 | Entrepreneurship, equity, acquisitions and governance | **In progress — specification locked** |
+| 10 | Entrepreneurship, equity, acquisitions and governance | **In progress — core ownership engine and workspace implemented; automated/browser acceptance pending** |
 | 11 | News, events and interconnected economy | Not started |
 | 12 | Financial freedom and endgame | Not started |
 | 13 | Learning, balancing, accessibility and polish | Not started |
