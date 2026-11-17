@@ -34,6 +34,8 @@ Phase 9 operating mandates remain separate. Accepting a management mandate must 
 - Validate that shareholder allocations reconcile exactly to issued/outstanding shares.
 - Do not treat authorized but unissued shares as player wealth.
 - Keep company cash, retained earnings and equity valuation separate from household cash.
+- Maintain one portfolio-wide cash balance per non-player investor across all companies; company-local shareholder fields must never be used as the source of truth.
+- Debit that balance for primary share issues and secondary/negotiated purchases; credit it for share-sale proceeds and paid dividends.
 
 ### 3. Personal investment and capital contributions
 
@@ -91,13 +93,15 @@ Phase 9 operating mandates remain separate. Accepting a management mandate must 
 - Share-sale proceeds post to cash; realized gain/loss is calculated against the tracked cost basis.
 - Company books and household books remain separate and reconcile independently.
 - All financial amounts use integer minor units; shares use integer units.
+- Investor cash is global across company holdings; no investor can spend the same balance twice by investing in another company.
+- Paid investor dividends and secondary sale proceeds increase the same shared cash balance.
 - Invalid actions must not partially mutate state.
 - All random outcomes, if introduced, must use the existing seeded simulation generator.
 
 ## Save compatibility
 
-- Advance the save schema from v8 to v9 for ownership, then v9 to v10 for company ledgers.
-- v8 saves initialize an empty ownership subsystem; v9 saves receive an opening company-ledger entry for each existing company while preserving every existing subsystem and historical record.
+- Advance the save schema from v8 to v9 for ownership, v9 to v10 for company ledgers, and v10 to v11 for portfolio-wide investor cash.
+- v8 saves initialize an empty ownership subsystem; v9 saves receive an opening company-ledger entry for each existing company while v10 saves initialize shared investor balances from their existing portfolio holdings.
 - Earlier schema versions continue through the existing migration chain.
 - New companies, cap tables, investments, shareholder loans, company journal entries and account balances, transactions, valuations, distributions, acquisition proposals, votes, board seats, executive appointments and governance history must survive IndexedDB save/load and JSON export/import.
 - Import validation must reject malformed share totals, invalid ownership percentages, duplicate IDs, negative balances and broken company/household reconciliations.
@@ -149,14 +153,17 @@ The Network workspace should surface ownership relationships from the same under
 
 ### Compatibility and regression
 - v8 saves migrate to v9 with empty ownership state and all Phase 1–9 data preserved.
-- JSON export/import preserves the full ownership and governance state.
+- JSON export/import preserves the full ownership, governance and investor cash state.
+- A schema v10 save with an investor holding migrates to v11 with a conservative cash balance and no per-company cash fields.
+- An investor who spends most of their cash in one company cannot spend it again in another company.
+- Secondary investor purchases debit the buyer; negotiated sales credit sellers; settled dividends credit non-player shareholders.
 - Existing Phase 9 operations, banking, markets, assets, Finance and career behavior remain unchanged.
 - Deterministic seeds and action sequences produce identical ownership and governance outcomes.
 - Full test suite and syntax checks pass.
 
 ### Company double-entry accounting — implemented milestone
 
-Each owned company maintains its own journal and chart of accounts, separate from household Finance. Company cash, share capital, shareholder-loan liabilities and retained earnings are posted through balanced entries. The journal reconciles to the company balance sheet and is persisted in saves and JSON backups. v9 company records are migrated with a balanced opening-balance journal in schema v10.
+Each owned company maintains its own journal and chart of accounts, separate from household Finance. Company cash, share capital, shareholder-loan liabilities and retained earnings are posted through balanced entries. The journal reconciles to the company balance sheet and is persisted in saves and JSON backups. v9 company records are migrated with a balanced opening-balance journal in schema v10. Schema v11 adds portfolio-wide investor cash accounts; legacy balances are initialized conservatively from aggregate current shareholder cost basis because prior saves did not maintain a global investor wallet.
 
 ## Explicit exclusions
 
@@ -191,5 +198,5 @@ The first functional milestone is implemented on branch `phase-10-ownership`:
 - Negotiated transfers are available between shareholders already on a company's register. New external counterparties and a full offer/escrow workflow are not included.
 - NPC voting now uses deterministic investor profiles for dividend and growth preferences. These profiles still need balancing across longer simulations.
 - Board elections and fixed director terms are implemented. Capital-expansion resolutions move company cash into capital assets; executive-appointment resolutions update the executive register. Broader resolution types, board succession and multi-seat election cycles remain future work.
-- Weekly owned-company operating profit remains a deterministic capital-and-skill abstraction. Phase 9 management mandates intentionally remain separate; integrating a detailed operating division into an owned company is a later simulation-economy enhancement.
+- Weekly owned-company operating profit remains a deterministic capital-and-skill abstraction. Phase 9 management mandates intentionally remain separate; integrating a detailed operating division into an owned company is still required before Phase 10 can pass its economic-balancing gate.
 - The first milestone now passes the GitHub Actions automated suite (136 tests) and JavaScript syntax checks. Cloudflare Pages preview deployment also reports success. Browser acceptance remains pending before this phase can be accepted.
