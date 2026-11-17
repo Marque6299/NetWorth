@@ -54,7 +54,7 @@ Phase 9 operating mandates remain separate. Accepting a management mandate must 
 
 ### 5. Share transfers and secondary transactions
 
-- Allow the player to sell or transfer shares to named fictional counterparties.
+- Allow the player to negotiate share transfers between any existing shareholders, including player purchases and sales.
 - Validate seller holdings, buyer funds, transfer quantity and agreed price.
 - Update both parties' holdings atomically.
 - Record transaction price, date, counterparties, shares, fees (if any), realized gain/loss and ownership history.
@@ -72,10 +72,10 @@ Phase 9 operating mandates remain separate. Accepting a management mandate must 
 
 ### 7. Corporate governance
 
-- Support shareholder voting based on eligible voting shares.
+- Support shareholder voting based on eligible voting shares, deterministic investor-specific preferences, and executable capital-expansion and executive-appointment resolutions.
 - Include meeting proposals with a defined voting window and clear quorum/approval rules.
 - Record votes, abstentions, quorum, outcome and effective turn.
-- Support a board with seats, appointment/removal rules and board resolutions.
+- Support a board with seats, appointment/removal rules, shareholder-elected directors and fixed director terms.
 - Distinguish board authority from executive operating authority.
 - Provide a basic executive structure (CEO / finance / operations) with appointment and removal actions.
 - Ensure only eligible shareholders or directors can perform the relevant governance action.
@@ -154,7 +154,7 @@ The Network workspace should surface ownership relationships from the same under
 - Deterministic seeds and action sequences produce identical ownership and governance outcomes.
 - Full test suite and syntax checks pass.
 
-### Company double-entry accounting — completion milestone
+### Company double-entry accounting — implemented milestone
 
 Each owned company maintains its own journal and chart of accounts, separate from household Finance. Company cash, share capital, shareholder-loan liabilities and retained earnings are posted through balanced entries. The journal reconciles to the company balance sheet and is persisted in saves and JSON backups. v9 company records are migrated with a balanced opening-balance journal in schema v10.
 
@@ -186,10 +186,10 @@ The first functional milestone is implemented on branch `phase-10-ownership`:
 - Executive appointments and generic shareholder resolutions.
 - Businesses workspace ownership portfolio, company formation, acquisitions and governance controls.
 
-### Known boundaries before Phase 10 acceptance
+### Remaining Phase 10 boundaries before acceptance
 
-- Share transfers are supported between the player and the fictional investor directory; fully open-ended counterparties and negotiated transfer agreements remain future work. Minority-stake acquisitions are supported from the target directory.
-- NPC shareholders now submit deterministic votes based on proposal type and company financial conditions. Their preferences are intentionally simple and require further balancing.
-- Board seats can be appointed and removed, and executive appointments are supported. Generic non-dividend resolutions are recorded and voted on but do not yet trigger their corresponding corporate action; board elections and director terms remain future work.
-- Weekly operating profit is a deterministic abstraction based on paid-in capital and character operating/management skills; it is not yet connected to the detailed Phase 9 branch ledger.
+- Negotiated transfers are available between shareholders already on a company's register. New external counterparties and a full offer/escrow workflow are not included.
+- NPC voting now uses deterministic investor profiles for dividend and growth preferences. These profiles still need balancing across longer simulations.
+- Board elections and fixed director terms are implemented. Capital-expansion resolutions move company cash into capital assets; executive-appointment resolutions update the executive register. Broader resolution types, board succession and multi-seat election cycles remain future work.
+- Weekly owned-company operating profit remains a deterministic capital-and-skill abstraction. Phase 9 management mandates intentionally remain separate; integrating a detailed operating division into an owned company is a later simulation-economy enhancement.
 - The first milestone now passes the GitHub Actions automated suite (136 tests) and JavaScript syntax checks. Cloudflare Pages preview deployment also reports success. Browser acceptance remains pending before this phase can be accepted.
