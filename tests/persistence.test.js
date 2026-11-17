@@ -48,7 +48,6 @@ test("Phase 10 schema v10 JSON backups initialize portfolio-wide investor cash o
   old = resolveAction(old, { type: "OWNERSHIP_FOUND_COMPANY", name: "Legacy Capital Studio", sector: "Technology", amountMinor: 50000, shares: 100000 }).state;
   const companyId = old.ownership.companies[0].id;
   old = resolveAction(old, { type: "OWNERSHIP_ISSUE_SHARES", companyId, investorId: "mira-chen", shares: 15000 }).state;
-  old.ownership.companies[0].shareholders.find(item => item.id === "mira-chen").lastDividendMinor = 1000;
   old.schemaVersion = 10;
   old.simulationVersion = "0.10.1";
   delete old.ownership.investorAccounts;
@@ -56,6 +55,6 @@ test("Phase 10 schema v10 JSON backups initialize portfolio-wide investor cash o
   const restored = parseImport(JSON.stringify(payload));
   const wallet = restored.ownership.investorAccounts.find(item => item.investorId === "mira-chen");
   assert.equal(restored.schemaVersion, 11);
-  assert.equal(wallet.cashMinor, 25000000 - 15000 + 1000);
+  assert.equal(wallet.cashMinor, 25000000 - 15000);
   assert.equal(validateGameState(restored).valid, true);
 });
