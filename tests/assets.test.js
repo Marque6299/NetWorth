@@ -128,7 +128,7 @@ test("schema v6 saves migrate to schema v8 without losing earlier systems", () =
   old.simulationVersion = "0.7.0";
   delete old.assets;
   const migrated = migrateGameState(old);
-  assert.equal(migrated.schemaVersion, 7);
+  assert.equal(migrated.schemaVersion, 8);
   assert.equal(migrated.assets.properties.length, 0);
   assert.equal(migrated.assets.collectibles.length, 0);
   assert.deepEqual(migrated.markets, old.markets);
