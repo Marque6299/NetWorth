@@ -139,14 +139,14 @@ test("company ownership and governance records survive JSON export and import", 
   assert.equal(validateGameState(restored).valid, true);
 });
 
-test("schema v8 saves migrate to schema v9 with an empty ownership subsystem", () => {
+test("schema v8 saves migrate to schema v10 with an empty ownership subsystem with an empty ownership subsystem", () => {
   const old = makeGame();
   old.schemaVersion = 8;
   old.simulationVersion = "0.9.0";
   delete old.ownership;
   old.finance.accounts = old.finance.accounts.filter(item => !["privateEquity", "shareholderLoans"].includes(item.id));
   const migrated = migrateGameState(old);
-  assert.equal(migrated.schemaVersion, 9);
+  assert.equal(migrated.schemaVersion, 10);
   assert.deepEqual(migrated.ownership.companies, []);
   assert.equal(validateGameState(migrated).valid, true);
 });
