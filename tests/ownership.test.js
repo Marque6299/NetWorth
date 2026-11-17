@@ -119,6 +119,7 @@ test("company buyback realizes gain or loss and reduces founder shares and cost 
 
 test("acquisition purchases 100 percent of a listed target and posts the purchase as an investment", () => {
   let state = makeGame("independent");
+  state = act(state, { type: "RECORD_INCOME", amountMinor: 2000000, category: "business-income", description: "Sale of an inherited asset" });
   state = act(state, { type: "OWNERSHIP_ACQUIRE_TARGET", targetId: "cobalt-digital-works" });
   const company = state.ownership.companies[0];
   assert.equal(company.name, "Cobalt Digital Works");
