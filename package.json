@@ -1,6 +1,6 @@
 {
   "name": "networth-game",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "private": true,
   "type": "module",
   "description": "Networth — deterministic financial life simulation with employment, education, banking, credit, investment markets, property, collectibles, company ownership, equity and governance",
