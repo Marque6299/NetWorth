@@ -18,12 +18,45 @@ const act = (state, action) => {
 };
 const found = state => act(state, { type: "OWNERSHIP_FOUND_COMPANY", name: "Meridian Data Studio", sector: "Technology", amountMinor: 50000, shares: 100000, description: "Analytics and workflow services." });
 
-test("Phase 10 initializes a separate ownership subsystem and household investment accounts", () => {
+test("Phase 10 initializes a separate ownership subsystem and global investor cash accounts", () => {
   const state = makeGame();
   assert.deepEqual(state.ownership.companies, []);
   assert.equal(state.finance.accounts.some(item => item.id === "privateEquity"), true);
   assert.equal(state.finance.accounts.some(item => item.id === "shareholderLoans"), true);
+  assert.equal(state.ownership.investorAccounts.length, 4);
+  assert.equal(state.ownership.investorAccounts.find(item => item.investorId === "mira-chen").cashMinor, 25000000);
   assert.equal(validateOwnership(state.ownership, state.finance).valid, true);
+  assert.equal(validateGameState(state).valid, true);
+});
+
+test("investor cash is shared across companies and cannot be reused", () => {
+  let state = found(makeGame());
+  const firstCompanyId = state.ownership.companies[0].id;
+  state = act(state, { type: "OWNERSHIP_FOUND_COMPANY", name: "Northstar Services", sector: "Technology", amountMinor: 50000, shares: 100000 });
+  const secondCompanyId = state.ownership.companies[1].id;
+  const wallet = state.ownership.investorAccounts.find(item => item.investorId === "mira-chen");
+  wallet.cashMinor = 25000;
+  state = act(state, { type: "OWNERSHIP_ISSUE_SHARES", companyId: firstCompanyId, investorId: "mira-chen", shares: 20000 });
+  assert.equal(wallet.cashMinor, 5000);
+  const before = structuredClone(state);
+  const rejected = resolveAction(state, { type: "OWNERSHIP_ISSUE_SHARES", companyId: secondCompanyId, investorId: "mira-chen", shares: 10000 });
+  assert.equal(rejected.ok, false);
+  assert.match(rejected.reason, /available cash/i);
+  assert.deepEqual(rejected.state, before);
+  assert.equal(validateGameState(state).valid, true);
+});
+
+test("repeated share issues accumulate investor cost basis and debit the same wallet", () => {
+  let state = found(makeGame());
+  const companyId = state.ownership.companies[0].id;
+  state = act(state, { type: "OWNERSHIP_ISSUE_SHARES", companyId, investorId: "mira-chen", shares: 10000 });
+  state = act(state, { type: "OWNERSHIP_ISSUE_SHARES", companyId, investorId: "mira-chen", shares: 5000 });
+  const company = state.ownership.companies[0];
+  const holding = company.shareholders.find(item => item.id === "mira-chen");
+  const wallet = state.ownership.investorAccounts.find(item => item.investorId === "mira-chen");
+  assert.equal(holding.shares, 15000);
+  assert.equal(holding.costBasisMinor, 15000);
+  assert.equal(wallet.cashMinor, 25000000 - 15000);
   assert.equal(validateGameState(state).valid, true);
 });
 
@@ -173,14 +206,17 @@ test("negotiated transfers settle between current holders and reconcile player c
   let state = found(makeGame()), companyId = state.ownership.companies[0].id;
   state = act(state, { type: "OWNERSHIP_ISSUE_SHARES", companyId, investorId: "mira-chen", shares: 20000 });
   const beforeCash = state.finance.accounts.find(item => item.id === "cash").balanceMinor;
+  const investorCashBefore = state.ownership.investorAccounts.find(item => item.investorId === "mira-chen").cashMinor;
   state = act(state, { type: "OWNERSHIP_TRANSFER_SHARES", companyId, sellerId: "player", buyerId: "mira-chen", shares: 5000, pricePerShareMinor: 4 });
   let company = state.ownership.companies[0];
+  assert.equal(state.ownership.investorAccounts.find(item => item.investorId === "mira-chen").cashMinor, investorCashBefore - 20000);
   assert.equal(company.shareholders.find(item => item.id === "player").shares, 95000);
   assert.equal(company.shareholders.find(item => item.id === "mira-chen").shares, 25000);
   assert.equal(state.finance.accounts.find(item => item.id === "cash").balanceMinor, beforeCash + 20000);
   assert.equal(validateGameState(state).valid, true);
   state = act(state, { type: "OWNERSHIP_TRANSFER_SHARES", companyId, sellerId: "mira-chen", buyerId: "player", shares: 2000, pricePerShareMinor: 4 });
   company = state.ownership.companies[0];
+  assert.equal(state.ownership.investorAccounts.find(item => item.investorId === "mira-chen").cashMinor, investorCashBefore - 12000);
   assert.equal(company.shareholders.find(item => item.id === "player").shares, 97000);
   assert.equal(company.shareholders.find(item => item.id === "mira-chen").shares, 23000);
   assert.equal(validateGameState(state).valid, true);
@@ -245,7 +281,7 @@ test("schema v9 ownership saves gain a balanced opening company ledger during mi
   }
   const migrated = migrateGameState(old);
   const company = migrated.ownership.companies[0];
-  assert.equal(migrated.schemaVersion, 10);
+  assert.equal(migrated.schemaVersion, 11);
   assert.equal(company.ledger.length, 1);
   assert.equal(company.ledger[0].kind, "OPENING_BALANCE");
   assert.equal(validateGameState(migrated).valid, true);
@@ -258,7 +294,7 @@ test("schema v8 saves migrate to schema v10 with an empty ownership subsystem", 
   delete old.ownership;
   old.finance.accounts = old.finance.accounts.filter(item => !["privateEquity", "shareholderLoans"].includes(item.id));
   const migrated = migrateGameState(old);
-  assert.equal(migrated.schemaVersion, 10);
+  assert.equal(migrated.schemaVersion, 11);
   assert.deepEqual(migrated.ownership.companies, []);
   assert.equal(validateGameState(migrated).valid, true);
 });
@@ -287,13 +323,15 @@ test("minority acquisition records the actual stake and leaves the seller on the
   assert.equal(validateGameState(state).valid, true);
 });
 
-test("secondary share sales transfer ownership to an investor and realize gain in household Finance", () => {
+test("secondary share sales debit the investor wallet and realize gain in household Finance", () => {
   let state = found(makeGame()), companyId = state.ownership.companies[0].id;
+  const investorCashBefore = state.ownership.investorAccounts.find(item => item.investorId === "mira-chen").cashMinor;
   state = act(state, { type: "OWNERSHIP_SELL_SHARES", companyId, buyerId: "mira-chen", shares: 10000, pricePerShareMinor: 3 });
   const company = state.ownership.companies[0];
   assert.equal(company.shareholders.find(item => item.id === "player").shares, 90000);
   assert.equal(company.shareholders.find(item => item.id === "mira-chen").shares, 10000);
   assert.equal(company.outstandingShares, 100000);
+  assert.equal(state.ownership.investorAccounts.find(item => item.investorId === "mira-chen").cashMinor, investorCashBefore - 30000);
   assert.equal(state.finance.accounts.find(item => item.id === "privateEquity").balanceMinor, 45000);
   assert.equal(state.finance.ledger.at(-1).kind, "EQUITY_SECONDARY_SALE");
   assert.equal(validateGameState(state).valid, true);
@@ -314,6 +352,7 @@ test("non-player shareholders cast deterministic votes and receive pro-rata divi
   state = act(state, { type: "OWNERSHIP_ISSUE_SHARES", companyId, investorId: "mira-chen", shares: 20000 });
   state = act(state, { type: "ADVANCE_TURN" });
   const retained = state.ownership.companies[0].retainedEarningsMinor;
+  const investorCashBefore = state.ownership.investorAccounts.find(item => item.investorId === "mira-chen").cashMinor;
   const amountMinor = Math.max(1, Math.floor(retained / 10));
   state = act(state, { type: "OWNERSHIP_PROPOSE_DIVIDEND", companyId, amountMinor });
   const resolutionId = state.ownership.companies[0].resolutions[0].id;
@@ -322,6 +361,29 @@ test("non-player shareholders cast deterministic votes and receive pro-rata divi
   const resolution = state.ownership.companies[0].resolutions[0];
   assert.equal(resolution.status, "passed");
   assert.equal(resolution.votes.some(item => item.shareholderId === "mira-chen" && item.automatic), true);
-  assert.ok(state.ownership.companies[0].shareholders.find(item => item.id === "mira-chen").lastDividendMinor > 0);
+  const investorReceipt = state.ownership.companies[0].shareholders.find(item => item.id === "mira-chen").lastDividendMinor;
+  assert.ok(investorReceipt > 0);
+  assert.equal(state.ownership.investorAccounts.find(item => item.investorId === "mira-chen").cashMinor, investorCashBefore + investorReceipt);
+  assert.equal(state.ownership.companies[0].transactions.length > 0, true);
   assert.equal(validateGameState(state).valid, true);
+});
+
+
+test("schema v10 saves migrate investor cash from portfolio holdings without reusing company-local wallets", () => {
+  let old = found(makeGame());
+  const companyId = old.ownership.companies[0].id;
+  old = act(old, { type: "OWNERSHIP_ISSUE_SHARES", companyId, investorId: "mira-chen", shares: 20000 });
+  old.schemaVersion = 10;
+  old.simulationVersion = "0.10.1";
+  delete old.ownership.investorAccounts;
+  for (const company of old.ownership.companies) {
+    for (const holder of company.shareholders) delete holder.cashMinor;
+  }
+  const migrated = migrateGameState(old);
+  const wallet = migrated.ownership.investorAccounts.find(item => item.investorId === "mira-chen");
+  assert.equal(migrated.schemaVersion, 11);
+  assert.equal(wallet.initialCashMinor, 25000000);
+  assert.equal(wallet.cashMinor, 25000000 - 20000);
+  assert.equal("cashMinor" in migrated.ownership.companies[0].shareholders.find(item => item.id === "mira-chen"), false);
+  assert.equal(validateGameState(migrated).valid, true);
 });
