@@ -161,13 +161,9 @@ export function migrateInvestorLiquidity(state) {
       const holding = shareholderById(company, investorId);
       return sum + (safeNonNegative(holding?.costBasisMinor) ? holding.costBasisMinor : 0);
     }, 0);
-    const knownDividendsMinor = state.companies.reduce((sum, company) => {
-      const holding = shareholderById(company, investorId);
-      return sum + (safeNonNegative(holding?.lastDividendMinor) ? holding.lastDividendMinor : 0);
-    }, 0);
-    // Existing saves did not track a shared wallet. Reconstruct only provable dividends;
-    // unrecorded secondary-sale proceeds are intentionally omitted to avoid overstating cash.
-    return { investorId, initialCashMinor, cashMinor: Math.max(0, initialCashMinor - investedMinor + knownDividendsMinor) };
+    // Legacy saves do not identify whether historical dividends or share-sale proceeds
+    // were later spent. Do not add those untracked receipts to available cash.
+    return { investorId, initialCashMinor, cashMinor: Math.max(0, initialCashMinor - investedMinor) };
   });
   return state;
 }
