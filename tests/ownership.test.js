@@ -269,6 +269,7 @@ test("Businesses workspace exposes company formation, ownership portfolio and ac
   let companyState = found(makeGame()), companyId = companyState.ownership.companies[0].id;
   companyState = act(companyState, { type: "OWNERSHIP_ISSUE_SHARES", companyId, investorId: "mira-chen", shares: 20000 });
   companyState = act(companyState, { type: "OWNERSHIP_APPOINT_DIRECTOR", companyId, candidateId: "mira-chen", seat: "Director" });
+  companyState = act(companyState, { type: "OWNERSHIP_OPEN_BOARD_ELECTION", companyId, termTurns: 8 });
   const owned = renderBusinessesView(companyState);
   for (const label of ["OWNERSHIP_SELL_SHARES", "OWNERSHIP_TRANSFER_SHARES", "OWNERSHIP_OPEN_BOARD_ELECTION", "OWNERSHIP_VOTE_BOARD_ELECTION", "Company journal", "OWNERSHIP_APPOINT_DIRECTOR", "OWNERSHIP_REMOVE_DIRECTOR", "OWNERSHIP_PROPOSE_DIVIDEND"]) assert.ok(owned.includes(label), label);
 });
