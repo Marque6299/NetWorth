@@ -729,24 +729,118 @@ export function applyOwnershipAction(state, finance, character, action, { date, 
   }
   throw new Error("Unsupported ownership action.");
 }
-export function advanceOwnership(state, finance, { date, turn, character }) {
+export function advanceOwnership(state, finance, { date, turn, character, marketRegime = "Stable" }) {
   const next = clone(state), events = [];
+  const regimeFactors = { Expansion: 11000, Stable: 10000, Stability: 10000, Contraction: 9000, Recession: 8000 };
   for (const company of next.companies) {
     if (!Array.isArray(company.elections)) company.elections = [];
     company.board = company.board.filter(member => member.seat === "Chair" || !Number.isInteger(member.termEndsAtTurn) || member.termEndsAtTurn > turn);
     if (company.status !== "active" || company.lastAdvanceTurn >= turn) continue;
-    const skillAdjustment = Math.floor((character?.skills?.operations ?? 0) / 20) + Math.floor((character?.skills?.management ?? 0) / 25);
-    const rate = clamp(company.weeklyProfitBps + skillAdjustment, 5, 100);
-    const profit = Math.max(1, Math.floor(company.paidInCapitalMinor * rate / 10000));
-    company.cashMinor += profit; company.retainedEarningsMinor += profit; company.cumulativeProfitMinor += profit;
-    postCompanyJournal(company, { date, turn, kind: "WEEKLY_OPERATING_PROFIT", description: "Weekly operating profit", lines: [
-      { accountId: "cash", debitMinor: profit, creditMinor: 0 },
-      { accountId: "retainedEarnings", debitMinor: 0, creditMinor: profit }
-    ] });
-    company.lastAdvanceTurn = turn; company.estimatedValueMinor = equityValue(company); company.sharePriceMinor = sharePrice(company);
-    const entry = { id: "ownership-" + next.nextId++, companyId: company.id, turn, date, kind: "WEEKLY_OPERATING_PROFIT", description: "Weekly operating profit", amountMinor: profit, details: { rateBps: rate } };
-    next.transactions.unshift(entry); company.transactions.unshift(entry.id);
-    events.push({ type: "COMPANY_PROFIT", summary: company.name + " generated " + money(profit) + " Credits in weekly operating profit.", details: { companyId: company.id, profitMinor: profit, rateBps: rate } });
+    const operations = company.operations ?? (company.operations = createCompanyOperations(company.sector));
+    const skills = character?.skills ?? {};
+    const skillAverage = Math.floor(((skills.sales ?? 0) + (skills.management ?? 0) + (skills.operations ?? 0)) / 3);
+    const skillFactorBps = 7000 + skillAverage * 60;
+    const marketFactorBps = regimeFactors[marketRegime] ?? 10000;
+    const priceFactorBps = clamp(Math.floor(operations.basePriceMinor * 10000 / operations.priceMinor), 6500, 13000);
+    const satisfactionFactorBps = 8000 + operations.customerSatisfaction * 30;
+    const demandUnits = Math.max(0, Math.floor(
+      operations.baseDemandUnits * skillFactorBps * marketFactorBps * priceFactorBps * satisfactionFactorBps / 10000000000000000
+    ));
+    const capacityUnits = operations.staffCount * operations.capacityPerEmployee;
+    const unitsSold = Math.min(demandUnits, capacityUnits);
+    const revenueMinor = unitsSold * operations.priceMinor;
+    const costOfGoodsMinor = unitsSold * operations.unitCostMinor;
+    const payrollMinor = operations.staffCount * operations.wagePerEmployeeMinor;
+    const overheadMinor = operations.weeklyOverheadMinor;
+    const expensesMinor = costOfGoodsMinor + payrollMinor + overheadMinor;
+
+    // Collect revenue, settle older operating payables first, then pay current costs.
+    // Any unpaid current costs remain as a company liability instead of making cash negative.
+    const cashAfterRevenue = company.cashMinor + revenueMinor;
+    const settledPayablesMinor = Math.min(company.operatingPayablesMinor ?? 0, cashAfterRevenue);
+    const cashBeforeCurrentCosts = cashAfterRevenue - settledPayablesMinor;
+    const paidCurrentCostsMinor = Math.min(expensesMinor, cashBeforeCurrentCosts);
+    const unpaidCurrentCostsMinor = expensesMinor - paidCurrentCostsMinor;
+    company.cashMinor = cashBeforeCurrentCosts - paidCurrentCostsMinor;
+    company.operatingPayablesMinor = Math.max(0, (company.operatingPayablesMinor ?? 0) - settledPayablesMinor + unpaidCurrentCostsMinor);
+
+    const profitMinor = revenueMinor - expensesMinor;
+    company.retainedEarningsMinor += profitMinor;
+    company.cumulativeProfitMinor += profitMinor;
+    operations.lastTurn = turn;
+    operations.lastDemandUnits = demandUnits;
+    operations.lastUnitsSold = unitsSold;
+    operations.lastRevenueMinor = revenueMinor;
+    operations.lastCostOfGoodsMinor = costOfGoodsMinor;
+    operations.lastPayrollMinor = payrollMinor;
+    operations.lastOverheadMinor = overheadMinor;
+    operations.lastExpensesMinor = expensesMinor;
+    operations.lastProfitMinor = profitMinor;
+    if (unitsSold < demandUnits) operations.customerSatisfaction = clamp(operations.customerSatisfaction - 2, 30, 100);
+    else if (operations.priceMinor <= operations.basePriceMinor) operations.customerSatisfaction = clamp(operations.customerSatisfaction + 1, 30, 100);
+    operations.history.unshift({
+      turn, date, demandUnits, unitsSold, revenueMinor, costOfGoodsMinor,
+      payrollMinor, overheadMinor, expensesMinor, profitMinor,
+      cashMinor: company.cashMinor, operatingPayablesMinor: company.operatingPayablesMinor
+    });
+    if (operations.history.length > 52) operations.history.length = 52;
+
+    const lines = [];
+    if (revenueMinor > 0) {
+      lines.push({ accountId: "cash", debitMinor: revenueMinor, creditMinor: 0 });
+      lines.push({ accountId: "operatingRevenue", debitMinor: 0, creditMinor: revenueMinor });
+    }
+    if (expensesMinor > 0) lines.push({ accountId: "operatingExpenses", debitMinor: expensesMinor, creditMinor: 0 });
+    if (paidCurrentCostsMinor > 0) lines.push({ accountId: "cash", debitMinor: 0, creditMinor: paidCurrentCostsMinor });
+    if (unpaidCurrentCostsMinor > 0) lines.push({ accountId: "operatingPayables", debitMinor: 0, creditMinor: unpaidCurrentCostsMinor });
+    if (settledPayablesMinor > 0) {
+      lines.push({ accountId: "operatingPayables", debitMinor: settledPayablesMinor, creditMinor: 0 });
+      lines.push({ accountId: "cash", debitMinor: 0, creditMinor: settledPayablesMinor });
+    }
+    // Close this week's income and expenses into retained earnings so the trial
+    // balance and the cumulative company balance sheet remain fully reconcilable.
+    if (revenueMinor > 0) {
+      lines.push({ accountId: "operatingRevenue", debitMinor: revenueMinor, creditMinor: 0 });
+      lines.push({ accountId: "retainedEarnings", debitMinor: 0, creditMinor: revenueMinor });
+    }
+    if (expensesMinor > 0) {
+      lines.push({ accountId: "retainedEarnings", debitMinor: expensesMinor, creditMinor: 0 });
+      lines.push({ accountId: "operatingExpenses", debitMinor: 0, creditMinor: expensesMinor });
+    }
+    postCompanyJournal(company, {
+      date, turn, kind: "WEEKLY_OPERATING_RESULT",
+      description: "Weekly sales, operating costs and retained result",
+      lines
+    });
+
+    company.lastAdvanceTurn = turn;
+    company.estimatedValueMinor = equityValue(company);
+    company.sharePriceMinor = sharePrice(company);
+    const details = {
+      demandUnits, unitsSold, revenueMinor, costOfGoodsMinor, payrollMinor,
+      overheadMinor, expensesMinor, profitMinor, paidCurrentCostsMinor,
+      unpaidCurrentCostsMinor, settledPayablesMinor,
+      operatingPayablesMinor: company.operatingPayablesMinor
+    };
+    const entry = {
+      id: "ownership-" + next.nextId++,
+      companyId: company.id,
+      turn, date,
+      kind: "WEEKLY_OPERATING_RESULT",
+      description: "Weekly operating result",
+      amountMinor: revenueMinor + expensesMinor,
+      details
+    };
+    next.transactions.unshift(entry);
+    if (next.transactions.length > 250) next.transactions.length = 250;
+    company.transactions.unshift(entry.id);
+    if (company.transactions.length > 100) company.transactions.length = 100;
+    const resultText = profitMinor >= 0 ? "earned " + money(profitMinor) + " Credits" : "recorded an operating loss of " + money(-profitMinor) + " Credits";
+    events.push({
+      type: "COMPANY_OPERATING_RESULT",
+      summary: company.name + " sold " + unitsSold + " " + operations.productLabel.toLowerCase() + ", generated " + money(revenueMinor) + " Credits in revenue and " + resultText + ".",
+      details: { companyId: company.id, ...details }
+    });
   }
   return { ownership: next, finance, events };
 }
@@ -772,8 +866,17 @@ export function validateOwnership(state, finance) {
       else { shareholderIds.add(holder.id); shares += holder.shares; }
     }
     if (shares !== company.outstandingShares) errors.push("The shareholder register does not reconcile to outstanding shares.");
-    for (const key of ["cashMinor", "capitalAssetsMinor", "paidInCapitalMinor", "loanBalanceMinor", "retainedEarningsMinor", "cumulativeProfitMinor", "cumulativeDividendsMinor", "estimatedValueMinor", "sharePriceMinor"]) if (!safeNonNegative(company[key])) errors.push("A company financial balance is invalid.");
-    if (company.cashMinor + (company.capitalAssetsMinor ?? 0) !== company.paidInCapitalMinor + company.loanBalanceMinor + company.retainedEarningsMinor) errors.push("Company cash does not reconcile to paid-in capital, shareholder loans and retained earnings.");
+    for (const key of ["cashMinor", "capitalAssetsMinor", "operatingPayablesMinor", "paidInCapitalMinor", "loanBalanceMinor", "cumulativeDividendsMinor", "estimatedValueMinor", "sharePriceMinor"]) if (!safeNonNegative(company[key])) errors.push("A company financial balance is invalid.");
+    if (!Number.isSafeInteger(company.retainedEarningsMinor) || !Number.isSafeInteger(company.cumulativeProfitMinor)) errors.push("Company retained earnings and cumulative operating result must be valid signed minor-unit balances.");
+    if (company.cashMinor + (company.capitalAssetsMinor ?? 0) !== company.paidInCapitalMinor + company.loanBalanceMinor + company.operatingPayablesMinor + company.retainedEarningsMinor) errors.push("Company assets do not reconcile to paid-in capital, shareholder loans, operating payables and retained earnings.");
+    const op = company.operations;
+    if (!op || typeof op.productLabel !== "string" || !op.productLabel || !Array.isArray(op.history) || !Number.isInteger(op.baseDemandUnits) || op.baseDemandUnits < 0 || !Number.isInteger(op.capacityPerEmployee) || op.capacityPerEmployee < 1 || !Number.isInteger(op.staffCount) || op.staffCount < 1 || op.staffCount > 10 || !Number.isInteger(op.customerSatisfaction) || op.customerSatisfaction < 0 || op.customerSatisfaction > 100) errors.push("Company operating configuration is malformed.");
+    else {
+      for (const key of ["basePriceMinor", "priceMinor", "unitCostMinor", "wagePerEmployeeMinor", "weeklyOverheadMinor", "lastDemandUnits", "lastUnitsSold", "lastRevenueMinor", "lastCostOfGoodsMinor", "lastPayrollMinor", "lastOverheadMinor", "lastExpensesMinor"]) if (!safeNonNegative(op[key])) errors.push("A company operating metric is invalid.");
+      if (!safePositive(op.basePriceMinor) || !safePositive(op.unitCostMinor) || op.priceMinor < Math.ceil(op.unitCostMinor * 1.1) || op.priceMinor > op.basePriceMinor * 3 || !Number.isInteger(op.lastTurn) || op.lastTurn < 0 || !Number.isSafeInteger(op.lastProfitMinor)) errors.push("Company pricing or recent operating result is invalid.");
+      if (op.lastExpensesMinor !== op.lastCostOfGoodsMinor + op.lastPayrollMinor + op.lastOverheadMinor || op.lastProfitMinor !== op.lastRevenueMinor - op.lastExpensesMinor || op.lastUnitsSold > op.lastDemandUnits + op.staffCount * op.capacityPerEmployee) errors.push("Company operating results do not reconcile.");
+      if (op.history.length > 52 || op.history.some(item => !item || !Number.isInteger(item.turn) || typeof item.date !== "string" || !safeNonNegative(item.revenueMinor) || !safeNonNegative(item.expensesMinor) || !Number.isSafeInteger(item.profitMinor) || item.profitMinor !== item.revenueMinor - item.expensesMinor || !safeNonNegative(item.cashMinor) || !safeNonNegative(item.operatingPayablesMinor))) errors.push("Company operating history is invalid.");
+    }
     if (company.retainedEarningsMinor !== company.cumulativeProfitMinor - company.cumulativeDividendsMinor) errors.push("Company retained earnings do not reconcile to profit and distributions.");
     if (company.estimatedValueMinor !== equityValue(company) || company.sharePriceMinor !== sharePrice(company)) errors.push("Company valuation does not reconcile to its equity and share register.");
     if (!Array.isArray(company.ledger) || !Array.isArray(company.ledgerAccounts) || !Number.isInteger(company.ledgerSequence) || company.ledgerSequence < 1) errors.push("Company double-entry ledger is missing or malformed.");
@@ -792,7 +895,7 @@ export function validateOwnership(state, finance) {
       }
       for (const account of company.ledgerAccounts) if (account.balanceMinor !== totals.get(account.id)) errors.push("Company ledger account balances do not reconcile to journal history.");
       const balance = id => company.ledgerAccounts.find(account => account.id === id)?.balanceMinor ?? -1;
-      if (balance("cash") !== company.cashMinor || balance("capitalAssets") !== company.capitalAssetsMinor || balance("shareCapital") !== company.paidInCapitalMinor || balance("shareholderLoans") !== company.loanBalanceMinor || balance("retainedEarnings") !== company.retainedEarningsMinor) errors.push("Company ledger does not reconcile to the company balance sheet.");
+      if (balance("cash") !== company.cashMinor || balance("capitalAssets") !== company.capitalAssetsMinor || balance("shareCapital") !== company.paidInCapitalMinor || balance("shareholderLoans") !== company.loanBalanceMinor || balance("operatingPayables") !== company.operatingPayablesMinor || balance("operatingRevenue") !== 0 || balance("operatingExpenses") !== 0 || balance("retainedEarnings") !== company.retainedEarningsMinor) errors.push("Company ledger does not reconcile to the company balance sheet and closed operating result.");
     }
     if (!Number.isInteger(company.weeklyProfitBps) || company.weeklyProfitBps < 1 || company.weeklyProfitBps > 100 || !Number.isInteger(company.lastAdvanceTurn) || company.lastAdvanceTurn < company.foundedAtTurn) errors.push("Company operating parameters are invalid.");
     for (const resolution of company.resolutions) {
