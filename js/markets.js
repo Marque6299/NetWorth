@@ -84,7 +84,7 @@ export function applyMarketAction(markets,finance,action,{date,turn,sequence}){
  }else{
   const soldValue=unitValue(security.priceMinor,action.quantityUnits),carrying=roundDiv(position.marketValueMinor*action.quantityUnits,position.quantityUnits),cost=roundDiv(position.costBasisMinor*action.quantityUnits,position.quantityUnits),unrealized=carrying-cost,realized=soldValue-cost;
   const lines=[line("cash",soldValue),line("investment",0,carrying)];
-  if(realized>0)lines.push(line("cash",0,0),line("income",0,realized));
+  if(realized>0)lines.push(line("income",0,realized));
   else if(realized<0)lines.push(line("expense",-realized));
   if(unrealized>0)lines.push(line("unrealizedGain",unrealized));
   else if(unrealized<0)lines.push(line("unrealizedGain",0,-unrealized));
@@ -100,7 +100,7 @@ export function advanceMarkets(markets,finance,{date,turn,sequence}){
  const m=clone(markets),f=clone(finance),events=[],rng=m.rng;
  m.turn=turn;
  const regimeRoll=draw(rng,1000);rng.state=regimeRoll.state;
- if(turn%13===0){m.regime=["Expansion","Slowdown","Recovery","Contraction"][draw(rng,4).value];m.sentiment=draw(rng,801).value-400;events.push({type:"MARKET_CYCLE",summary:"Market conditions shifted into "+m.regime.toLowerCase()+".",details:{regime:m.regime,sentiment:m.sentiment}});}
+ if(turn%13===0){const regimeDraw=draw(rng,4);rng.state=regimeDraw.state;m.regime=["Expansion","Slowdown","Recovery","Contraction"][regimeDraw.value];const sentimentDraw=draw(rng,801);rng.state=sentimentDraw.state;m.sentiment=sentimentDraw.value-400;events.push({type:"MARKET_CYCLE",summary:"Market conditions shifted into "+m.regime.toLowerCase()+".",details:{regime:m.regime,sentiment:m.sentiment}});}
  const common=m.regime==="Expansion"?20:m.regime==="Slowdown"?-15:m.regime==="Recovery"?35:-35;
  for(const s of m.securities){
   s.previousPriceMinor=s.priceMinor;
@@ -123,7 +123,6 @@ export function advanceMarkets(markets,finance,{date,turn,sequence}){
   if(s.yieldBps>0&&turn%13===0){const distribution=Math.floor(newValue*s.yieldBps/10000/4);if(distribution>0){post(f,{id:"journal-market-income-"+turn+"-"+s.id,date,turn,kind:"MARKET_DISTRIBUTION",description:(s.kind.includes("bond")?"Bond coupon":"Dividend")+" · "+s.symbol,amountMinor:distribution,lines:[line("cash",distribution),line("income",0,distribution)],category:"investment-income",relatedId:s.id});events.push({type:"MARKET_DISTRIBUTION",summary:securityName(s)+" paid "+(distribution/100).toFixed(2)+" Credits in income.",details:{securityId:s.id,amountMinor:distribution}});}}
  }
  m.rng=rng;m.lastAdvanceTurn=turn;
- for(const event of events){} 
  return {markets:m,finance:f,events};
 }
 function securityName(s){return s.name;}
