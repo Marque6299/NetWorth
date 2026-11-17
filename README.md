@@ -126,6 +126,7 @@ GitHub Actions runs the same tests and syntax checks on pushes and pull requests
 - [Phase 8 — Property & Collectibles](docs/PHASE_8_PROPERTY_COLLECTIBLES.md)
 - [Phase 9 — Business Operations](docs/PHASE_9_BUSINESS_OPERATIONS.md)
 - [Phase 10 — Entrepreneurship, Equity, Acquisitions & Governance](docs/PHASE_10_ENTREPRENEURSHIP_OWNERSHIP.md)
+- [Phase 10 — Browser Acceptance Checklist](docs/PHASE_10_BROWSER_ACCEPTANCE.md)
 - [Implementation Roadmap](docs/IMPLEMENTATION_ROADMAP.md)
 
 ## Current status
