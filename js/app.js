@@ -1,6 +1,6 @@
 import { GROUPS, PAGES, getPage, getPageIdFromHash } from "./navigation.js";
 import { esc, icon, navLink } from "./components.js";
-import { renderOverview, renderSection, renderPersonalView, renderStartingProfilePreview, renderFinanceView, renderMarketsView } from "./views.js";
+import { renderOverview, renderSection, renderPersonalView, renderStartingProfilePreview, renderFinanceView, renderMarketsView, renderAssetsView } from "./views.js";
 import { TIME_KEYS } from "./simulation-core.js";
 import { createGameState, resolveAction } from "./simulation-core.js";
 import { createExport, deleteSave, listSaveSlots, loadGame, parseImport, saveGame } from "./persistence.js";
@@ -9,7 +9,7 @@ import { renderGamePanel } from "./game-ui.js";
 const root=document.querySelector("#app");
 let currentGame=null,saveSlots=[],storageError="",feedbackMessage="",busy=false;
 function sidebar(active){
- return '<aside class="sidebar"><a class="brand" href="#/overview" data-route="overview"><span class="brand-mark">N</span><span><b>NETWORTH</b><small>CAPITAL & CONSEQUENCE</small></span></a><div class="side-rule"></div><div class="nav-groups">'+GROUPS.map(group=>'<section class="nav-group"><label>'+esc(group.label)+'</label><nav>'+group.pages.map(page=>navLink(page,active)).join("")+'</nav></section>').join("")+'</div><div class="side-bottom"><b>EARLY ACCESS SHELL</b><small>BUILD 0.7.0 / PHASE 07</small><p>A world of decisions.<br>A future of your making.</p></div></aside>';
+ return '<aside class="sidebar"><a class="brand" href="#/overview" data-route="overview"><span class="brand-mark">N</span><span><b>NETWORTH</b><small>CAPITAL & CONSEQUENCE</small></span></a><div class="side-rule"></div><div class="nav-groups">'+GROUPS.map(group=>'<section class="nav-group"><label>'+esc(group.label)+'</label><nav>'+group.pages.map(page=>navLink(page,active)).join("")+'</nav></section>').join("")+'</div><div class="side-bottom"><b>EARLY ACCESS SHELL</b><small>BUILD 0.8.0 / PHASE 08</small><p>A world of decisions.<br>A future of your making.</p></div></aside>';
 }
 function topbar(page){
  const saveLabel=currentGame?`TURN ${currentGame.calendar.turn} · ${currentGame.calendar.currentDate}`:"NO SAVE LOADED";
@@ -17,14 +17,14 @@ function topbar(page){
  return '<header class="topbar"><div class="crumb">NETWORTH '+icon("right")+' <b>'+esc(page.label.toUpperCase())+'</b></div><div class="top-actions"><div class="search" id="searchWrap">'+icon("search")+'<input id="globalSearch" type="search" placeholder="Find a workspace" aria-label="Find a workspace" aria-controls="searchResults" aria-expanded="false" autocomplete="off"><kbd>⌘ K</kbd><div id="searchResults" class="results" role="listbox" hidden></div></div><div class="save"><i></i><span><small>SAVE STATUS</small><b>'+esc(saveLabel)+'</b></span></div><span class="avatar" aria-label="Player profile">'+avatar+'</span></div></header>';
 }
 function heading(page){
- return '<div class="page-heading"><div><label>'+(page.id==="overview"?"YOUR FINANCIAL COMMAND CENTER":"NETWORTH WORKSPACE / "+page.id.toUpperCase())+'</label><h1>'+esc(page.title)+'</h1><p>'+esc(page.description)+'</p></div><span class="phase">◇ PHASE 07 <small>INVESTMENT MARKETS / 09 SECTIONS</small></span></div>';
+ return '<div class="page-heading"><div><label>'+(page.id==="overview"?"YOUR FINANCIAL COMMAND CENTER":"NETWORTH WORKSPACE / "+page.id.toUpperCase())+'</label><h1>'+esc(page.title)+'</h1><p>'+esc(page.description)+'</p></div><span class="phase">◇ PHASE 08 <small>INVESTMENT MARKETS / 09 SECTIONS</small></span></div>';
 }
 function render(){
  let id=getPageIdFromHash(location.hash);
  if(!location.hash||!PAGES.some(page=>"#/"+page.id===location.hash)){history.replaceState(null,"","#/overview");id="overview";}
  const page=getPage(id);
- root.innerHTML=sidebar(id)+'<div class="main-column">'+topbar(page)+'<main class="main"><a class="skip" href="#content">Skip to content</a><div id="content">'+heading(page)+'<div class="content">'+(id==="overview"?renderOverview(currentGame)+renderGamePanel(currentGame,saveSlots,storageError,feedbackMessage):id==="personal"?renderPersonalView(currentGame):id==="finance"?renderFinanceView(currentGame):id==="markets"?renderMarketsView(currentGame):renderSection(id))+'</div></div><footer class="page-footer"><span>NETWORTH · CAPITAL & CONSEQUENCE</span><span>PHASE 07 / INVESTMENT MARKETS · LOCAL GAME STATE</span></footer></main></div>';
- document.title=page.label+" — Networth";setupSearch();setupGameControls();setupPersonalControls();setupCareerControls();setupFinanceControls();setupBankingControls();setupMarketControls();root.classList.add("ready");
+ root.innerHTML=sidebar(id)+'<div class="main-column">'+topbar(page)+'<main class="main"><a class="skip" href="#content">Skip to content</a><div id="content">'+heading(page)+'<div class="content">'+(id==="overview"?renderOverview(currentGame)+renderGamePanel(currentGame,saveSlots,storageError,feedbackMessage):id==="personal"?renderPersonalView(currentGame):id==="finance"?renderFinanceView(currentGame):id==="markets"?renderMarketsView(currentGame):id==="assets"?renderAssetsView(currentGame):renderSection(id))+'</div></div><footer class="page-footer"><span>NETWORTH · CAPITAL & CONSEQUENCE</span><span>PHASE 08 / PROPERTY & COLLECTIBLES · LOCAL GAME STATE</span></footer></main></div>';
+ document.title=page.label+" — Networth";setupSearch();setupGameControls();setupPersonalControls();setupCareerControls();setupFinanceControls();setupBankingControls();setupMarketControls();setupAssetControls();root.classList.add("ready");
 }
 function closeSearch(){const input=document.querySelector("#globalSearch"),results=document.querySelector("#searchResults");if(results)results.hidden=true;if(input)input.setAttribute("aria-expanded","false");}
 function setupSearch(){
@@ -161,5 +161,56 @@ function setupMarketControls(){
  }));
  document.querySelectorAll("[data-market-select]").forEach(button=>button.addEventListener("click",()=>{
   const select=document.querySelector('[data-market-form] [name="securityId"]');if(select){select.value=button.dataset.marketSelect;select.scrollIntoView({behavior:"smooth",block:"center"});select.focus();}
+ }));
+}
+
+
+function setupAssetControls() {
+ document.querySelectorAll("[data-asset-form]").forEach(form => form.addEventListener("submit", event => {
+  event.preventDefault();
+  if (!currentGame) return;
+  const data = new FormData(form), type = form.dataset.assetForm, action = { type };
+  try {
+   if (type === "ASSET_BUY_PROPERTY") {
+    action.listingId = String(data.get("listingId"));
+    action.use = String(data.get("use"));
+    action.downPaymentBps = Number(data.get("downPaymentBps"));
+   } else if (type === "ASSET_BUY_COLLECTIBLE") {
+    action.catalogId = String(data.get("catalogId"));
+   } else if (type === "ASSET_SET_PROPERTY_USE") {
+    action.propertyId = String(data.get("propertyId"));
+    action.use = String(data.get("use"));
+   } else {
+    throw new Error("Unsupported asset form.");
+   }
+   const result = resolveAction(currentGame, action);
+   if (!result.ok) throw new Error(result.reason);
+   currentGame = result.state;
+   setFeedback(type === "ASSET_SET_PROPERTY_USE" ? "Property use updated." : "Asset acquisition recorded in the Finance ledger.");
+   render();
+  } catch (error) {
+   setFeedback(error.message);
+   const target = document.querySelector("#assetFeedback") || document.querySelector("#collectibleFeedback");
+   if (target) target.textContent = error.message;
+  }
+ }));
+ document.querySelectorAll("[data-asset-action]").forEach(button => button.addEventListener("click", () => {
+  if (!currentGame) return;
+  const type = button.dataset.assetAction;
+  const action = { type };
+  if (button.dataset.propertyId) action.propertyId = button.dataset.propertyId;
+  if (button.dataset.collectibleId) action.collectibleId = button.dataset.collectibleId;
+  if ((type === "ASSET_SELL_PROPERTY" || type === "ASSET_SELL_COLLECTIBLE") && !window.confirm("Sell this asset? The transaction and any realized gain or loss will be posted to Finance.")) return;
+  try {
+   const result = resolveAction(currentGame, action);
+   if (!result.ok) throw new Error(result.reason);
+   currentGame = result.state;
+   setFeedback(type.includes("SELL") ? "Asset sale recorded. Review the sale proceeds and ledger entries." : "Maintenance was completed and the updated valuation was posted.");
+   render();
+  } catch (error) {
+   setFeedback(error.message);
+   const target = document.querySelector("#assetFeedback") || document.querySelector("#collectibleFeedback");
+   if (target) target.textContent = error.message;
+  }
  }));
 }
