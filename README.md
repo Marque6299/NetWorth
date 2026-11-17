@@ -2,7 +2,7 @@
 
 Networth is a turn-based financial life simulation, economic strategy and business management game. Players begin as ordinary individuals with different backgrounds, resources, obligations and opportunities. Through work, education, saving, borrowing, investing, entrepreneurship, acquisitions and relationships, they pursue financial independence and may continue into building a business and investment empire.
 
-This repository currently contains **Phases 1–9**: Core Shell, Simulation Core, Character & Life, Household Finance & Ledger, Employment & Education, Banking & Credit, and Investment Markets. Later phases remain gated by the implementation roadmap.
+This repository currently contains **Phases 1–9**: Core Shell, Simulation Core, Character & Life, Household Finance & Ledger, Employment & Education, Banking & Credit, Investment Markets, Property & Collectibles, and Business Operations. Later phases remain gated by the implementation roadmap.
 
 ## Workspaces
 
