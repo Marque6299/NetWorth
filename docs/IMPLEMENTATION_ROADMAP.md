@@ -14,7 +14,7 @@ The project is delivered one phase at a time. Each phase has an acceptance gate;
 | 7 | Investment markets | **Accepted** |
 | 8 | Property and collectibles | **Accepted** |
 | 9 | Business operations | **Accepted** |
-| 10 | Entrepreneurship, equity, acquisitions and governance | **In progress — ownership, company ledgers, negotiated transfers, investor voting, board elections, executable core resolutions and portfolio-wide investor cash implemented; company operating economics and browser acceptance pending** |
+| 10 | Entrepreneurship, equity, acquisitions and governance | **In progress — ownership, company ledgers, governance, portfolio-wide investor cash and a first operation-driven company P&L implemented; full Phase 9 operations integration and browser acceptance pending** |
 | 11 | News, events and interconnected economy | Not started |
 | 12 | Financial freedom and endgame | Not started |
 | 13 | Learning, balancing, accessibility and polish | Not started |
