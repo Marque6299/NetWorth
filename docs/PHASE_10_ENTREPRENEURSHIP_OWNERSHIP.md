@@ -47,7 +47,11 @@ Phase 9 operating mandates remain separate. Accepting a management mandate must 
 
 ### 4. Valuation and distributions
 
-- Provide a transparent estimated company valuation using a documented, deterministic method based on contributed capital, retained earnings and operating performance where available.
+- Provide a transparent estimated company valuation using a documented, deterministic method based on contributed capital and retained earnings. Operating performance changes retained earnings; valuation is indicative, not liquid cash or guaranteed sale proceeds.
+- Give each owned company a sector operating profile with reference price, unit cost, demand, service capacity, staff wages and weekly overhead.
+- Derive weekly revenue from estimated demand, market regime, player operating skills, customer satisfaction and price elasticity, capped by staffed capacity.
+- Record cost of goods, payroll and overhead as operating expenses. Pay costs from company cash where possible and carry unpaid costs as operating payables without allowing company cash to go negative.
+- Keep company journal entries balanced, close weekly income and expenses into retained earnings, and reconcile cash, capital assets, debt, operating payables and equity.
 - Clearly label estimates and assumptions; do not imply that estimated value is guaranteed sale proceeds.
 - Calculate the player's equity value from the player's share count and the current estimated per-share value.
 - Support board-approved dividends/distributions subject to available distributable cash.
@@ -100,8 +104,8 @@ Phase 9 operating mandates remain separate. Accepting a management mandate must 
 
 ## Save compatibility
 
-- Advance the save schema from v8 to v9 for ownership, v9 to v10 for company ledgers, and v10 to v11 for portfolio-wide investor cash.
-- v8 saves initialize an empty ownership subsystem; v9 saves receive an opening company-ledger entry for each existing company while v10 saves initialize shared investor balances from their existing portfolio holdings.
+- Advance the save schema from v8 to v9 for ownership, v9 to v10 for company ledgers, v10 to v11 for portfolio-wide investor cash, and v11 to v12 for company operating profiles and operating ledger accounts.
+- v8 saves initialize an empty ownership subsystem; v9 saves receive an opening company-ledger entry for each existing company; v10 saves initialize shared investor balances from their existing portfolio holdings; v11 saves receive deterministic sector operating profiles and the related journal accounts.
 - Earlier schema versions continue through the existing migration chain.
 - New companies, cap tables, investments, shareholder loans, company journal entries and account balances, transactions, valuations, distributions, acquisition proposals, votes, board seats, executive appointments and governance history must survive IndexedDB save/load and JSON export/import.
 - Import validation must reject malformed share totals, invalid ownership percentages, duplicate IDs, negative balances and broken company/household reconciliations.
@@ -154,16 +158,21 @@ The Network workspace should surface ownership relationships from the same under
 ### Compatibility and regression
 - v8 saves migrate to v9 with empty ownership state and all Phase 1–9 data preserved.
 - JSON export/import preserves the full ownership, governance and investor cash state.
-- A schema v10 save with an investor holding migrates to v11 with a conservative cash balance and no per-company cash fields.
+- A schema v10 save with an investor holding migrates to v12 with a conservative cash balance, no per-company cash fields and an initialized company operating profile.
+- A schema v11 save migrates to v12 without changing an existing global investor cash balance.
 - An investor who spends most of their cash in one company cannot spend it again in another company.
 - Secondary investor purchases debit the buyer; negotiated sales credit sellers; settled dividends credit non-player shareholders.
+- A company earns no arbitrary return merely because it has more paid-in capital; two otherwise identical operating companies with different capitalization produce the same weekly trading result.
+- Changing selling price or staff count changes sales, capacity or expenses.
+- Unpaid operating expenses accrue as liabilities while company cash remains non-negative.
+- Weekly operating journal entries balance and reconcile to the company balance sheet and retained earnings.
 - Existing Phase 9 operations, banking, markets, assets, Finance and career behavior remain unchanged.
 - Deterministic seeds and action sequences produce identical ownership and governance outcomes.
 - Full test suite and syntax checks pass.
 
 ### Company double-entry accounting — implemented milestone
 
-Each owned company maintains its own journal and chart of accounts, separate from household Finance. Company cash, share capital, shareholder-loan liabilities and retained earnings are posted through balanced entries. The journal reconciles to the company balance sheet and is persisted in saves and JSON backups. v9 company records are migrated with a balanced opening-balance journal in schema v10. Schema v11 adds portfolio-wide investor cash accounts; legacy balances are initialized conservatively from aggregate current shareholder cost basis because prior saves did not maintain a global investor wallet.
+Each owned company maintains its own journal and chart of accounts, separate from household Finance. Company cash, capital assets, share capital, shareholder-loan liabilities, operating payables and retained earnings are posted through balanced entries. Weekly operating revenue and expenses are closed into retained earnings, and the operating revenue/expense accounts return to zero after each weekly close. The journal reconciles to the company balance sheet and is persisted in saves and JSON backups. v9 company records receive a balanced opening-balance journal in schema v10. Schema v11 adds portfolio-wide investor cash accounts; legacy balances are initialized conservatively from aggregate current shareholder cost basis because prior saves did not maintain a global investor wallet. Schema v12 adds sector operating profiles and operating journal accounts for existing companies.
 
 ## Explicit exclusions
 
@@ -187,7 +196,7 @@ The first functional milestone is implemented on branch `phase-10-ownership`:
 - Company formation, founder shares, authorized/issued/outstanding share reconciliation and a shareholder register.
 - Household private-equity and shareholder-loan asset accounts.
 - Additional capital contributions, investor share issuance/dilution, company buybacks and shareholder loans.
-- Deterministic weekly operating-profit accrual and indicative equity valuations.
+- Deterministic weekly operating P&L, sector-specific price/cost/demand/staffing profiles, cash-constrained expense settlement, operating payables and indicative equity valuations.
 - Dividend proposals, share-weighted player voting, quorum/approval calculation and pro-rata settlement.
 - Full acquisition of selected fictional companies.
 - Executive appointments and generic shareholder resolutions.
@@ -198,5 +207,5 @@ The first functional milestone is implemented on branch `phase-10-ownership`:
 - Negotiated transfers are available between shareholders already on a company's register. New external counterparties and a full offer/escrow workflow are not included.
 - NPC voting now uses deterministic investor profiles for dividend and growth preferences. These profiles still need balancing across longer simulations.
 - Board elections and fixed director terms are implemented. Capital-expansion resolutions move company cash into capital assets; executive-appointment resolutions update the executive register. Broader resolution types, board succession and multi-seat election cycles remain future work.
-- Weekly owned-company operating profit remains a deterministic capital-and-skill abstraction. Phase 9 management mandates intentionally remain separate; integrating a detailed operating division into an owned company is still required before Phase 10 can pass its economic-balancing gate.
+- Owned-company operating results now depend on demand, pricing, market regime, player skills, staffing capacity, cost of goods, payroll and overhead. The current model is a deliberately small company operating simulation; full Phase 9 product/inventory/supplier/marketing integration remains future work. Phase 9 management mandates remain distinct from ownership.
 - The first milestone now passes the GitHub Actions automated suite (136 tests) and JavaScript syntax checks. Cloudflare Pages preview deployment also reports success. Browser acceptance remains pending before this phase can be accepted.
