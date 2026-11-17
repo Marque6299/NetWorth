@@ -139,7 +139,7 @@ test("company ownership and governance records survive JSON export and import", 
 });
 
 test("schema v8 saves migrate to schema v9 with an empty ownership subsystem", () => {
-  const old = found(makeGame());
+  const old = makeGame();
   old.schemaVersion = 8;
   old.simulationVersion = "0.9.0";
   delete old.ownership;
