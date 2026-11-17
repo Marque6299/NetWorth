@@ -216,6 +216,18 @@ export function createOwnershipState() {
     }))
   };
 }
+export function getInvestorLiquidity(state) {
+  return INVESTORS.map(investor => {
+    const account = investorAccountById(state, investor.id);
+    return {
+      id: investor.id,
+      name: investor.name,
+      type: investor.type,
+      initialCashMinor: account?.initialCashMinor ?? investor.capacityMinor,
+      cashMinor: account?.cashMinor ?? 0
+    };
+  });
+}
 export function getOwnershipPortfolio(state) {
   const companies = state?.companies ?? [];
   const holdings = companies.map(company => {
