@@ -25,6 +25,6 @@ test("each section shows modules, planned status and a deliberate empty state", 
 test("Markets workspace renders the instrument directory, order terminal and portfolio",()=>{
  let state=createGameState({seed:"market-view"});state=resolveAction(state,{type:"CREATE_CHARACTER",name:"Taylor Morgan",age:29,profileId:"early-career"}).state;
  const html=renderMarketsView(state);
- for(const text of ["Market instruments","Order terminal","Portfolio holdings","Northstar Services","National Government 5Y","Bitcoin Index","Available cash"])assert.ok(html.includes(text),text);
+ for(const text of ["Market instruments","ORDER TERMINAL","Portfolio holdings","Northstar Services","National Government 5Y","Bitcoin Index","Available cash"])assert.ok(html.includes(text),text);
  assert.match(html,/data-market-form/);assert.match(html,/data-market-watch/);
 });
