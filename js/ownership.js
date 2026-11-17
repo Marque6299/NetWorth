@@ -120,7 +120,7 @@ function transaction(state, company, turn, date, kind, description, amountMinor,
   return entry;
 }
 function makeCompany({ id, name, sector, description, capitalMinor, shares, turn, date, weeklyProfitBps, acquired = false }) {
-  return {
+  const company = {
     id, name, sector, description, status: "active", foundedAtTurn: turn, acquired,
     authorizedShares: Math.max(shares, 1000000), issuedShares: shares, outstandingShares: shares,
     shareholders: [{ id: "player", name: "You", type: "Founder", shares, costBasisMinor: capitalMinor, isPlayer: true }],
