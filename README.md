@@ -8,7 +8,7 @@ This repository currently contains **Phases 1–5**: Core Shell, Simulation Core
 
 - **Overview** — financial command center and simulation controls.
 - **Personal** — character dossier, career opportunities, job applications, employment contracts, education programs, skills, time allocation, well-being and goals.
-- **Finance** — cash, savings, investment valuation, liabilities, budgets, double-entry journal, cash flow and net worth (Phase 4).
+- **Finance** — cash, savings, investment valuation, liabilities, budgets, double-entry journal, cash flow and net worth.
 - **Markets** — instrument directory, research, orders and holdings placeholders (Phase 7).
 - **Businesses** — company directory, business operations and ownership placeholders (Phases 9–10).
 - **Assets** — asset portfolio, property and collectibles placeholders (Phase 8).
@@ -37,11 +37,33 @@ The design uses dashboards, directories, profiles, terminals, reports and relati
 - Deterministic well-being updates for health, energy, stress and happiness on turn advancement.
 - Skill development through study focus, research, networking and side work.
 - Measurable goals for skills, well-being and turn milestones, including lower-is-better stress goals.
-- Schema v1 → v2 migration for Phase 2 local saves and JSON backups.
 
-Starting capital and debt become opening ledger balances in Phase 4. Monthly expenses become a planning budget, not an automatic charge. Phase 5 adds functional employment and education.
+## Phase 4 — Household finance & ledger
 
-## Phase 4 — Household finance & ledger\n\n- Neutral in-game Credits, stored as integer minor units.\n- Opening cash, debt and monthly budget initialized from each character profile.\n- Balanced double-entry journal with account reconciliation.\n- Income, expense, transfer, borrowing, principal repayment and unrealized valuation actions.\n- Transfers and borrowing are excluded from income; principal repayment is not an expense; unrealized gains are not cash.\n- Net worth, liquid net worth, recorded cash flow and monthly budgets.\n- Schema v2 → v3 migration for existing Phase 3 saves and backups.\n\nThe monthly expense context is a budget baseline, not an automatic charge. Interest, bank products, scheduled debt service and market pricing remain later-phase systems.\n\n## Run locally
+- Neutral in-game Credits, stored as integer minor units.
+- Opening cash, debt and monthly budget initialized from each character profile.
+- Balanced double-entry journal with account reconciliation.
+- Income, expense, transfer, borrowing, principal repayment and unrealized valuation actions.
+- Transfers and borrowing are excluded from income; principal repayment is not an expense; unrealized gains are not cash.
+- Net worth, liquid net worth, recorded cash flow and monthly budgets.
+- Schema v2 → v3 migration for existing Phase 3 saves and backups.
+
+The monthly expense context is a budget baseline, not an automatic charge. Banking products, interest, scheduled debt service and market pricing remain later-phase systems.
+
+## Phase 5 — Employment & education
+
+- Six fictional job listings with role requirements, weekly salary and contracted hours.
+- Seeded job applications, offer/rejection outcomes, explicit offer acceptance and resignation.
+- Employment contracts, employment history, performance, experience and promotions.
+- Weekly payroll posted to the existing double-entry Finance ledger.
+- Salary prorated to allocated work hours; work influences performance and job-specific skill gains.
+- Three education programs with tuition, prerequisites, study-hour progression, skill development and credentials.
+- Education completion can unlock more advanced programs and job eligibility.
+- Schema v3 → v4 migration preserves existing Phase 4 saves and initializes career state.
+
+Employment salaries and education tuition use the existing Finance ledger. Salary is gross in-game Credits. Payroll taxes, benefits, commissions, student loans, bank products and credit scoring are not included in this phase.
+
+## Run locally
 
 Requirements: Node.js 18 or newer. There are no runtime dependencies to install.
 
@@ -73,7 +95,9 @@ GitHub Actions runs the same tests and syntax checks on pushes and pull requests
 
 - [Phase 1 — Core Shell](docs/PHASE_1_CORE_SHELL.md)
 - [Phase 2 — Simulation Core](docs/PHASE_2_SIMULATION_CORE.md)
-- [Phase 3 — Character & Life](docs/PHASE_3_CHARACTER_AND_LIFE.md)\n- [Phase 4 — Household Finance & Ledger](docs/PHASE_4_HOUSEHOLD_FINANCE.md)
+- [Phase 3 — Character & Life](docs/PHASE_3_CHARACTER_AND_LIFE.md)
+- [Phase 4 — Household Finance & Ledger](docs/PHASE_4_HOUSEHOLD_FINANCE.md)
+- [Phase 5 — Employment & Education](docs/PHASE_5_EMPLOYMENT_AND_EDUCATION.md)
 - [Implementation Roadmap](docs/IMPLEMENTATION_ROADMAP.md)
 
 ## Current status
