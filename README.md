@@ -39,7 +39,7 @@ The design uses dashboards, directories, profiles, terminals, reports and relati
 - Measurable goals for skills, well-being and turn milestones, including lower-is-better stress goals.
 - Schema v1 → v2 migration for Phase 2 local saves and JSON backups.
 
-Starting capital, debt and monthly expenses are **scenario context only** in Phase 3; they are not account balances or ledger entries. The authoritative household financial model is introduced in Phase 4. Employment, compensation and job outcomes remain Phase 5.
+Starting capital and debt become opening ledger balances in Phase 4. Monthly expenses become a planning budget, not an automatic charge. Employment, compensation and job outcomes remain Phase 5.
 
 ## Phase 4 — Household finance & ledger\n\n- Neutral in-game Credits, stored as integer minor units.\n- Opening cash, debt and monthly budget initialized from each character profile.\n- Balanced double-entry journal with account reconciliation.\n- Income, expense, transfer, borrowing, principal repayment and unrealized valuation actions.\n- Transfers and borrowing are excluded from income; principal repayment is not an expense; unrealized gains are not cash.\n- Net worth, liquid net worth, recorded cash flow and monthly budgets.\n- Schema v2 → v3 migration for existing Phase 3 saves and backups.\n\nThe monthly expense context is a budget baseline, not an automatic charge. Interest, payroll, scheduled debt service and market pricing remain later-phase systems.\n\n## Run locally
 
