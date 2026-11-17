@@ -1,13 +1,13 @@
 # Networth — Capital & Consequence
 
-Networth is a turn-based financial life simulation, economic strategy and business management game. You begin as an ordinary individual and work toward financial stability, investment success, business ownership and potentially a wider economic enterprise.
+Networth is a turn-based financial life simulation, economic strategy and business management game. Players begin as ordinary individuals with different backgrounds, resources, obligations and opportunities. Through work, education, saving, borrowing, investing, entrepreneurship, acquisitions and relationships, they pursue financial independence and may continue into building a business and investment empire.
 
-This repository currently contains **Phase 1 — Core Shell** and **Phase 2 — Simulation Core**. The simulation foundation is active, while character progression and financial/economic systems remain scheduled for later phases.
+This repository currently contains **Phase 1 — Core Shell**, **Phase 2 — Simulation Core** and **Phase 3 — Character & Life**. Household finance and the wider economy remain scheduled for later phases.
 
 ## Workspaces
 
 - **Overview** — financial command center and simulation controls.
-- **Personal** — character dossier, calendar and well-being placeholders (Phase 3).
+- **Personal** — character dossier, starting circumstances, skills, time allocation, well-being and goals.
 - **Finance** — accounts, budgets, cash flow, debt and savings placeholders (Phase 4).
 - **Markets** — instrument directory, research, orders and holdings placeholders (Phase 7).
 - **Businesses** — company directory, business operations and ownership placeholders (Phases 9–10).
@@ -18,17 +18,28 @@ This repository currently contains **Phase 1 — Core Shell** and **Phase 2 — 
 
 The design uses dashboards, directories, profiles, terminals, reports and relationship networks. There is no world map, geographic exploration, travel progression or multi-region unlock system.
 
-## Phase 2 simulation features
+## Phase 2 — Simulation core
 
 - Seven-day in-game turn clock, independent of real-world time.
 - Seed normalization and deterministic pseudo-random draws.
 - Central action validation/resolution; invalid actions do not mutate state.
 - Turn and month-boundary event log.
 - Three IndexedDB save slots stored locally in the current browser profile.
-- Versioned save validation and an integrity checksum for accidental-corruption detection.
+- Versioned save validation and integrity checksum.
 - JSON backup export and validated import.
 
-Month-boundary entries are calendar markers only. No financial settlement is performed until the finance systems are implemented. Character creation, jobs, banking, credit, trading, property and business systems are not yet active.
+## Phase 3 — Character & life
+
+- Four distinct starting backgrounds: Early-Career Graduate, Career Switcher, Family Provider and Independent Specialist.
+- Each profile has different education, experience, employment context, capital/debt/expense context, dependents, skills, well-being, reputation and contacts.
+- Character dossier with age, background, skills, well-being and starting circumstances.
+- Weekly time planner with 112 waking hours across work, study, rest, family, networking, research, side work and recreation.
+- Deterministic well-being updates for health, energy, stress and happiness on turn advancement.
+- Skill development through study focus, research, networking and side work.
+- Measurable goals for skills, well-being and turn milestones, including lower-is-better stress goals.
+- Schema v1 → v2 migration for Phase 2 local saves and JSON backups.
+
+Starting capital, debt and monthly expenses are **scenario context only** in Phase 3; they are not account balances or ledger entries. The authoritative household financial model is introduced in Phase 4. Employment, compensation and job outcomes remain Phase 5.
 
 ## Run locally
 
@@ -47,21 +58,24 @@ npm test
 npm run check
 ```
 
+GitHub Actions runs the same tests and syntax checks on pushes and pull requests to `main`.
+
 ## Technical boundaries
 
 - Browser-first responsive interface.
 - HTML, CSS and native JavaScript ES modules; no framework or third-party runtime dependency.
 - Local saves use IndexedDB; saves do not sync across devices.
 - Export JSON backups before clearing browser site data or moving to another device.
-- The checksum is for accidental corruption detection, not cryptographic security.
-- The empty states remain deliberate; no fabricated player balances, prices or news are shown.
+- The checksum detects accidental corruption; it is not cryptographic security.
+- No fabricated financial balances, market prices or news are presented.
 
 ## Project documents
 
 - [Phase 1 — Core Shell](docs/PHASE_1_CORE_SHELL.md)
 - [Phase 2 — Simulation Core](docs/PHASE_2_SIMULATION_CORE.md)
+- [Phase 3 — Character & Life](docs/PHASE_3_CHARACTER_AND_LIFE.md)
 - [Implementation Roadmap](docs/IMPLEMENTATION_ROADMAP.md)
 
 ## Current status
 
-**Phase 1 — implemented. Phase 2 — implemented pending user acceptance.** Later phases remain gated by the roadmap.
+**Phases 1–3 are implemented. Phase 3 is awaiting user acceptance.** Later phases remain gated by the roadmap.
