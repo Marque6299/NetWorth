@@ -2,13 +2,13 @@
 
 Networth is a turn-based financial life simulation, economic strategy and business management game. Players begin as ordinary individuals with different backgrounds, resources, obligations and opportunities. Through work, education, saving, borrowing, investing, entrepreneurship, acquisitions and relationships, they pursue financial independence and may continue into building a business and investment empire.
 
-This repository currently contains **Phases 1–5**: Core Shell, Simulation Core, Character & Life, Household Finance & Ledger, and Employment & Education. Later phases remain gated by the implementation roadmap.
+This repository currently contains **Phases 1–6**: Core Shell, Simulation Core, Character & Life, Household Finance & Ledger, Employment & Education, and Banking & Credit. Later phases remain gated by the implementation roadmap.
 
 ## Workspaces
 
 - **Overview** — financial command center and simulation controls.
 - **Personal** — character dossier, career opportunities, job applications, employment contracts, education programs, skills, time allocation, well-being and goals.
-- **Finance** — cash, savings, investment valuation, liabilities, budgets, double-entry journal, cash flow and net worth.
+- **Finance** — cash, bank checking/savings, fixed deposits, loans, credit cards, credit score, investment valuation, liabilities, budgets, double-entry journal, cash flow and net worth.
 - **Markets** — instrument directory, research, orders and holdings placeholders (Phase 7).
 - **Businesses** — company directory, business operations and ownership placeholders (Phases 9–10).
 - **Assets** — asset portfolio, property and collectibles placeholders (Phase 8).
@@ -63,7 +63,7 @@ The monthly expense context is a budget baseline, not an automatic charge. Banki
 
 Employment salaries and education tuition use the existing Finance ledger. Salary is gross in-game Credits. Payroll taxes, benefits, commissions, student loans, bank products and credit scoring are not included in this phase.
 
-## Run locally
+## Phase 6 — Banking & credit\n\n- Five fictional institution categories: National, Local, Microfinance, Investment and Predatory.\n- Checking and savings accounts, fixed deposits, deposit interest, account fees and withdrawals.\n- Personal, mortgage, business and microfinance loans with eligibility rules, amortization, interest accrual and scheduled repayment.\n- Credit cards, purchase limits, interest and repayments.\n- Credit score with a recorded reason for each score change.\n- Dedicated ledger accounts for bank deposits, fixed deposits, loans and credit cards; bank transactions reconcile to the household double-entry ledger.\n- Schema v4 → v5 migration preserves earlier saves and backups.\n\nBank products and rates are fictional. Deposit-insurance eligibility is disclosed, but bank failure and insurance settlement remain planned economy-system extensions.\n\n## Run locally
 
 Requirements: Node.js 18 or newer. There are no runtime dependencies to install.
 
@@ -97,9 +97,9 @@ GitHub Actions runs the same tests and syntax checks on pushes and pull requests
 - [Phase 2 — Simulation Core](docs/PHASE_2_SIMULATION_CORE.md)
 - [Phase 3 — Character & Life](docs/PHASE_3_CHARACTER_AND_LIFE.md)
 - [Phase 4 — Household Finance & Ledger](docs/PHASE_4_HOUSEHOLD_FINANCE.md)
-- [Phase 5 — Employment & Education](docs/PHASE_5_EMPLOYMENT_AND_EDUCATION.md)
+- [Phase 5 — Employment & Education](docs/PHASE_5_EMPLOYMENT_AND_EDUCATION.md)\n- [Phase 6 — Banking & Credit](docs/PHASE_6_BANKING_AND_CREDIT.md)
 - [Implementation Roadmap](docs/IMPLEMENTATION_ROADMAP.md)
 
 ## Current status
 
-**Phases 1–4 are accepted; Phase 5 is implemented and awaiting user acceptance.** Later phases remain gated by the roadmap.
+**Phases 1–5 are accepted; Phase 6 is implemented and awaiting user acceptance.** Later phases remain gated by the roadmap.
