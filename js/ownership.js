@@ -161,9 +161,13 @@ export function migrateInvestorLiquidity(state) {
       const holding = shareholderById(company, investorId);
       return sum + (safeNonNegative(holding?.costBasisMinor) ? holding.costBasisMinor : 0);
     }, 0);
-    // Existing saves did not track one shared wallet. Ignore unrecorded sale proceeds
-    // during migration so legacy investor cash is never overstated.
-    return { investorId, initialCashMinor, cashMinor: Math.max(0, initialCashMinor - investedMinor) };
+    const knownDividendsMinor = state.companies.reduce((sum, company) => {
+      const holding = shareholderById(company, investorId);
+      return sum + (safeNonNegative(holding?.lastDividendMinor) ? holding.lastDividendMinor : 0);
+    }, 0);
+    // Existing saves did not track a shared wallet. Reconstruct only provable dividends;
+    // unrecorded secondary-sale proceeds are intentionally omitted to avoid overstating cash.
+    return { investorId, initialCashMinor, cashMinor: Math.max(0, initialCashMinor - investedMinor + knownDividendsMinor) };
   });
   return state;
 }
