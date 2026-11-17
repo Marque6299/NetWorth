@@ -6,7 +6,7 @@ The project is delivered one phase at a time. Each phase has an acceptance gate;
 |---|---|---|
 | 0 | Setup and platform decisions | Recorded for the current browser-first shell |
 | 1 | Core shell: navigation, nine placeholder workspaces and shared UI | **Implemented** |
-| 2 | Simulation core: turn/date, seeded randomness, action validation, event log and local save/load | Not started |
+| 2 | Simulation core: turn/date, seeded randomness, action validation, event log and local save/load | **Implemented** |
 | 3 | Character, life, skills, time allocation, well-being and goals | Not started |
 | 4 | Household finance, ledger, budgets, cash flow, debt and net worth | Not started |
 | 5 | Employment and education | Not started |
