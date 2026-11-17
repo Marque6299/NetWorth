@@ -109,6 +109,7 @@ export function validateOwnershipAction(state, finance, character, action) {
   }
   if (!company) return { valid: false, reason: "Select a company first." };
   if (company.status !== "active") return { valid: false, reason: "This company is not active." };
+  if (["OWNERSHIP_CONTRIBUTE_CAPITAL","OWNERSHIP_ISSUE_SHARES","OWNERSHIP_BUYBACK_SHARES","OWNERSHIP_SELL_SHARES"].includes(action.type) && company.resolutions.some(item => item.status === "open")) return { valid: false, reason: "Close open shareholder resolutions before changing the share register." };
   if (action.type === "OWNERSHIP_CONTRIBUTE_CAPITAL" || action.type === "OWNERSHIP_TAKE_LOAN") {
     if (!safePositive(amount) || amount > cash) return { valid: false, reason: "Enter a positive amount within available household cash." };
     if (action.type === "OWNERSHIP_CONTRIBUTE_CAPITAL") {
@@ -123,6 +124,7 @@ export function validateOwnershipAction(state, finance, character, action) {
     return { valid: true };
   }
   if (action.type === "OWNERSHIP_PROPOSE_DIVIDEND") {
+    if (company.resolutions.some(item => item.status === "open")) return { valid: false, reason: "Close the existing shareholder resolution before proposing a dividend." };
     if (!playerControls(company)) return { valid: false, reason: "A controlling shareholder is required to submit a dividend proposal." };
     const reserve = Math.floor(company.paidInCapitalMinor * 20 / 100);
     const available = Math.min(company.retainedEarningsMinor, Math.max(0, company.cashMinor - company.loanBalanceMinor - reserve));
