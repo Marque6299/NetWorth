@@ -4,6 +4,7 @@ import { createGameState, resolveAction, validateGameState, migrateGameState } f
 import { validateFinance, getFinanceSummary } from "../js/finance.js";
 import { validateBanking } from "../js/banking.js";
 import { getAssetPortfolio, validateAssets } from "../js/assets.js";
+import { createExport, parseImport } from "../js/persistence.js";
 
 const makeGame = (profileId = "career-switcher", seed = "assets-phase-eight") => {
   const result = resolveAction(createGameState({ seed }), { type: "CREATE_CHARACTER", name: "Casey Morgan", age: 30, profileId });
@@ -147,4 +148,14 @@ test("property and collectible condition wears down periodically and can be rest
   assert.ok(state.assets.properties[0].condition > 99);
   assert.ok(state.assets.collectibles[0].condition > 99);
   assert.equal(validateGameState(state).valid, true);
+});
+
+test("JSON export and import preserve property, collectible and mortgage state", () => {
+  let state = act(makeGame(), { type: "ASSET_BUY_PROPERTY", listingId: "property-studio", use: "rental" });
+  state = act(state, { type: "ASSET_BUY_COLLECTIBLE", catalogId: "collectible-camera" });
+  for (let i = 0; i < 2; i++) state = act(state, { type: "ADVANCE_TURN" });
+  const restored = parseImport(createExport(state));
+  assert.deepEqual(restored.assets, state.assets);
+  assert.deepEqual(restored.banking.loans, state.banking.loans);
+  assert.equal(validateGameState(restored).valid, true);
 });
