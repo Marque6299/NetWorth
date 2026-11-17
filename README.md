@@ -2,7 +2,7 @@
 
 Networth is a turn-based financial life simulation, economic strategy and business management game. Players begin as ordinary individuals with different backgrounds, resources, obligations and opportunities. Through work, education, saving, borrowing, investing, entrepreneurship, acquisitions and relationships, they pursue financial independence and may continue into building a business and investment empire.
 
-This repository currently contains **Phases 1–8**: Core Shell, Simulation Core, Character & Life, Household Finance & Ledger, Employment & Education, Banking & Credit, and Investment Markets. Later phases remain gated by the implementation roadmap.
+This repository currently contains **Phases 1–9**: Core Shell, Simulation Core, Character & Life, Household Finance & Ledger, Employment & Education, Banking & Credit, and Investment Markets. Later phases remain gated by the implementation roadmap.
 
 ## Workspaces
 
@@ -10,7 +10,7 @@ This repository currently contains **Phases 1–8**: Core Shell, Simulation Core
 - **Personal** — character dossier, career opportunities, job applications, employment contracts, education programs, skills, time allocation, well-being and goals.
 - **Finance** — cash, bank checking/savings, fixed deposits, loans, mortgages, credit cards, credit score, investment holdings, property, collectibles, liabilities, budgets, double-entry journal, cash flow and net worth.
 - **Markets** — fictional equities, government/corporate bonds, commodity benchmarks, digital assets, research indicators, market orders, watchlists, weekly pricing, dividends/coupons and portfolio performance.
-- **Businesses** — company directory, business operations and ownership placeholders (Phases 9–10).
+- **Businesses** — company operating mandates, products and pricing, staffing, supplier orders, marketing, sales, branch finances and weekly performance (Phase 9). Ownership, equity, acquisitions and governance remain Phase 10.
 - **Assets** — property listings and ownership, rental income, upkeep, taxes, mortgage-linked financing, appraisals, maintenance, collectible acquisitions, liquidity discounts and sales.
 - **Network** — people, company relationships and ownership-network placeholders.
 - **News** — news feed, economic events and cause-and-effect placeholders (Phase 11).
@@ -122,12 +122,12 @@ GitHub Actions runs the same tests and syntax checks on pushes and pull requests
 - [Phase 4 — Household Finance & Ledger](docs/PHASE_4_HOUSEHOLD_FINANCE.md)
 - [Phase 5 — Employment & Education](docs/PHASE_5_EMPLOYMENT_AND_EDUCATION.md)
 - [Phase 6 — Banking & Credit](docs/PHASE_6_BANKING_AND_CREDIT.md)
-- [Phase 7 — Investment Markets](docs/PHASE_7_INVESTMENT_MARKETS.md)\n- [Phase 8 — Property & Collectibles](docs/PHASE_8_PROPERTY_COLLECTIBLES.md)
+- [Phase 7 — Investment Markets](docs/PHASE_7_INVESTMENT_MARKETS.md)\n- [Phase 8 — Property & Collectibles](docs/PHASE_8_PROPERTY_COLLECTIBLES.md)\n- [Phase 9 — Business Operations](docs/PHASE_9_BUSINESS_OPERATIONS.md)
 - [Implementation Roadmap](docs/IMPLEMENTATION_ROADMAP.md)
 
 ## Current status
 
-**Phases 1–7 are accepted; Phase 8 is implemented and awaiting user acceptance.** Later phases remain gated by the roadmap.
+**Phases 1–8 are accepted; Phase 9 is implemented and awaiting user acceptance.** Later phases remain gated by the roadmap.
 
  
 ## Phase 8 — Property & collectibles
@@ -143,3 +143,21 @@ GitHub Actions runs the same tests and syntax checks on pushes and pull requests
 - Schema v6 → v7 migration preserves existing game state and initializes the new Assets subsystem.
  
 Asset catalogue data, prices and appraisal assumptions are fictional. No real-world property inventory, maps or property feeds are used.
+
+ 
+## Phase 9 — Business Operations
+ 
+- Five fictional companies provide different operating mandates across consumer retail, e-commerce, digital services, business services and industrial supply.
+- The player acts as an operating manager for one company-funded branch. The parent company retains the branch's capital, cash, inventory and equity.
+- Three product or service lines per branch, with price controls, unit costs, stock, demand and margins.
+- Staffing from one to ten employees, manager compensation, weekly payroll, rent and utilities.
+- Three suppliers with different prices, shipping fees, lead times and delivery reliability.
+- Prepaid purchase orders, inventory in transit, delayed deliveries and weighted-average inventory cost.
+- Marketing campaigns with an expense and a four-turn demand boost.
+- Deterministic weekly sales driven by pricing, player skills, side-work hours, staffing capacity, marketing and market regime.
+- Separate branch ledger for cash, inventory, inventory in transit, operating payables, revenue, cost of goods sold and operating expenses.
+- Manager compensation reaches household Finance only when actually paid. Company capital and inventory never count as player assets in Phase 9.
+- Weekly sales, operating results, stockouts, customer satisfaction and manager performance history.
+- Schema v7 → v8 migration preserves all previous systems and save data.
+ 
+Operating companies and financial assumptions are fictional. Business ownership, equity, dividends, company formation, acquisitions and governance are reserved for Phase 10.
