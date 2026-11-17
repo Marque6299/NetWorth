@@ -155,3 +155,54 @@ test("Businesses workspace exposes company formation, ownership portfolio and ac
   const html = renderBusinessesView(makeGame());
   for (const label of ["OWNERSHIP PORTFOLIO / PHASE 10", "Found your own company", "Acquire an established company", "data-ownership-form", "data-ownership-action"]) assert.ok(html.includes(label), label);
 });
+
+test("minority acquisition records the actual stake and leaves the seller on the cap table", () => {
+  let state = makeGame("independent");
+  state = act(state, { type: "RECORD_INCOME", amountMinor: 2000000, category: "business-income", description: "Sale of an inherited asset" });
+  state = act(state, { type: "OWNERSHIP_ACQUIRE_TARGET", targetId: "cobalt-digital-works", ownershipBps: 2500 });
+  const company = state.ownership.companies[0];
+  assert.equal(company.shareholders.find(item => item.id === "player").shares, 25000);
+  assert.equal(company.shareholders.find(item => item.id === "seller-cobalt-digital-works").shares, 75000);
+  assert.equal(state.ownership.acquisitionHistory[0].ownershipBps, 2500);
+  assert.equal(state.finance.accounts.find(item => item.id === "privateEquity").balanceMinor, 462500);
+  assert.equal(validateGameState(state).valid, true);
+});
+
+test("secondary share sales transfer ownership to an investor and realize gain in household Finance", () => {
+  let state = found(makeGame()), companyId = state.ownership.companies[0].id;
+  state = act(state, { type: "OWNERSHIP_SELL_SHARES", companyId, buyerId: "mira-chen", shares: 10000, pricePerShareMinor: 3 });
+  const company = state.ownership.companies[0];
+  assert.equal(company.shareholders.find(item => item.id === "player").shares, 90000);
+  assert.equal(company.shareholders.find(item => item.id === "mira-chen").shares, 10000);
+  assert.equal(company.outstandingShares, 100000);
+  assert.equal(state.finance.accounts.find(item => item.id === "privateEquity").balanceMinor, 45000);
+  assert.equal(state.finance.ledger.at(-1).kind, "EQUITY_SECONDARY_SALE");
+  assert.equal(validateGameState(state).valid, true);
+});
+
+test("shareholders can be appointed to and removed from the board", () => {
+  let state = found(makeGame()), companyId = state.ownership.companies[0].id;
+  state = act(state, { type: "OWNERSHIP_ISSUE_SHARES", companyId, investorId: "mira-chen", shares: 20000 });
+  state = act(state, { type: "OWNERSHIP_APPOINT_DIRECTOR", companyId, candidateId: "mira-chen", seat: "Director" });
+  assert.equal(state.ownership.companies[0].board.some(item => item.holderId === "mira-chen" && item.seat === "Director"), true);
+  state = act(state, { type: "OWNERSHIP_REMOVE_DIRECTOR", companyId, candidateId: "mira-chen" });
+  assert.equal(state.ownership.companies[0].board.some(item => item.holderId === "mira-chen" && item.seat === "Director"), false);
+  assert.equal(validateGameState(state).valid, true);
+});
+
+test("non-player shareholders cast deterministic votes and receive pro-rata dividends", () => {
+  let state = found(makeGame()), companyId = state.ownership.companies[0].id;
+  state = act(state, { type: "OWNERSHIP_ISSUE_SHARES", companyId, investorId: "mira-chen", shares: 20000 });
+  state = act(state, { type: "ADVANCE_TURN" });
+  const retained = state.ownership.companies[0].retainedEarningsMinor;
+  const amountMinor = Math.max(1, Math.floor(retained / 10));
+  state = act(state, { type: "OWNERSHIP_PROPOSE_DIVIDEND", companyId, amountMinor });
+  const resolutionId = state.ownership.companies[0].resolutions[0].id;
+  state = act(state, { type: "OWNERSHIP_VOTE", companyId, resolutionId, vote: "for" });
+  state = act(state, { type: "OWNERSHIP_CLOSE_VOTE", companyId, resolutionId });
+  const resolution = state.ownership.companies[0].resolutions[0];
+  assert.equal(resolution.status, "passed");
+  assert.equal(resolution.votes.some(item => item.shareholderId === "mira-chen" && item.automatic), true);
+  assert.ok(state.ownership.companies[0].shareholders.find(item => item.id === "mira-chen").lastDividendMinor > 0);
+  assert.equal(validateGameState(state).valid, true);
+});
