@@ -131,7 +131,7 @@ GitHub Actions runs the same tests and syntax checks on pushes and pull requests
 
 ## Current status
 
-**Phases 1–9 are accepted; Phase 10 remains in progress.** The ownership milestone is merged; company double-entry accounting is now being added with a v9 → v10 save migration. Board elections, negotiated transfers and executable resolutions remain in progress.
+**Phases 1–9 are accepted; Phase 10 remains in progress.** Company ownership, company ledgers, governance actions and portfolio-wide investor cash tracking are implemented. Schema v10 saves migrate to v11 with a conservative global investor cash balance initialization. Final company-economics balancing and browser acceptance remain pending.
 
  
 ## Phase 8 — Property & collectibles
@@ -178,7 +178,8 @@ Operating companies and financial assumptions are fictional. Phase 10 adds a sep
 - Propose dividends, record weighted shareholder votes and settle approved distributions pro rata from retained earnings after debt and reserve checks.
 - Acquire minority or controlling stakes in selected fictional companies using household cash.
 - Record executive appointments, executable capital-expansion and executive-appointment resolutions, shareholder voting preferences, board elections and fixed director terms.
-- Schema v8 → v9 initializes ownership; schema v9 → v10 adds reconciled company double-entry ledgers, migration-safe election state and governance history.
-- Ownership data, Finance entries and governance records persist through IndexedDB saves and JSON backup/import.
+- A portfolio-wide investor cash ledger prevents the same fictional investor funds being reused across different companies. Primary share issues and secondary purchases debit the global balance; investor share sales and dividends credit it.
+- Schema v8 → v9 initializes ownership; schema v9 → v10 adds reconciled company ledgers; schema v10 → v11 initializes global investor cash balances.
+- Ownership data, investor balances, Finance entries and governance records persist through IndexedDB saves and JSON backup/import.
 
-**Current boundaries:** secondary share transfers between arbitrary holders, minority-stake acquisitions, investor voting automation, board-seat elections and full resolution execution remain future Phase 10 work. Existing Phase 9 branch mandates remain separate.
+**Current boundaries:** company operating profit remains a deterministic capital-and-skill abstraction rather than a fully integrated revenue, cost, staffing and demand model. Phase 9 branch mandates remain separate from Phase 10 ownership pending the broader company operating-economics upgrade.
