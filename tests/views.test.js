@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { renderOverview, renderSection } from "../js/views.js";
+import { renderOverview, renderSection, renderMarketsView } from "../js/views.js";
+import { createGameState, resolveAction } from "../js/simulation-core.js";
 import { PAGE_IDS } from "../js/navigation.js";
 
 test("Overview contains the welcome panel, blank snapshot and next-step navigation", () => {
@@ -19,4 +20,11 @@ test("each section shows modules, planned status and a deliberate empty state", 
     assert.match(html, /Phase 1 foundation/);
     assert.doesNotMatch(html, /undefined|null/);
   }
+});
+
+test("Markets workspace renders the instrument directory, order terminal and portfolio",()=>{
+ let state=createGameState({seed:"market-view"});state=resolveAction(state,{type:"CREATE_CHARACTER",name:"Taylor Morgan",age:29,profileId:"early-career"}).state;
+ const html=renderMarketsView(state);
+ for(const text of ["Market instruments","Order terminal","Portfolio holdings","Northstar Services","National Government 5Y","Bitcoin Index","Available cash"])assert.ok(html.includes(text),text);
+ assert.match(html,/data-market-form/);assert.match(html,/data-market-watch/);
 });
