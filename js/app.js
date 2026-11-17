@@ -36,13 +36,21 @@ function setupSearch(){
 }
 async function refreshSlots(){try{saveSlots=await listSaveSlots();storageError="";}catch(error){storageError=error.message;}}
 function setFeedback(message){feedbackMessage=message;}
+function updateAutoSaveWarning(){
+ const warning=document.querySelector("#autoSaveWarning");
+ if(!warning)return;
+ warning.hidden=!autoSaveError;
+ warning.textContent=autoSaveError?`Automatic recovery could not be saved: ${autoSaveError}. Use a manual save slot.`:"";
+}
 function scheduleAutoSave(){
  if(!currentGame)return;
  const snapshot=typeof structuredClone==="function"?structuredClone(currentGame):JSON.parse(JSON.stringify(currentGame));
  autoSaveQueue=autoSaveQueue.catch(()=>{}).then(()=>saveAutoGame(snapshot)).then(()=>{
   autoSaveError="";
+  updateAutoSaveWarning();
  }).catch(error=>{
   autoSaveError=error.message;
+  updateAutoSaveWarning();
  });
 }
 async function restoreAutoSave(){
