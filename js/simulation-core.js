@@ -115,7 +115,7 @@ export function resolveAction(state,action){
 export function migrateGameState(input){
  const state=clone(input);
  if(state.schemaVersion===1){state.life={character:null,timeAllocation:null,goals:[]};state.schemaVersion=2;}
- if(state.schemaVersion===2){state.finance=null;state.schemaVersion=3;state.simulationVersion=SIMULATION_VERSION;}
+ if(state.schemaVersion===2){state.finance=state.life?.character?createOpeningFinance(state.life.character.startingContext,state.calendar.currentDate,state.calendar.turn):null;state.schemaVersion=3;state.simulationVersion=SIMULATION_VERSION;}
  if(state.schemaVersion!==SAVE_SCHEMA_VERSION)throw new Error(`Unsupported save schema version: ${state.schemaVersion}`);
  return state;
 }
