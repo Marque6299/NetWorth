@@ -2,7 +2,7 @@ export const GROUPS = [
   { label: "Workspace", pages: [{ id: "overview", label: "Overview", icon: "grid", title: "Executive Overview", description: "A clear view of the financial life and enterprise you are building." }] },
   { label: "Life & Capital", pages: [
     { id: "personal", label: "Personal", icon: "user", title: "Personal Dossier", description: "Your career, education, circumstances, capabilities and personal goals." },
-    { id: "finance", label: "Finance", icon: "wallet", title: "Finance", description: "Accounts, obligations, cash flow and the foundations of your balance sheet." },
+    { id: "finance", label: "Finance", icon: "wallet", title: "Finance", description: "Accounts, obligations, banking, credit, cash flow and the foundations of your balance sheet." },
     { id: "markets", label: "Markets", icon: "chart", title: "Markets", description: "Investment instruments, research and portfolio opportunities." },
     { id: "businesses", label: "Businesses", icon: "building", title: "Businesses", description: "Companies, operations and the ownership decisions behind them." },
     { id: "assets", label: "Assets", icon: "gem", title: "Assets", description: "Property, valuables and the assets that make up your wealth." }
