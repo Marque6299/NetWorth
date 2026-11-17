@@ -51,8 +51,69 @@ function postHousehold(finance, { id, date, turn, kind, description, amountMinor
   }
   finance.ledger.push({ id, date, turn, kind, description, amountMinor, category: "private-equity", relatedId, lines: clone(lines) });
 }
+function initializeCompanyLedger(company) {
+  if (Array.isArray(company.ledger) && Array.isArray(company.ledgerAccounts)) return company;
+  company.ledgerSequence = 1;
+  company.ledgerAccounts = [
+    { id: "cash", name: "Cash", type: "asset", balanceMinor: 0 },
+    { id: "shareholderLoans", name: "Shareholder loans payable", type: "liability", balanceMinor: 0 },
+    { id: "shareCapital", name: "Share capital", type: "equity", balanceMinor: 0 },
+    { id: "retainedEarnings", name: "Retained earnings", type: "equity", balanceMinor: 0 }
+  ];
+  company.ledger = [];
+  const amount = company.cashMinor;
+  if (amount > 0) postCompanyJournal(company, {
+    date: company.createdAt, turn: company.foundedAtTurn, kind: "OPENING_BALANCE",
+    description: "Opening company balance on ownership-ledger activation",
+    lines: [
+      { accountId: "cash", debitMinor: amount, creditMinor: 0 },
+      { accountId: "shareCapital", debitMinor: 0, creditMinor: company.paidInCapitalMinor },
+      { accountId: "shareholderLoans", debitMinor: 0, creditMinor: company.loanBalanceMinor },
+      { accountId: "retainedEarnings", debitMinor: 0, creditMinor: company.retainedEarningsMinor }
+    ]
+  });
+  return company;
+}
+function postCompanyJournal(company, { date, turn, kind, description, lines }) {
+  initializeCompanyLedger(company);
+  const debit = lines.reduce((sum, line) => sum + line.debitMinor, 0);
+  const credit = lines.reduce((sum, line) => sum + line.creditMinor, 0);
+  if (!safePositive(debit) || debit !== credit) throw new Error("Company journal entry is not balanced.");
+  const accounts = new Map(company.ledgerAccounts.map(account => [account.id, account]));
+  for (const line of lines) {
+    const account = accounts.get(line.accountId);
+    if (!account || !safeNonNegative(line.debitMinor) || !safeNonNegative(line.creditMinor) || (line.debitMinor > 0 && line.creditMinor > 0)) throw new Error("Company journal line is invalid.");
+  }
+  for (const line of lines) {
+    const account = accounts.get(line.accountId);
+    account.balanceMinor += account.type === "asset" ? line.debitMinor - line.creditMinor : line.creditMinor - line.debitMinor;
+  }
+  company.ledger.unshift({
+    id: "company-journal-" + company.id + "-" + company.ledgerSequence++,
+    date, turn, kind, description, amountMinor: debit, lines: clone(lines)
+  });
+  if (company.ledger.length > 500) company.ledger.length = 500;
+}
+function postCompanyTransaction(company, kind, amountMinor, date, turn, description) {
+  if (!safePositive(amountMinor)) return;
+  const entries = {
+    EQUITY_CONTRIBUTION: [{ accountId: "cash", debitMinor: amountMinor, creditMinor: 0 }, { accountId: "shareCapital", debitMinor: 0, creditMinor: amountMinor }],
+    SHARES_ISSUED: [{ accountId: "cash", debitMinor: amountMinor, creditMinor: 0 }, { accountId: "shareCapital", debitMinor: 0, creditMinor: amountMinor }],
+    SHAREHOLDER_LOAN: [{ accountId: "cash", debitMinor: amountMinor, creditMinor: 0 }, { accountId: "shareholderLoans", debitMinor: 0, creditMinor: amountMinor }],
+    SHAREHOLDER_LOAN_REPAYMENT: [{ accountId: "shareholderLoans", debitMinor: amountMinor, creditMinor: 0 }, { accountId: "cash", debitMinor: 0, creditMinor: amountMinor }],
+    DIVIDEND_PAID: [{ accountId: "retainedEarnings", debitMinor: amountMinor, creditMinor: 0 }, { accountId: "cash", debitMinor: 0, creditMinor: amountMinor }],
+    SHARES_BOUGHT_BACK: [{ accountId: "shareCapital", debitMinor: amountMinor, creditMinor: 0 }, { accountId: "cash", debitMinor: 0, creditMinor: amountMinor }]
+  };
+  const lines = entries[kind];
+  if (lines) postCompanyJournal(company, { date, turn, kind, description, lines });
+}
+export function migrateOwnershipLedger(state) {
+  for (const company of state?.companies ?? []) initializeCompanyLedger(company);
+  return state;
+}
 function transaction(state, company, turn, date, kind, description, amountMinor, details = {}) {
   const entry = { id: "ownership-" + state.nextId++, companyId: company.id, turn, date, kind, description, amountMinor, details: clone(details) };
+  postCompanyTransaction(company, kind, amountMinor, date, turn, description);
   state.transactions.unshift(entry);
   if (state.transactions.length > 250) state.transactions.length = 250;
   company.transactions.unshift(entry.id);
@@ -69,8 +130,21 @@ function makeCompany({ id, name, sector, description, capitalMinor, shares, turn
     estimatedValueMinor: capitalMinor, sharePriceMinor: Math.max(1, Math.floor(capitalMinor / shares)),
     board: [{ seat: "Chair", holderId: "player", appointedAtTurn: turn }],
     executives: [{ role: "CEO", holderId: "player", appointedAtTurn: turn }, { role: "CFO", holderId: "player", appointedAtTurn: turn }],
-    resolutions: [], transactions: [], lastAdvanceTurn: turn, createdAt: date
+    resolutions: [], transactions: [], lastAdvanceTurn: turn, createdAt: date,
+    ledgerSequence: 1,
+    ledgerAccounts: [
+      { id: "cash", name: "Cash", type: "asset", balanceMinor: 0 },
+      { id: "shareholderLoans", name: "Shareholder loans payable", type: "liability", balanceMinor: 0 },
+      { id: "shareCapital", name: "Share capital", type: "equity", balanceMinor: 0 },
+      { id: "retainedEarnings", name: "Retained earnings", type: "equity", balanceMinor: 0 }
+    ],
+    ledger: []
   };
+  postCompanyJournal(company, { date, turn, kind: "COMPANY_FORMATION", description: "Initial paid-in capital", lines: [
+    { accountId: "cash", debitMinor: capitalMinor, creditMinor: 0 },
+    { accountId: "shareCapital", debitMinor: 0, creditMinor: capitalMinor }
+  ] });
+  return company;
 }
 export function createOwnershipState() {
   return { nextId: 1, companies: [], transactions: [], acquisitionHistory: [] };
@@ -366,6 +440,10 @@ export function advanceOwnership(state, finance, { date, turn, character }) {
     const rate = clamp(company.weeklyProfitBps + skillAdjustment, 5, 100);
     const profit = Math.max(1, Math.floor(company.paidInCapitalMinor * rate / 10000));
     company.cashMinor += profit; company.retainedEarningsMinor += profit; company.cumulativeProfitMinor += profit;
+    postCompanyJournal(company, { date, turn, kind: "WEEKLY_OPERATING_PROFIT", description: "Weekly operating profit", lines: [
+      { accountId: "cash", debitMinor: profit, creditMinor: 0 },
+      { accountId: "retainedEarnings", debitMinor: 0, creditMinor: profit }
+    ] });
     company.lastAdvanceTurn = turn; company.estimatedValueMinor = equityValue(company); company.sharePriceMinor = sharePrice(company);
     const entry = { id: "ownership-" + next.nextId++, companyId: company.id, turn, date, kind: "WEEKLY_OPERATING_PROFIT", description: "Weekly operating profit", amountMinor: profit, details: { rateBps: rate } };
     next.transactions.unshift(entry); company.transactions.unshift(entry.id);
@@ -391,6 +469,24 @@ export function validateOwnership(state, finance) {
     if (company.cashMinor !== company.paidInCapitalMinor + company.loanBalanceMinor + company.retainedEarningsMinor) errors.push("Company cash does not reconcile to paid-in capital, shareholder loans and retained earnings.");
     if (company.retainedEarningsMinor !== company.cumulativeProfitMinor - company.cumulativeDividendsMinor) errors.push("Company retained earnings do not reconcile to profit and distributions.");
     if (company.estimatedValueMinor !== equityValue(company) || company.sharePriceMinor !== sharePrice(company)) errors.push("Company valuation does not reconcile to its equity and share register.");
+    if (!Array.isArray(company.ledger) || !Array.isArray(company.ledgerAccounts) || !Number.isInteger(company.ledgerSequence) || company.ledgerSequence < 1) errors.push("Company double-entry ledger is missing or malformed.");
+    else {
+      const accountIds = new Set(company.ledgerAccounts.map(account => account.id));
+      const totals = new Map(company.ledgerAccounts.map(account => [account.id, 0]));
+      for (const entry of company.ledger) {
+        const debit = entry.lines?.reduce((sum, line) => sum + line.debitMinor, 0) ?? -1;
+        const credit = entry.lines?.reduce((sum, line) => sum + line.creditMinor, 0) ?? -2;
+        if (debit <= 0 || debit !== credit || !Array.isArray(entry.lines)) errors.push("A company journal entry is not balanced.");
+        for (const line of entry.lines ?? []) {
+          const account = company.ledgerAccounts.find(item => item.id === line.accountId);
+          if (!account || !safeNonNegative(line.debitMinor) || !safeNonNegative(line.creditMinor) || (line.debitMinor > 0 && line.creditMinor > 0)) errors.push("A company journal line is invalid.");
+          else totals.set(line.accountId, (totals.get(line.accountId) ?? 0) + (account.type === "asset" ? line.debitMinor - line.creditMinor : line.creditMinor - line.debitMinor));
+        }
+      }
+      for (const account of company.ledgerAccounts) if (account.balanceMinor !== totals.get(account.id)) errors.push("Company ledger account balances do not reconcile to journal history.");
+      const balance = id => company.ledgerAccounts.find(account => account.id === id)?.balanceMinor ?? -1;
+      if (balance("cash") !== company.cashMinor || balance("shareCapital") !== company.paidInCapitalMinor || balance("shareholderLoans") !== company.loanBalanceMinor || balance("retainedEarnings") !== company.retainedEarningsMinor) errors.push("Company ledger does not reconcile to the company balance sheet.");
+    }
     if (!Number.isInteger(company.weeklyProfitBps) || company.weeklyProfitBps < 1 || company.weeklyProfitBps > 100 || !Number.isInteger(company.lastAdvanceTurn) || company.lastAdvanceTurn < company.foundedAtTurn) errors.push("Company operating parameters are invalid.");
     for (const resolution of company.resolutions) {
       if (!resolution || typeof resolution.id !== "string" || !["open", "passed", "rejected"].includes(resolution.status) || !Array.isArray(resolution.votes) || resolution.votes.some(vote => !shareholderIds.has(vote.shareholderId) || !Number.isInteger(vote.shares) || vote.shares < 1 || !["for", "against", "abstain"].includes(vote.choice))) errors.push("A shareholder resolution or vote is invalid.");
