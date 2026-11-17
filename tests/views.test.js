@@ -51,7 +51,7 @@ test("Active Business workspace renders pricing, staffing, marketing, suppliers 
   state = resolveAction(state, { type: "CREATE_CHARACTER", name: "Taylor Morgan", age: 29, profileId: "career-switcher" }).state;
   state = resolveAction(state, { type: "BUSINESS_ACCEPT_MANDATE", companyId: "meridian-essentials" }).state;
   const html = renderBusinessesView(state);
-  for (const text of ["Meridian Essentials Market", "Pricing and inventory", "Available suppliers", "Operating results", "Branch journal", "Operating mandate only"]) assert.ok(html.includes(text), text);
+  for (const text of ["Meridian Essentials Market", "Pricing and inventory", "Available suppliers", "Operating results", "BRANCH JOURNAL", "Operating mandate only"]) assert.ok(html.includes(text), text);
   assert.match(html, /data-business-form="BUSINESS_SET_PRICE"/);
   assert.match(html, /data-business-form="BUSINESS_ORDER_INVENTORY"/);
   assert.match(html, /data-business-form="BUSINESS_MARKETING_CAMPAIGN"/);
