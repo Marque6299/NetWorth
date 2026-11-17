@@ -32,9 +32,9 @@ Use the Phase 10 preview build for the current ownership branch. These are manua
 6. Create or acquire a second company and attempt another investment that exceeds the same investor's remaining cash. Confirm it is rejected even though the second company has not previously received capital from that investor.
 7. Sell a small number of founder shares to a different fictional investor at a custom price. Confirm shares move between holders, company cash is unchanged, household Finance records proceeds and realized gain/loss, and the buyer's global cash balance decreases.
 8. Negotiate a transfer from an existing investor to yourself. Confirm household cash decreases, your holding and cost basis increase, the seller's global cash balance increases, and total outstanding shares remain unchanged.
-8. Appoint an investor shareholder as a director, then remove the director. Confirm the board list updates and the Chair seat remains intact.
-9. Open a board election, vote for a shareholder candidate, close the election and confirm the winning director receives the configured term. Advance to the term end and confirm the seat expires.
-10. If sufficient company cash is available, sell a small number of founder shares back to the company. Confirm proceeds, remaining shares and realized gain/loss are reflected in Finance.
+9. Appoint an investor shareholder as a director, then remove the director. Confirm the board list updates and the Chair seat remains intact.
+10. Open a board election, vote for a shareholder candidate, close the election and confirm the winning director receives the configured term. Advance to the term end and confirm the seat expires.
+11. If sufficient company cash is available, sell a small number of founder shares back to the company. Confirm proceeds, remaining shares and realized gain/loss are reflected in Finance.
 
 ## C. Governance and distributions
 
@@ -55,12 +55,13 @@ Use the Phase 10 preview build for the current ownership branch. These are manua
 
 ## E. Phase 9 regression and persistence
 
-1. Accept a Phase 9 operating mandate. Confirm its branch cash, inventory and manager pay remain separate from owned-company cash and equity.
-2. Return to the ownership portfolio and confirm owned-company balances remain intact.
-3. Export a JSON save, start or load another simulation, then import the exported save.
-4. Confirm company holdings, share registers, global investor cash balances, negotiated transfers, company journals, loans, resolutions, elections, votes, executive appointments, acquisition history and Finance ledger entries are restored.
+1. Confirm a successful turn or action is written to the separate automatic recovery save. Reload the page and verify the latest state is restored without using one of the three manual save slots.
+2. Accept a Phase 9 operating mandate. Confirm its branch cash, inventory and manager pay remain separate from owned-company cash and equity.
+3. Return to the ownership portfolio and confirm owned-company balances remain intact.
+4. Export a JSON save, start or load another simulation, then import the exported save.
+5. Confirm company holdings, share registers, global investor cash balances, negotiated transfers, company journals, loans, resolutions, elections, votes, executive appointments, acquisition history and Finance ledger entries are restored.
 5. Import a schema v10 backup containing investor holdings. Confirm it migrates to schema v11 and does not restore legacy company-local investor cash fields.
-5. Save to an IndexedDB slot, reload the browser and load the slot. Confirm the same ownership data is restored.
+6. Save to an IndexedDB slot, reload the browser and load the slot. Confirm the same ownership data is restored.
 
 ## F. Responsive and integrity checks
 
