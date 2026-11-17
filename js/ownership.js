@@ -5,10 +5,10 @@ const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const money = value => (value / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const COMPANY_SECTORS = ["Technology", "Consumer", "Professional services", "Healthcare", "Logistics", "Hospitality", "Manufacturing"];
 const INVESTORS = Object.freeze([
-  { id: "cedar-ridge-capital", name: "Cedar Ridge Capital", type: "Institutional investor", capacityMinor: 250000000 },
-  { id: "northstar-ventures", name: "Northstar Ventures", type: "Venture investor", capacityMinor: 120000000 },
-  { id: "mira-chen", name: "Mira Chen", type: "Angel investor", capacityMinor: 25000000 },
-  { id: "atlas-holdings", name: "Atlas Holdings", type: "Private investment group", capacityMinor: 500000000 }
+  { id: "cedar-ridge-capital", name: "Cedar Ridge Capital", type: "Institutional investor", capacityMinor: 250000000, dividendBias: 72, growthBias: 48, riskTolerance: 42 },
+  { id: "northstar-ventures", name: "Northstar Ventures", type: "Venture investor", capacityMinor: 120000000, dividendBias: 25, growthBias: 92, riskTolerance: 88 },
+  { id: "mira-chen", name: "Mira Chen", type: "Angel investor", capacityMinor: 25000000, dividendBias: 38, growthBias: 78, riskTolerance: 70 },
+  { id: "atlas-holdings", name: "Atlas Holdings", type: "Private investment group", capacityMinor: 500000000, dividendBias: 84, growthBias: 32, riskTolerance: 35 }
 ]);
 export const OWNERSHIP_TARGETS = Object.freeze([
   { id: "cobalt-digital-works", name: "Cobalt Digital Works", sector: "Technology", description: "A compact analytics and workflow automation studio with a recurring small-business client base.", askingPriceMinor: 1850000, weeklyProfitBps: 34, risk: "Moderate" },
@@ -61,12 +61,15 @@ function initializeCompanyLedger(company) {
     { id: "retainedEarnings", name: "Retained earnings", type: "equity", balanceMinor: 0 }
   ];
   company.ledger = [];
-  const amount = company.cashMinor;
+  if (!Number.isSafeInteger(company.capitalAssetsMinor)) company.capitalAssetsMinor = 0;
+  if (!company.ledgerAccounts.some(account => account.id === "capitalAssets")) company.ledgerAccounts.push({ id: "capitalAssets", name: "Capital assets", type: "asset", balanceMinor: 0 });
+  const amount = company.cashMinor + company.capitalAssetsMinor;
   if (amount > 0) postCompanyJournal(company, {
     date: company.createdAt, turn: company.foundedAtTurn, kind: "OPENING_BALANCE",
     description: "Opening company balance on ownership-ledger activation",
     lines: [
-      { accountId: "cash", debitMinor: amount, creditMinor: 0 },
+      { accountId: "cash", debitMinor: company.cashMinor, creditMinor: 0 },
+      { accountId: "capitalAssets", debitMinor: company.capitalAssetsMinor, creditMinor: 0 },
       { accountId: "shareCapital", debitMinor: 0, creditMinor: company.paidInCapitalMinor },
       { accountId: "shareholderLoans", debitMinor: 0, creditMinor: company.loanBalanceMinor },
       { accountId: "retainedEarnings", debitMinor: 0, creditMinor: company.retainedEarningsMinor }
@@ -124,7 +127,7 @@ function makeCompany({ id, name, sector, description, capitalMinor, shares, turn
     id, name, sector, description, status: "active", foundedAtTurn: turn, acquired,
     authorizedShares: Math.max(shares, 1000000), issuedShares: shares, outstandingShares: shares,
     shareholders: [{ id: "player", name: "You", type: "Founder", shares, costBasisMinor: capitalMinor, isPlayer: true }],
-    cashMinor: capitalMinor, paidInCapitalMinor: capitalMinor, loanBalanceMinor: 0, retainedEarningsMinor: 0,
+    cashMinor: capitalMinor, capitalAssetsMinor: 0, paidInCapitalMinor: capitalMinor, loanBalanceMinor: 0, retainedEarningsMinor: 0,
     cumulativeProfitMinor: 0, cumulativeDividendsMinor: 0, weeklyProfitBps,
     estimatedValueMinor: capitalMinor, sharePriceMinor: Math.max(1, Math.floor(capitalMinor / shares)),
     board: [{ seat: "Chair", holderId: "player", appointedAtTurn: turn }],
@@ -133,6 +136,7 @@ function makeCompany({ id, name, sector, description, capitalMinor, shares, turn
     ledgerSequence: 1,
     ledgerAccounts: [
       { id: "cash", name: "Cash", type: "asset", balanceMinor: 0 },
+      { id: "capitalAssets", name: "Capital assets", type: "asset", balanceMinor: 0 },
       { id: "shareholderLoans", name: "Shareholder loans payable", type: "liability", balanceMinor: 0 },
       { id: "shareCapital", name: "Share capital", type: "equity", balanceMinor: 0 },
       { id: "retainedEarnings", name: "Retained earnings", type: "equity", balanceMinor: 0 }
@@ -464,8 +468,8 @@ export function validateOwnership(state, finance) {
       else { shareholderIds.add(holder.id); shares += holder.shares; }
     }
     if (shares !== company.outstandingShares) errors.push("The shareholder register does not reconcile to outstanding shares.");
-    for (const key of ["cashMinor", "paidInCapitalMinor", "loanBalanceMinor", "retainedEarningsMinor", "cumulativeProfitMinor", "cumulativeDividendsMinor", "estimatedValueMinor", "sharePriceMinor"]) if (!safeNonNegative(company[key])) errors.push("A company financial balance is invalid.");
-    if (company.cashMinor !== company.paidInCapitalMinor + company.loanBalanceMinor + company.retainedEarningsMinor) errors.push("Company cash does not reconcile to paid-in capital, shareholder loans and retained earnings.");
+    for (const key of ["cashMinor", "capitalAssetsMinor", "paidInCapitalMinor", "loanBalanceMinor", "retainedEarningsMinor", "cumulativeProfitMinor", "cumulativeDividendsMinor", "estimatedValueMinor", "sharePriceMinor"]) if (!safeNonNegative(company[key])) errors.push("A company financial balance is invalid.");
+    if (company.cashMinor + (company.capitalAssetsMinor ?? 0) !== company.paidInCapitalMinor + company.loanBalanceMinor + company.retainedEarningsMinor) errors.push("Company cash does not reconcile to paid-in capital, shareholder loans and retained earnings.");
     if (company.retainedEarningsMinor !== company.cumulativeProfitMinor - company.cumulativeDividendsMinor) errors.push("Company retained earnings do not reconcile to profit and distributions.");
     if (company.estimatedValueMinor !== equityValue(company) || company.sharePriceMinor !== sharePrice(company)) errors.push("Company valuation does not reconcile to its equity and share register.");
     if (!Array.isArray(company.ledger) || !Array.isArray(company.ledgerAccounts) || !Number.isInteger(company.ledgerSequence) || company.ledgerSequence < 1) errors.push("Company double-entry ledger is missing or malformed.");
@@ -484,7 +488,7 @@ export function validateOwnership(state, finance) {
       }
       for (const account of company.ledgerAccounts) if (account.balanceMinor !== totals.get(account.id)) errors.push("Company ledger account balances do not reconcile to journal history.");
       const balance = id => company.ledgerAccounts.find(account => account.id === id)?.balanceMinor ?? -1;
-      if (balance("cash") !== company.cashMinor || balance("shareCapital") !== company.paidInCapitalMinor || balance("shareholderLoans") !== company.loanBalanceMinor || balance("retainedEarnings") !== company.retainedEarningsMinor) errors.push("Company ledger does not reconcile to the company balance sheet.");
+      if (balance("cash") !== company.cashMinor || balance("capitalAssets") !== company.capitalAssetsMinor || balance("shareCapital") !== company.paidInCapitalMinor || balance("shareholderLoans") !== company.loanBalanceMinor || balance("retainedEarnings") !== company.retainedEarningsMinor) errors.push("Company ledger does not reconcile to the company balance sheet.");
     }
     if (!Number.isInteger(company.weeklyProfitBps) || company.weeklyProfitBps < 1 || company.weeklyProfitBps > 100 || !Number.isInteger(company.lastAdvanceTurn) || company.lastAdvanceTurn < company.foundedAtTurn) errors.push("Company operating parameters are invalid.");
     for (const resolution of company.resolutions) {
