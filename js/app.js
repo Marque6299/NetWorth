@@ -24,7 +24,7 @@ function render(){
  if(!location.hash||!PAGES.some(page=>"#/"+page.id===location.hash)){history.replaceState(null,"","#/overview");id="overview";}
  const page=getPage(id);
  root.innerHTML=sidebar(id)+'<div class="main-column">'+topbar(page)+'<main class="main"><a class="skip" href="#content">Skip to content</a><div id="content">'+heading(page)+'<div class="content">'+(id==="overview"?renderOverview(currentGame)+renderGamePanel(currentGame,saveSlots,storageError,feedbackMessage):id==="personal"?renderPersonalView(currentGame):id==="finance"?renderFinanceView(currentGame):renderSection(id))+'</div></div><footer class="page-footer"><span>NETWORTH · CAPITAL & CONSEQUENCE</span><span>PHASE 05 / EMPLOYMENT & EDUCATION · LOCAL GAME STATE</span></footer></main></div>';
- document.title=page.label+" — Networth";setupSearch();setupGameControls();setupPersonalControls();setupCareerControls();setupFinanceControls();root.classList.add("ready");
+ document.title=page.label+" — Networth";setupSearch();setupGameControls();setupPersonalControls();setupCareerControls();setupFinanceControls();setupBankingControls();root.classList.add("ready");
 }
 function closeSearch(){const input=document.querySelector("#globalSearch"),results=document.querySelector("#searchResults");if(results)results.hidden=true;if(input)input.setAttribute("aria-expanded","false");}
 function setupSearch(){
@@ -116,5 +116,24 @@ function setupCareerControls(){
    currentGame=result.state;setFeedback(result.event?.summary??"Career decision recorded.");render();
    const feedback=document.querySelector("#careerFeedback");if(feedback)feedback.textContent=feedbackMessage;
   }catch(error){setFeedback(error.message);const feedback=document.querySelector("#careerFeedback");if(feedback)feedback.textContent=error.message;}
+ }));
+}
+
+function setupBankingControls(){
+ document.querySelectorAll("[data-banking-form]").forEach(form=>form.addEventListener("submit",event=>{
+  event.preventDefault();if(!currentGame){setFeedback("Start a simulation first.");render();return;}
+  const data=new FormData(form),type=form.dataset.bankingForm,action={type};
+  try{
+   if(["OPEN_BANK_ACCOUNT","CREATE_FIXED_DEPOSIT","WITHDRAW_BANK_FUNDS","APPLY_FOR_LOAN","PAY_LOAN_INSTALLMENT","USE_CREDIT_CARD","PAY_CREDIT_CARD"].includes(type))action.amountMinor=parseCredits(data.get("amount"));
+   if(type==="OPEN_BANK_ACCOUNT"){action.bankId=String(data.get("bankId"));action.accountType=String(data.get("accountType"));}
+   if(type==="CREATE_FIXED_DEPOSIT"){action.accountId=String(data.get("accountId"));action.termWeeks=Number(data.get("termWeeks"));}
+   if(type==="WITHDRAW_BANK_FUNDS")action.accountId=String(data.get("accountId"));
+   if(type==="APPLY_FOR_LOAN"){action.bankId=String(data.get("bankId"));action.loanType=String(data.get("loanType"));action.termWeeks=Number(data.get("termWeeks"));action.collateral=String(data.get("collateral")||"");}
+   if(type==="PAY_LOAN_INSTALLMENT")action.loanId=String(data.get("loanId"));
+   if(type==="APPLY_FOR_CREDIT_CARD"){action.bankId=String(data.get("bankId"));action.limitMinor=parseCredits(data.get("limit"));}
+   if(type==="USE_CREDIT_CARD"||type==="PAY_CREDIT_CARD")action.cardId=String(data.get("cardId"));
+   const result=resolveAction(currentGame,action);if(!result.ok)throw new Error(result.reason);
+   currentGame=result.state;setFeedback("Banking decision recorded and posted to the household ledger.");render();
+  }catch(error){setFeedback(error.message);const target=document.querySelector("#bankingFeedback");if(target)target.textContent=error.message;}
  }));
 }
