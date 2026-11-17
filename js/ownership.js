@@ -99,9 +99,11 @@ export function validateOwnershipAction(state, finance, character, action) {
     return { valid: true };
   }
   if (action.type === "OWNERSHIP_ACQUIRE_TARGET") {
-    const target = targetById(action.targetId);
+    const target = targetById(action.targetId), ownershipBps = action.ownershipBps ?? 10000;
     if (!target || state.companies.some(item => item.id === target.id)) return { valid: false, reason: "This acquisition target is unavailable or already owned." };
-    if (target.askingPriceMinor > cash) return { valid: false, reason: "There is not enough household cash to acquire this company outright." };
+    if (!Number.isInteger(ownershipBps) || ownershipBps < 1000 || ownershipBps > 10000) return { valid: false, reason: "Choose an acquisition stake between 10% and 100%." };
+    const consideration = Math.floor(target.askingPriceMinor * ownershipBps / 10000);
+    if (!safePositive(consideration) || consideration > cash) return { valid: false, reason: "There is not enough household cash for the selected acquisition stake." };
     if (state.companies.length >= 20) return { valid: false, reason: "Your portfolio has reached the 20-company limit." };
     return { valid: true };
   }
@@ -163,8 +165,25 @@ export function validateOwnershipAction(state, finance, character, action) {
     if (proceeds > company.cashMinor - company.loanBalanceMinor - reserve || proceeds > company.paidInCapitalMinor) return { valid: false, reason: "The company cannot fund this buyback while preserving debt, paid-in capital and its operating reserve." };
     return { valid: true };
   }
+  if (action.type === "OWNERSHIP_SELL_SHARES") {
+    const holding = shareholderById(company, "player"), buyer = investorById(action.buyerId);
+    if (!buyer || !Number.isInteger(action.shares) || action.shares < 1 || action.shares > (holding?.shares ?? 0) || !safePositive(action.pricePerShareMinor)) return { valid: false, reason: "Choose a valid investor, share quantity and positive sale price." };
+    const proceeds = action.shares * action.pricePerShareMinor;
+    if (!safePositive(proceeds) || proceeds > buyer.capacityMinor) return { valid: false, reason: "The buyer cannot fund this secondary share purchase." };
+    return { valid: true };
+  }
   if (action.type === "OWNERSHIP_APPOINT_EXECUTIVE") {
     if (!playerControls(company) || !["CEO", "CFO", "COO"].includes(action.role) || !company.shareholders.some(item => item.id === action.candidateId)) return { valid: false, reason: "Only a controlling shareholder can appoint an eligible shareholder to an executive role." };
+    return { valid: true };
+  }
+  if (action.type === "OWNERSHIP_APPOINT_DIRECTOR") {
+    if (!playerControls(company) || !company.shareholders.some(item => item.id === action.candidateId) || !["Chair", "Director"].includes(action.seat)) return { valid: false, reason: "Only a controlling shareholder can appoint an eligible shareholder to a board seat." };
+    if (action.seat === "Director" && company.board.some(item => item.holderId === action.candidateId)) return { valid: false, reason: "This shareholder already holds a board seat." };
+    return { valid: true };
+  }
+  if (action.type === "OWNERSHIP_REMOVE_DIRECTOR") {
+    const director = company.board.find(item => item.holderId === action.candidateId && item.seat === "Director");
+    if (!playerControls(company) || !director) return { valid: false, reason: "Only a controlling shareholder can remove an appointed director." };
     return { valid: true };
   }
   return { valid: false, reason: "Unsupported ownership action." };
@@ -183,13 +202,17 @@ export function applyOwnershipAction(state, finance, character, action, { date, 
     return { ownership: next, finance, event: { type: "COMPANY_FOUNDED", summary: name + " was founded with " + money(capital) + " Credits of paid-in capital.", details: { companyId: id, capitalMinor: capital, shares } } };
   }
   if (action.type === "OWNERSHIP_ACQUIRE_TARGET") {
-    const target = targetById(action.targetId), id = target.id, capital = target.askingPriceMinor, shares = 100000;
-    const created = makeCompany({ id, name: target.name, sector: target.sector, description: target.description, capitalMinor: capital, shares, turn, date, weeklyProfitBps: target.weeklyProfitBps, acquired: true });
+    const target = targetById(action.targetId), id = target.id, capital = target.askingPriceMinor, totalShares = 100000;
+    const ownershipBps = action.ownershipBps ?? 10000, playerShares = Math.max(1, Math.floor(totalShares * ownershipBps / 10000));
+    const consideration = Math.floor(capital * ownershipBps / 10000), sellerShares = totalShares - playerShares;
+    const created = makeCompany({ id, name: target.name, sector: target.sector, description: target.description, capitalMinor: capital, shares: totalShares, turn, date, weeklyProfitBps: target.weeklyProfitBps, acquired: true });
+    created.shareholders = [{ id: "player", name: "You", type: "Shareholder", shares: playerShares, costBasisMinor: consideration, isPlayer: true }];
+    if (sellerShares > 0) created.shareholders.push({ id: "seller-" + id, name: "Original shareholders", type: "Existing owners", shares: sellerShares, costBasisMinor: capital - consideration, isPlayer: false });
     next.companies.push(created);
-    postHousehold(finance, { id: postId("acquire"), date, turn, kind: "COMPANY_ACQUISITION", description: "Acquired " + target.name + " outright", amountMinor: capital, relatedId: id, lines: [{ accountId: "privateEquity", debitMinor: capital, creditMinor: 0 }, { accountId: "cash", debitMinor: 0, creditMinor: capital }] });
-    next.acquisitionHistory.unshift({ id: "acquisition-" + id, companyId: id, companyName: target.name, turn, date, considerationMinor: capital, ownershipBps: 10000 });
-    transaction(next, created, turn, date, "COMPANY_ACQUIRED", "Acquired " + target.name, capital, { ownershipBps: 10000 });
-    return { ownership: next, finance, event: { type: "COMPANY_ACQUIRED", summary: target.name + " was acquired outright for " + money(capital) + " Credits.", details: { companyId: id, considerationMinor: capital } } };
+    postHousehold(finance, { id: postId("acquire"), date, turn, kind: "COMPANY_ACQUISITION", description: "Acquired " + (ownershipBps === 10000 ? "100% of " : ownershipBps / 100 + "% of ") + target.name, amountMinor: consideration, relatedId: id, lines: [{ accountId: "privateEquity", debitMinor: consideration, creditMinor: 0 }, { accountId: "cash", debitMinor: 0, creditMinor: consideration }] });
+    next.acquisitionHistory.unshift({ id: "acquisition-" + id, companyId: id, companyName: target.name, turn, date, considerationMinor: consideration, ownershipBps });
+    transaction(next, created, turn, date, "COMPANY_ACQUIRED", "Acquired " + ownershipBps / 100 + "% of " + target.name, consideration, { ownershipBps, shares: playerShares });
+    return { ownership: next, finance, event: { type: "COMPANY_ACQUIRED", summary: "Acquired " + ownershipBps / 100 + "% of " + target.name + " for " + money(consideration) + " Credits.", details: { companyId: id, considerationMinor: consideration, ownershipBps } } };
   }
   if (action.type === "OWNERSHIP_CONTRIBUTE_CAPITAL") {
     const price = sharePrice(company), shares = Math.floor(action.amountMinor / price), invested = shares * price;
@@ -237,6 +260,14 @@ export function applyOwnershipAction(state, finance, character, action, { date, 
   }
   if (action.type === "OWNERSHIP_CLOSE_VOTE") {
     const resolution = company.resolutions.find(item => item.id === action.resolutionId);
+    for (const holder of company.shareholders.filter(item => item.id !== "player" && item.shares > 0)) {
+      if (resolution.votes.some(item => item.shareholderId === holder.id)) continue;
+      let choice = "abstain";
+      if (resolution.type === "DIVIDEND") choice = resolution.amountMinor <= Math.floor(company.retainedEarningsMinor * 20 / 100) ? "for" : "against";
+      else if (resolution.type === "CAPITAL_EXPANSION") choice = /capital|expansion|growth/i.test(resolution.title) ? "for" : "abstain";
+      else if (resolution.type === "ACQUISITION") choice = company.cashMinor > Math.floor(company.paidInCapitalMinor * 30 / 100) ? "for" : "against";
+      resolution.votes.push({ shareholderId: holder.id, shares: holder.shares, choice, turn, automatic: true });
+    }
     const cast = resolution.votes.reduce((sum, item) => sum + (item.choice === "abstain" ? 0 : item.shares), 0);
     const yes = resolution.votes.filter(item => item.choice === "for").reduce((sum, item) => sum + item.shares, 0);
     const quorum = cast >= Math.ceil(company.outstandingShares * 0.5);
@@ -287,12 +318,41 @@ export function applyOwnershipAction(state, finance, character, action, { date, 
     transaction(next, company, turn, date, "SHARES_BOUGHT_BACK", "Company repurchased founder shares", proceeds, { shares: action.shares, realizedGainMinor: gain, pricePerShareMinor: price });
     return { ownership: next, finance, event: { type: "SHARES_BOUGHT_BACK", summary: "Sold " + action.shares.toLocaleString("en-US") + " shares back to " + company.name + " for " + money(proceeds) + " Credits.", details: { companyId: company.id, shares: action.shares, realizedGainMinor: gain } } };
   }
+  if (action.type === "OWNERSHIP_SELL_SHARES") {
+    const holding = shareholderById(company, "player"), buyer = investorById(action.buyerId), shares = action.shares;
+    const proceeds = shares * action.pricePerShareMinor, basis = Math.floor(holding.costBasisMinor * shares / holding.shares), gain = proceeds - basis;
+    let buyerHolding = shareholderById(company, buyer.id);
+    holding.shares -= shares; holding.costBasisMinor -= basis;
+    if (holding.shares === 0) company.shareholders = company.shareholders.filter(item => item.id !== "player");
+    if (buyerHolding) { buyerHolding.shares += shares; buyerHolding.costBasisMinor += proceeds; }
+    else company.shareholders.push({ id: buyer.id, name: buyer.name, type: buyer.type, shares, costBasisMinor: proceeds, isPlayer: false });
+    const lines = [{ accountId: "cash", debitMinor: proceeds, creditMinor: 0 }, { accountId: "privateEquity", debitMinor: 0, creditMinor: basis }];
+    if (gain > 0) lines.push({ accountId: "income", debitMinor: 0, creditMinor: gain });
+    if (gain < 0) lines.push({ accountId: "expense", debitMinor: -gain, creditMinor: 0 });
+    postHousehold(finance, { id: postId("secondary-sale"), date, turn, kind: "EQUITY_SECONDARY_SALE", description: "Sold shares in " + company.name + " to " + buyer.name, amountMinor: proceeds, relatedId: company.id, lines });
+    transaction(next, company, turn, date, "SECONDARY_SHARE_SALE", "Sold shares to " + buyer.name, proceeds, { buyerId: buyer.id, shares, pricePerShareMinor: action.pricePerShareMinor, realizedGainMinor: gain });
+    return { ownership: next, finance, event: { type: "SECONDARY_SHARE_SALE", summary: "Sold " + shares.toLocaleString("en-US") + " shares in " + company.name + " to " + buyer.name + " for " + money(proceeds) + " Credits.", details: { companyId: company.id, shares, proceedsMinor: proceeds, realizedGainMinor: gain } } };
+  }
   if (action.type === "OWNERSHIP_APPOINT_EXECUTIVE") {
     const existing = company.executives.find(item => item.role === action.role);
     const appointment = { role: action.role, holderId: action.candidateId, appointedAtTurn: turn };
     if (existing) Object.assign(existing, appointment); else company.executives.push(appointment);
     transaction(next, company, turn, date, "EXECUTIVE_APPOINTED", "Appointed " + shareholderById(company, action.candidateId).name + " as " + action.role, 0, appointment);
     return { ownership: next, finance, event: { type: "EXECUTIVE_APPOINTED", summary: "Executive appointment recorded: " + action.role + ".", details: { companyId: company.id, ...appointment } } };
+  }
+  if (action.type === "OWNERSHIP_APPOINT_DIRECTOR") {
+    if (action.seat === "Chair") {
+      const chair = company.board.find(item => item.seat === "Chair");
+      const appointment = { seat: "Chair", holderId: action.candidateId, appointedAtTurn: turn };
+      if (chair) Object.assign(chair, appointment); else company.board.push(appointment);
+    } else company.board.push({ seat: "Director", holderId: action.candidateId, appointedAtTurn: turn });
+    transaction(next, company, turn, date, "DIRECTOR_APPOINTED", "Appointed " + shareholderById(company, action.candidateId).name + " to the board", 0, { seat: action.seat, holderId: action.candidateId });
+    return { ownership: next, finance, event: { type: "DIRECTOR_APPOINTED", summary: "Board appointment recorded.", details: { companyId: company.id, seat: action.seat, holderId: action.candidateId } } };
+  }
+  if (action.type === "OWNERSHIP_REMOVE_DIRECTOR") {
+    company.board = company.board.filter(item => !(item.holderId === action.candidateId && item.seat === "Director"));
+    transaction(next, company, turn, date, "DIRECTOR_REMOVED", "Removed a director from the board", 0, { holderId: action.candidateId });
+    return { ownership: next, finance, event: { type: "DIRECTOR_REMOVED", summary: "Board director removed.", details: { companyId: company.id, holderId: action.candidateId } } };
   }
   throw new Error("Unsupported ownership action.");
 }
