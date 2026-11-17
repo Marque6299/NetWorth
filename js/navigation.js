@@ -5,7 +5,7 @@ export const GROUPS = [
     { id: "finance", label: "Finance", icon: "wallet", title: "Finance", description: "Accounts, obligations, banking, credit, cash flow and the foundations of your balance sheet." },
     { id: "markets", label: "Markets", icon: "chart", title: "Markets", description: "Equities, bonds, commodities, digital assets, orders and portfolio performance." },
     { id: "businesses", label: "Businesses", icon: "building", title: "Businesses", description: "Companies, operations and the ownership decisions behind them." },
-    { id: "assets", label: "Assets", icon: "gem", title: "Assets", description: "Property, valuables and the assets that make up your wealth." }
+    { id: "assets", label: "Assets", icon: "gem", title: "Assets", description: "Property ownership, rental operations, mortgages, collectibles and asset valuations." }
   ] },
   { label: "Intelligence", pages: [
     { id: "network", label: "Network", icon: "network", title: "Network", description: "People, institutions and companies connected by influence and ownership." },
