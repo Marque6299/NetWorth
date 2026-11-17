@@ -1,6 +1,6 @@
 import { GROUPS, PAGES, getPage, getPageIdFromHash } from "./navigation.js";
 import { esc, icon, navLink } from "./components.js";
-import { renderOverview, renderSection, renderPersonalView, renderStartingProfilePreview, renderFinanceView, renderMarketsView, renderAssetsView } from "./views.js";
+import { renderOverview, renderSection, renderPersonalView, renderStartingProfilePreview, renderFinanceView, renderMarketsView, renderAssetsView, renderBusinessesView } from "./views.js";
 import { TIME_KEYS } from "./simulation-core.js";
 import { createGameState, resolveAction } from "./simulation-core.js";
 import { createExport, deleteSave, listSaveSlots, loadGame, parseImport, saveGame } from "./persistence.js";
@@ -9,7 +9,7 @@ import { renderGamePanel } from "./game-ui.js";
 const root=document.querySelector("#app");
 let currentGame=null,saveSlots=[],storageError="",feedbackMessage="",busy=false;
 function sidebar(active){
- return '<aside class="sidebar"><a class="brand" href="#/overview" data-route="overview"><span class="brand-mark">N</span><span><b>NETWORTH</b><small>CAPITAL & CONSEQUENCE</small></span></a><div class="side-rule"></div><div class="nav-groups">'+GROUPS.map(group=>'<section class="nav-group"><label>'+esc(group.label)+'</label><nav>'+group.pages.map(page=>navLink(page,active)).join("")+'</nav></section>').join("")+'</div><div class="side-bottom"><b>EARLY ACCESS SHELL</b><small>BUILD 0.8.0 / PHASE 08</small><p>A world of decisions.<br>A future of your making.</p></div></aside>';
+ return '<aside class="sidebar"><a class="brand" href="#/overview" data-route="overview"><span class="brand-mark">N</span><span><b>NETWORTH</b><small>CAPITAL & CONSEQUENCE</small></span></a><div class="side-rule"></div><div class="nav-groups">'+GROUPS.map(group=>'<section class="nav-group"><label>'+esc(group.label)+'</label><nav>'+group.pages.map(page=>navLink(page,active)).join("")+'</nav></section>').join("")+'</div><div class="side-bottom"><b>EARLY ACCESS SHELL</b><small>BUILD 0.9.0 / PHASE 09</small><p>A world of decisions.<br>A future of your making.</p></div></aside>';
 }
 function topbar(page){
  const saveLabel=currentGame?`TURN ${currentGame.calendar.turn} · ${currentGame.calendar.currentDate}`:"NO SAVE LOADED";
@@ -17,14 +17,14 @@ function topbar(page){
  return '<header class="topbar"><div class="crumb">NETWORTH '+icon("right")+' <b>'+esc(page.label.toUpperCase())+'</b></div><div class="top-actions"><div class="search" id="searchWrap">'+icon("search")+'<input id="globalSearch" type="search" placeholder="Find a workspace" aria-label="Find a workspace" aria-controls="searchResults" aria-expanded="false" autocomplete="off"><kbd>⌘ K</kbd><div id="searchResults" class="results" role="listbox" hidden></div></div><div class="save"><i></i><span><small>SAVE STATUS</small><b>'+esc(saveLabel)+'</b></span></div><span class="avatar" aria-label="Player profile">'+avatar+'</span></div></header>';
 }
 function heading(page){
- return '<div class="page-heading"><div><label>'+(page.id==="overview"?"YOUR FINANCIAL COMMAND CENTER":"NETWORTH WORKSPACE / "+page.id.toUpperCase())+'</label><h1>'+esc(page.title)+'</h1><p>'+esc(page.description)+'</p></div><span class="phase">◇ PHASE 08 <small>INVESTMENT MARKETS / 09 SECTIONS</small></span></div>';
+ return '<div class="page-heading"><div><label>'+(page.id==="overview"?"YOUR FINANCIAL COMMAND CENTER":"NETWORTH WORKSPACE / "+page.id.toUpperCase())+'</label><h1>'+esc(page.title)+'</h1><p>'+esc(page.description)+'</p></div><span class="phase">◇ PHASE 09 <small>INVESTMENT MARKETS / 09 SECTIONS</small></span></div>';
 }
 function render(){
  let id=getPageIdFromHash(location.hash);
  if(!location.hash||!PAGES.some(page=>"#/"+page.id===location.hash)){history.replaceState(null,"","#/overview");id="overview";}
  const page=getPage(id);
- root.innerHTML=sidebar(id)+'<div class="main-column">'+topbar(page)+'<main class="main"><a class="skip" href="#content">Skip to content</a><div id="content">'+heading(page)+'<div class="content">'+(id==="overview"?renderOverview(currentGame)+renderGamePanel(currentGame,saveSlots,storageError,feedbackMessage):id==="personal"?renderPersonalView(currentGame):id==="finance"?renderFinanceView(currentGame):id==="markets"?renderMarketsView(currentGame):id==="assets"?renderAssetsView(currentGame):renderSection(id))+'</div></div><footer class="page-footer"><span>NETWORTH · CAPITAL & CONSEQUENCE</span><span>PHASE 08 / PROPERTY & COLLECTIBLES · LOCAL GAME STATE</span></footer></main></div>';
- document.title=page.label+" — Networth";setupSearch();setupGameControls();setupPersonalControls();setupCareerControls();setupFinanceControls();setupBankingControls();setupMarketControls();setupAssetControls();root.classList.add("ready");
+ root.innerHTML=sidebar(id)+'<div class="main-column">'+topbar(page)+'<main class="main"><a class="skip" href="#content">Skip to content</a><div id="content">'+heading(page)+'<div class="content">'+(id==="overview"?renderOverview(currentGame)+renderGamePanel(currentGame,saveSlots,storageError,feedbackMessage):id==="personal"?renderPersonalView(currentGame):id==="finance"?renderFinanceView(currentGame):id==="markets"?renderMarketsView(currentGame):id==="assets"?renderAssetsView(currentGame):id==="businesses"?renderBusinessesView(currentGame):renderSection(id))+'</div></div><footer class="page-footer"><span>NETWORTH · CAPITAL & CONSEQUENCE</span><span>PHASE 09 / BUSINESS OPERATIONS · LOCAL GAME STATE</span></footer></main></div>';
+ document.title=page.label+" — Networth";setupSearch();setupGameControls();setupPersonalControls();setupCareerControls();setupFinanceControls();setupBankingControls();setupMarketControls();setupAssetControls();setupBusinessControls();root.classList.add("ready");
 }
 function closeSearch(){const input=document.querySelector("#globalSearch"),results=document.querySelector("#searchResults");if(results)results.hidden=true;if(input)input.setAttribute("aria-expanded","false");}
 function setupSearch(){
@@ -210,6 +210,69 @@ function setupAssetControls() {
   } catch (error) {
    setFeedback(error.message);
    const target = document.querySelector("#assetFeedback") || document.querySelector("#collectibleFeedback");
+   if (target) target.textContent = error.message;
+  }
+ }));
+}
+
+
+function setupBusinessControls() {
+ document.querySelectorAll("[data-business-accept]").forEach(button => button.addEventListener("click", () => {
+  if (!currentGame) return;
+  try {
+   const result = resolveAction(currentGame, { type: "BUSINESS_ACCEPT_MANDATE", companyId: button.dataset.businessAccept });
+   if (!result.ok) throw new Error(result.reason);
+   currentGame = result.state;
+   setFeedback(result.event?.summary ?? "Business operating mandate accepted.");
+   render();
+  } catch (error) {
+   setFeedback(error.message);
+   const target = document.querySelector("#businessFeedback");
+   if (target) target.textContent = error.message;
+  }
+ }));
+ document.querySelectorAll("[data-business-form]").forEach(form => form.addEventListener("submit", event => {
+  event.preventDefault();
+  if (!currentGame) return;
+  const data = new FormData(form), type = form.dataset.businessForm, action = { type };
+  try {
+   if (type === "BUSINESS_SET_PRICE") {
+    action.productId = String(data.get("productId"));
+    action.priceMinor = parseCredits(data.get("price"));
+   } else if (type === "BUSINESS_SET_STAFFING") {
+    action.staffCount = Number(data.get("staffCount"));
+   } else if (type === "BUSINESS_ORDER_INVENTORY") {
+    action.productId = String(data.get("productId"));
+    action.supplierId = String(data.get("supplierId"));
+    action.units = Number(data.get("units"));
+   } else if (type === "BUSINESS_MARKETING_CAMPAIGN") {
+    action.amountMinor = parseCredits(data.get("amount"));
+   } else {
+    throw new Error("Unsupported business operation form.");
+   }
+   const result = resolveAction(currentGame, action);
+   if (!result.ok) throw new Error(result.reason);
+   currentGame = result.state;
+   setFeedback(result.event?.summary ?? "Business decision recorded.");
+   render();
+  } catch (error) {
+   setFeedback(error.message);
+   const target = document.querySelector("#businessFeedback");
+   if (target) target.textContent = error.message;
+  }
+ }));
+ document.querySelectorAll("[data-business-action]").forEach(button => button.addEventListener("click", () => {
+  if (!currentGame) return;
+  if (button.dataset.businessAction === "BUSINESS_END_MANDATE" && !window.confirm("End this operating mandate? Any remaining branch cash, inventory and payables return to the parent company. No business capital is paid to your personal account.")) return;
+  try {
+   const result = resolveAction(currentGame, { type: button.dataset.businessAction });
+   if (!result.ok) throw new Error(result.reason);
+   currentGame = result.state;
+   setFeedback(result.event?.summary ?? "Business mandate updated.");
+   render();
+  } catch (error) {
+   setFeedback(error.message);
+   const target = document.querySelector("#businessFeedback");
    if (target) target.textContent = error.message;
   }
  }));
