@@ -116,7 +116,7 @@ function transaction(mandate, { id, date, turn, kind, description, amountMinor, 
   if (mandate.transactions.length > 100) mandate.transactions.length = 100;
 }
 
-function createMandate(company, id, turn) {
+function createMandate(company, id, turn, date) {
   const products = company.products.map(item => ({
     id: item.id, name: item.name, basePriceMinor: item.priceMinor, priceMinor: item.priceMinor,
     unitCostMinor: item.unitCostMinor, inventoryUnits: item.initialUnits,
@@ -143,7 +143,7 @@ function createMandate(company, id, turn) {
     entries: []
   };
   post(ledger, {
-    id: "business-" + id + "-opening", date: null, turn, kind: "PARENT_CAPITAL_ALLOCATION",
+    id: "business-" + id + "-opening", date, turn, kind: "PARENT_CAPITAL_ALLOCATION",
     description: "Operating cash and opening inventory allocated by " + company.name,
     amountMinor: openingCash + inventoryMinor,
     lines: [line("cash", openingCash), line("inventory", inventoryMinor), line("parentCapital", 0, openingCash + inventoryMinor)]
@@ -193,7 +193,8 @@ export function validateBusinesses(state, finance) {
   if (!state || !state.rng || !Number.isInteger(state.rng.state) || !Number.isInteger(state.nextId) || state.nextId < 1 || !Array.isArray(state.history)) return { valid: false, errors: ["Business operating state is malformed."] };
   if (state.mandate === null) return { valid: state.history.every(item => item && typeof item.companyId === "string" && Number.isInteger(item.closedAtTurn)), errors: state.history.every(item => item && typeof item.companyId === "string" && Number.isInteger(item.closedAtTurn)) ? [] : ["A business mandate history record is invalid."] };
   const m = state.mandate;
-  if (!m || !companyById(m.companyId) || m.status !== "active" || !Array.isArray(m.products) || !Array.isArray(m.purchaseOrders) || !Array.isArray(m.payables) || !Array.isArray(m.transactions) || !Array.isArray(m.history) || !Number.isInteger(m.staffCount) || m.staffCount < 1 || m.staffCount > 10 || !Number.isInteger(m.managerScore) || m.managerScore < 0 || m.managerScore > 100 || !Number.isInteger(m.customerSatisfaction) || m.customerSatisfaction < 0 || m.customerSatisfaction > 100 || !Number.isSafeInteger(m.actionExpensesMinor) || m.actionExpensesMinor < 0) errors.push("The active business mandate is invalid.");
+  if (!m || !Array.isArray(m.products) || !Array.isArray(m.purchaseOrders) || !Array.isArray(m.payables) || !Array.isArray(m.transactions) || !Array.isArray(m.history) || !m.ledger?.accounts || !Array.isArray(m.ledger.entries)) return { valid: false, errors: ["The active business mandate is malformed."] };
+  if (!companyById(m.companyId) || m.status !== "active" || !Array.isArray(m.products) || !Array.isArray(m.purchaseOrders) || !Array.isArray(m.payables) || !Array.isArray(m.transactions) || !Array.isArray(m.history) || !Number.isInteger(m.staffCount) || m.staffCount < 1 || m.staffCount > 10 || !Number.isInteger(m.managerScore) || m.managerScore < 0 || m.managerScore > 100 || !Number.isInteger(m.customerSatisfaction) || m.customerSatisfaction < 0 || m.customerSatisfaction > 100 || !Number.isSafeInteger(m.actionExpensesMinor) || m.actionExpensesMinor < 0) errors.push("The active business mandate is invalid.");
   errors.push(...validateLedger(m.ledger));
   const productIds = new Set();
   for (const item of m.products) {
@@ -201,8 +202,8 @@ export function validateBusinesses(state, finance) {
     productIds.add(item.id);
   }
   const inventoryValue = m.products.reduce((sum, item) => sum + item.inventoryValueMinor, 0);
-  const transitValue = m.purchaseOrders.filter(item => item.status === "pending").reduce((sum, item) => sum + item.goodsValueMinor, 0);
-  const payableValue = m.payables.reduce((sum, item) => sum + item.amountMinor, 0);
+  const transitValue = m.purchaseOrders.filter(item => item?.status === "pending").reduce((sum, item) => sum + (Number.isSafeInteger(item.goodsValueMinor) ? item.goodsValueMinor : 0), 0);
+  const payableValue = m.payables.reduce((sum, item) => sum + (Number.isSafeInteger(item?.amountMinor) ? item.amountMinor : 0), 0);
   if (getBalance(m.ledger, "inventory") !== inventoryValue) errors.push("Business inventory does not reconcile to the business ledger.");
   if (getBalance(m.ledger, "inventoryTransit") !== transitValue) errors.push("Business inventory in transit does not reconcile to pending supplier orders.");
   if (getBalance(m.ledger, "payables") !== payableValue) errors.push("Business payables do not reconcile to outstanding obligations.");
@@ -318,7 +319,7 @@ export function applyBusinessAction(state, finance, character, action, { date, t
   if (action.type === "BUSINESS_ACCEPT_MANDATE") {
     const company = companyById(action.companyId);
     const id = "mandate-" + b.nextId++;
-    b.mandate = createMandate(company, id, turn);
+    b.mandate = createMandate(company, id, turn, date);
     transaction(b.mandate, { id: "business-tx-" + id, date, turn, kind: "MANDATE_ACCEPTED", description: "Accepted operating mandate for " + company.name, amountMinor: 0 });
     return { businesses: b, finance: f, event: { type: "BUSINESS_MANDATE_ACCEPTED", summary: "Operating mandate accepted: " + company.branchName + ".", details: { mandateId: id, companyId: company.id } } };
   }
