@@ -374,6 +374,7 @@ test("schema v10 saves migrate investor cash from portfolio holdings without reu
   let old = found(makeGame());
   const companyId = old.ownership.companies[0].id;
   old = act(old, { type: "OWNERSHIP_ISSUE_SHARES", companyId, investorId: "mira-chen", shares: 20000 });
+  old.ownership.companies[0].shareholders.find(item => item.id === "mira-chen").lastDividendMinor = 1500;
   old.schemaVersion = 10;
   old.simulationVersion = "0.10.1";
   delete old.ownership.investorAccounts;
@@ -384,7 +385,7 @@ test("schema v10 saves migrate investor cash from portfolio holdings without reu
   const wallet = migrated.ownership.investorAccounts.find(item => item.investorId === "mira-chen");
   assert.equal(migrated.schemaVersion, 11);
   assert.equal(wallet.initialCashMinor, 25000000);
-  assert.equal(wallet.cashMinor, 25000000 - 20000);
+  assert.equal(wallet.cashMinor, 25000000 - 20000 + 1500);
   assert.equal("cashMinor" in migrated.ownership.companies[0].shareholders.find(item => item.id === "mira-chen"), false);
   assert.equal(validateGameState(migrated).valid, true);
 });
