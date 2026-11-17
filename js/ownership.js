@@ -209,8 +209,13 @@ export function validateOwnershipAction(state, finance, character, action) {
     return { valid: true };
   }
   if (action.type === "OWNERSHIP_CREATE_RESOLUTION") {
-    if (!playerShares(company) || typeof action.title !== "string" || action.title.trim().length < 4 || action.title.trim().length > 100 || !["CAPITAL_EXPANSION", "EXECUTIVE_APPOINTMENT", "ACQUISITION", "OTHER"].includes(action.resolutionType)) return { valid: false, reason: "A valid shareholder resolution title and type are required." };
+    if (!playerShares(company) || typeof action.title !== "string" || action.title.trim().length < 4 || action.title.trim().length > 100 || !["CAPITAL_EXPANSION", "EXECUTIVE_APPOINTMENT"].includes(action.resolutionType)) return { valid: false, reason: "A valid shareholder resolution title and executable type are required." };
     if (company.resolutions.some(item => item.status === "open")) return { valid: false, reason: "Close the existing shareholder resolution before opening another." };
+    if (action.resolutionType === "CAPITAL_EXPANSION") {
+      const reserve = Math.floor(company.paidInCapitalMinor * 20 / 100);
+      if (!safePositive(amount) || amount > Math.max(0, company.cashMinor - company.loanBalanceMinor - reserve)) return { valid: false, reason: "Capital expenditure must be funded from cash above debt and the operating reserve." };
+    }
+    if (action.resolutionType === "EXECUTIVE_APPOINTMENT" && (!["CEO", "CFO", "COO"].includes(action.role) || !company.shareholders.some(item => item.id === action.candidateId && item.shares > 0))) return { valid: false, reason: "Select an eligible shareholder and executive role." };
     return { valid: true };
   }
   if (action.type === "OWNERSHIP_VOTE") {
@@ -347,7 +352,7 @@ export function applyOwnershipAction(state, finance, character, action, { date, 
   }
   if (action.type === "OWNERSHIP_CREATE_RESOLUTION") {
     const id = "resolution-" + next.nextId++;
-    company.resolutions.unshift({ id, title: action.title.trim(), type: action.resolutionType, amountMinor: 0, status: "open", createdAtTurn: turn, votes: [], outcome: null });
+    company.resolutions.unshift({ id, title: action.title.trim(), type: action.resolutionType, amountMinor: action.resolutionType === "CAPITAL_EXPANSION" ? action.amountMinor : 0, role: action.role ?? null, candidateId: action.candidateId ?? null, status: "open", createdAtTurn: turn, votes: [], outcome: null });
     transaction(next, company, turn, date, "RESOLUTION_OPENED", "Opened shareholder resolution: " + action.title.trim(), 0, { resolutionId: id, resolutionType: action.resolutionType });
     return { ownership: next, finance, event: { type: "RESOLUTION_OPENED", summary: "Shareholder resolution opened: " + action.title.trim() + ".", details: { companyId: company.id, resolutionId: id } } };
   }
@@ -363,10 +368,17 @@ export function applyOwnershipAction(state, finance, character, action, { date, 
     const resolution = company.resolutions.find(item => item.id === action.resolutionId);
     for (const holder of company.shareholders.filter(item => item.id !== "player" && item.shares > 0)) {
       if (resolution.votes.some(item => item.shareholderId === holder.id)) continue;
+      const profile = investorById(holder.id);
       let choice = "abstain";
-      if (resolution.type === "DIVIDEND") choice = resolution.amountMinor <= Math.floor(company.retainedEarningsMinor * 20 / 100) ? "for" : "against";
-      else if (resolution.type === "CAPITAL_EXPANSION") choice = /capital|expansion|growth/i.test(resolution.title) ? "for" : "abstain";
-      else if (resolution.type === "ACQUISITION") choice = company.cashMinor > Math.floor(company.paidInCapitalMinor * 30 / 100) ? "for" : "against";
+      if (resolution.type === "DIVIDEND") {
+        const ratio = company.retainedEarningsMinor > 0 ? resolution.amountMinor / company.retainedEarningsMinor : 1;
+        choice = (profile?.dividendBias ?? 50) >= Math.min(95, Math.round(ratio * 100)) ? "for" : "against";
+      } else if (resolution.type === "CAPITAL_EXPANSION") {
+        const ratio = company.cashMinor > 0 ? resolution.amountMinor / company.cashMinor : 1;
+        choice = (profile?.growthBias ?? 50) >= Math.round(ratio * 100) ? "for" : "against";
+      } else if (resolution.type === "EXECUTIVE_APPOINTMENT") {
+        choice = resolution.candidateId === holder.id || (resolution.candidateId === "player" && (character?.skills?.leadership ?? 0) >= 45) ? "for" : "against";
+      }
       resolution.votes.push({ shareholderId: holder.id, shares: holder.shares, choice, turn, automatic: true });
     }
     const cast = resolution.votes.reduce((sum, item) => sum + (item.choice === "abstain" ? 0 : item.shares), 0);
@@ -391,6 +403,22 @@ export function applyOwnershipAction(state, finance, character, action, { date, 
       company.cashMinor -= total; company.retainedEarningsMinor -= total; company.cumulativeDividendsMinor += total;
       company.estimatedValueMinor = equityValue(company); company.sharePriceMinor = sharePrice(company);
       transaction(next, company, turn, date, "DIVIDEND_PAID", "Paid shareholder dividend", total, { resolutionId: resolution.id, playerReceiptMinor: company.shareholders.find(item => item.id === "player")?.lastDividendMinor ?? 0 });
+    }
+    if (passed && resolution.type === "CAPITAL_EXPANSION") {
+      const amount = resolution.amountMinor, reserve = Math.floor(company.paidInCapitalMinor * 20 / 100);
+      if (!safePositive(amount) || amount > Math.max(0, company.cashMinor - company.loanBalanceMinor - reserve)) throw new Error("The company can no longer fund this approved capital expansion.");
+      company.cashMinor -= amount; company.capitalAssetsMinor += amount;
+      postCompanyJournal(company, { date, turn, kind: "CAPITAL_EXPANSION", description: "Approved capital expansion: " + resolution.title, lines: [
+        { accountId: "capitalAssets", debitMinor: amount, creditMinor: 0 },
+        { accountId: "cash", debitMinor: 0, creditMinor: amount }
+      ] });
+      transaction(next, company, turn, date, "CAPITAL_EXPANSION_EXECUTED", "Executed capital expansion: " + resolution.title, amount, { resolutionId: resolution.id });
+    }
+    if (passed && resolution.type === "EXECUTIVE_APPOINTMENT") {
+      const existing = company.executives.find(item => item.role === resolution.role);
+      const appointment = { role: resolution.role, holderId: resolution.candidateId, appointedAtTurn: turn, approvedByResolutionId: resolution.id };
+      if (existing) Object.assign(existing, appointment); else company.executives.push(appointment);
+      transaction(next, company, turn, date, "EXECUTIVE_APPOINTED_BY_RESOLUTION", "Appointed " + shareholderById(company, resolution.candidateId).name + " as " + resolution.role, 0, appointment);
     }
     transaction(next, company, turn, date, "RESOLUTION_CLOSED", "Shareholder resolution " + resolution.status, 0, { resolutionId: resolution.id, outcome: resolution.outcome });
     return { ownership: next, finance, event: { type: "RESOLUTION_CLOSED", summary: "Resolution " + resolution.status + (resolution.type === "DIVIDEND" && passed ? "; dividend settled to eligible shareholders." : ".") , details: { companyId: company.id, resolutionId: resolution.id, outcome: resolution.outcome } } };
