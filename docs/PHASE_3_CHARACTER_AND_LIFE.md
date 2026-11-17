@@ -45,6 +45,18 @@ The character receives 112 waking hours per standard week after baseline sleep. 
 
 Health, energy, stress and happiness are bounded from 0 to 100 and updated deterministically when a turn advances. Work, study and side-work hours contribute to workload. Rest, family and recreation contribute to recovery and quality of life. Sustained workload without recovery can raise stress and reduce energy. The rules are intentionally transparent and will be balanced in the later learning/balance phase.
 
+
+### First-pass weekly formulas
+
+Let `W = work + study + sideWork`. After each turn, the current values are updated and clamped to 0–100:
+
+- Energy: `energy += round((rest - 14) × 0.7 + (recreation - 8) × 0.25 - max(0, W - 55) × 0.45)`.
+- Stress: `stress += round((W - 55) × 0.3 - (rest - 10) × 0.35 - recreation × 0.1)`.
+- Health: `health += round((rest - 12) × 0.12 + (recreation - 8) × 0.1 - max(0, stress - 60) × 0.08)`.
+- Happiness: `happiness += round((family - 6) × 0.25 + (recreation - 8) × 0.2 - max(0, stress - 60) × 0.12)`.
+
+Skill gains per week are: study focus +0.3 per study hour; research +0.3 per research hour; financial literacy +0.1 per research hour; networking +0.3 per networking hour; negotiation +0.1 per networking hour; operations +0.2 per side-work hour; sales +0.1 per side-work hour. Each skill is capped at 100. These are initial balancing coefficients, not real-world health or career advice.
+
 ## Goals
 
 Goals can target:
