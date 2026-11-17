@@ -606,6 +606,13 @@ export function validateOwnership(state, finance) {
     if (!Number.isInteger(company.weeklyProfitBps) || company.weeklyProfitBps < 1 || company.weeklyProfitBps > 100 || !Number.isInteger(company.lastAdvanceTurn) || company.lastAdvanceTurn < company.foundedAtTurn) errors.push("Company operating parameters are invalid.");
     for (const resolution of company.resolutions) {
       if (!resolution || typeof resolution.id !== "string" || !["open", "passed", "rejected"].includes(resolution.status) || !Array.isArray(resolution.votes) || resolution.votes.some(vote => !shareholderIds.has(vote.shareholderId) || !Number.isInteger(vote.shares) || vote.shares < 1 || !["for", "against", "abstain"].includes(vote.choice))) errors.push("A shareholder resolution or vote is invalid.");
+    }    for (const election of company.elections) {
+      const candidates = new Set(election?.candidates ?? []), voters = new Set();
+      if (!election || typeof election.id !== "string" || !["open", "closed"].includes(election.status) || !Number.isInteger(election.termTurns) || election.termTurns < 4 || election.termTurns > 52 || !Array.isArray(election.candidates) || !election.candidates.length || election.candidates.some(id => !shareholderIds.has(id)) || !Array.isArray(election.votes)) errors.push("A board election record is invalid.");
+      for (const vote of election?.votes ?? []) {
+        if (!shareholderIds.has(vote.shareholderId) || voters.has(vote.shareholderId) || !candidates.has(vote.candidateId) || !Number.isInteger(vote.shares) || vote.shares < 1) errors.push("A board election vote is invalid.");
+        voters.add(vote.shareholderId);
+      }
     }
   }
   if (finance?.initialized) {
