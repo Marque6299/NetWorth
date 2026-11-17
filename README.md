@@ -2,13 +2,13 @@
 
 Networth is a turn-based financial life simulation, economic strategy and business management game. Players begin as ordinary individuals with different backgrounds, resources, obligations and opportunities. Through work, education, saving, borrowing, investing, entrepreneurship, acquisitions and relationships, they pursue financial independence and may continue into building a business and investment empire.
 
-This repository currently contains **Phase 1 — Core Shell**, **Phase 2 — Simulation Core** and **Phase 3 — Character & Life**. Household finance and the wider economy remain scheduled for later phases.
+This repository currently contains **Phases 1–4**: Core Shell, Simulation Core, Character & Life, and Household Finance & Ledger. Later phases remain gated by the implementation roadmap.
 
 ## Workspaces
 
 - **Overview** — financial command center and simulation controls.
 - **Personal** — character dossier, starting circumstances, skills, time allocation, well-being and goals.
-- **Finance** — accounts, budgets, cash flow, debt and savings placeholders (Phase 4).
+- **Finance** — cash, savings, investment valuation, liabilities, budgets, double-entry journal, cash flow and net worth (Phase 4).
 - **Markets** — instrument directory, research, orders and holdings placeholders (Phase 7).
 - **Businesses** — company directory, business operations and ownership placeholders (Phases 9–10).
 - **Assets** — asset portfolio, property and collectibles placeholders (Phase 8).
@@ -41,7 +41,7 @@ The design uses dashboards, directories, profiles, terminals, reports and relati
 
 Starting capital, debt and monthly expenses are **scenario context only** in Phase 3; they are not account balances or ledger entries. The authoritative household financial model is introduced in Phase 4. Employment, compensation and job outcomes remain Phase 5.
 
-## Run locally
+## Phase 4 — Household finance & ledger\n\n- Neutral in-game Credits, stored as integer minor units.\n- Opening cash, debt and monthly budget initialized from each character profile.\n- Balanced double-entry journal with account reconciliation.\n- Income, expense, transfer, borrowing, principal repayment and unrealized valuation actions.\n- Transfers and borrowing are excluded from income; principal repayment is not an expense; unrealized gains are not cash.\n- Net worth, liquid net worth, recorded cash flow and monthly budgets.\n- Schema v2 → v3 migration for existing Phase 3 saves and backups.\n\nThe monthly expense context is a budget baseline, not an automatic charge. Interest, payroll, scheduled debt service and market pricing remain later-phase systems.\n\n## Run locally
 
 Requirements: Node.js 18 or newer. There are no runtime dependencies to install.
 
@@ -73,9 +73,9 @@ GitHub Actions runs the same tests and syntax checks on pushes and pull requests
 
 - [Phase 1 — Core Shell](docs/PHASE_1_CORE_SHELL.md)
 - [Phase 2 — Simulation Core](docs/PHASE_2_SIMULATION_CORE.md)
-- [Phase 3 — Character & Life](docs/PHASE_3_CHARACTER_AND_LIFE.md)
+- [Phase 3 — Character & Life](docs/PHASE_3_CHARACTER_AND_LIFE.md)\n- [Phase 4 — Household Finance & Ledger](docs/PHASE_4_HOUSEHOLD_FINANCE.md)
 - [Implementation Roadmap](docs/IMPLEMENTATION_ROADMAP.md)
 
 ## Current status
 
-**Phases 1–3 are implemented. Phase 3 is awaiting user acceptance.** Later phases remain gated by the roadmap.
+**Phases 1–3 are accepted; Phase 4 is implemented and awaiting user acceptance.** Later phases remain gated by the roadmap.
