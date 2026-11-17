@@ -152,8 +152,10 @@ test("schema v8 saves migrate to schema v9 with an empty ownership subsystem", (
 });
 
 test("Businesses workspace exposes company formation, ownership portfolio and acquisition controls", () => {
-  const html = renderBusinessesView(makeGame());
-  for (const label of ["OWNERSHIP PORTFOLIO / PHASE 10", "Found your own company", "Acquire an established company", "data-ownership-form", "data-ownership-action"]) assert.ok(html.includes(label), label);
+  const fresh = renderBusinessesView(makeGame());
+  for (const label of ["OWNERSHIP PORTFOLIO / PHASE 10", "Found your own company", "Acquire an established company", "OWNERSHIP_ACQUIRE_TARGET", "data-ownership-form"]) assert.ok(fresh.includes(label), label);
+  const owned = renderBusinessesView(found(makeGame()));
+  for (const label of ["OWNERSHIP_SELL_SHARES", "OWNERSHIP_APPOINT_DIRECTOR", "OWNERSHIP_REMOVE_DIRECTOR", "OWNERSHIP_PROPOSE_DIVIDEND"]) assert.ok(owned.includes(label), label);
 });
 
 test("minority acquisition records the actual stake and leaves the seller on the cap table", () => {
