@@ -96,10 +96,10 @@ Phase 9 operating mandates remain separate. Accepting a management mandate must 
 
 ## Save compatibility
 
-- Advance the save schema from v8 to v9.
-- v8 saves initialize an empty ownership subsystem while preserving every existing subsystem and historical record.
+- Advance the save schema from v8 to v9 for ownership, then v9 to v10 for company ledgers.
+- v8 saves initialize an empty ownership subsystem; v9 saves receive an opening company-ledger entry for each existing company while preserving every existing subsystem and historical record.
 - Earlier schema versions continue through the existing migration chain.
-- New companies, cap tables, investments, shareholder loans, transactions, valuations, distributions, acquisition proposals, votes, board seats, executive appointments and governance history must survive IndexedDB save/load and JSON export/import.
+- New companies, cap tables, investments, shareholder loans, company journal entries and account balances, transactions, valuations, distributions, acquisition proposals, votes, board seats, executive appointments and governance history must survive IndexedDB save/load and JSON export/import.
 - Import validation must reject malformed share totals, invalid ownership percentages, duplicate IDs, negative balances and broken company/household reconciliations.
 
 ## User interface
@@ -153,6 +153,10 @@ The Network workspace should surface ownership relationships from the same under
 - Existing Phase 9 operations, banking, markets, assets, Finance and career behavior remain unchanged.
 - Deterministic seeds and action sequences produce identical ownership and governance outcomes.
 - Full test suite and syntax checks pass.
+
+### Company double-entry accounting — completion milestone
+
+Each owned company maintains its own journal and chart of accounts, separate from household Finance. Company cash, share capital, shareholder-loan liabilities and retained earnings are posted through balanced entries. The journal reconciles to the company balance sheet and is persisted in saves and JSON backups. v9 company records are migrated with a balanced opening-balance journal in schema v10.
 
 ## Explicit exclusions
 
