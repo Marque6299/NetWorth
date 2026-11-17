@@ -2,7 +2,7 @@
 
 Networth is a turn-based financial life simulation, economic strategy and business management game. Players begin as ordinary individuals with different backgrounds, resources, obligations and opportunities. Through work, education, saving, borrowing, investing, entrepreneurship, acquisitions and relationships, they pursue financial independence and may continue into building a business and investment empire.
 
-This repository contains the accepted foundations through **Phase 9**. Phase 10 — Entrepreneurship, Equity, Acquisitions & Governance — is in active implementation on the `phase-10-ownership` branch. Later phases remain gated by the implementation roadmap.
+This repository contains accepted foundations through **Phase 9**. Phase 10 — Entrepreneurship, Equity, Acquisitions & Governance — is being completed on the `phase-10-completion` branch. Later phases remain gated by the implementation roadmap.
 
 ## Workspaces
 
@@ -131,7 +131,7 @@ GitHub Actions runs the same tests and syntax checks on pushes and pull requests
 
 ## Current status
 
-**Phases 1–9 are accepted; Phase 10 is in progress.** The first ownership milestone passes 136 automated tests; browser acceptance remains pending.
+**Phases 1–9 are accepted; Phase 10 remains in progress.** The ownership milestone is merged; company double-entry accounting is now being added with a v9 → v10 save migration. Board elections, negotiated transfers and executable resolutions remain in progress.
 
  
 ## Phase 8 — Property & collectibles
@@ -172,13 +172,13 @@ Operating companies and financial assumptions are fictional. Phase 10 adds a sep
 - Found fictional companies using household cash in exchange for founder shares.
 - Separate household private-equity assets and shareholder-loan receivables from cash, income and expenses.
 - Maintain authorized, issued and outstanding shares plus a shareholder register and ownership percentages.
-- Support additional capital contributions, new share issues to fictional investors, dilution and company share buybacks.
+- Support additional capital contributions, new share issues to fictional investors, dilution, company share buybacks and negotiated transfers between existing shareholders.
 - Model deterministic weekly operating profit and indicative equity valuation; estimated value is not cash or guaranteed sale proceeds.
 - Advance shareholder loans and receive company repayments.
 - Propose dividends, record weighted shareholder votes and settle approved distributions pro rata from retained earnings after debt and reserve checks.
 - Acquire minority or controlling stakes in selected fictional companies using household cash.
-- Record executive appointments and shareholder resolutions.
-- Schema v8 → v9 migration initializes the ownership subsystem while preserving existing saves.
+- Record executive appointments, executable capital-expansion and executive-appointment resolutions, shareholder voting preferences, board elections and fixed director terms.
+- Schema v8 → v9 initializes ownership; schema v9 → v10 adds reconciled company double-entry ledgers, migration-safe election state and governance history.
 - Ownership data, Finance entries and governance records persist through IndexedDB saves and JSON backup/import.
 
 **Current boundaries:** secondary share transfers between arbitrary holders, minority-stake acquisitions, investor voting automation, board-seat elections and full resolution execution remain future Phase 10 work. Existing Phase 9 branch mandates remain separate.

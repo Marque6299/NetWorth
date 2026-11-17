@@ -296,8 +296,12 @@ function setupBusinessControls() {
     action.shares = Number(data.get("shares"));
    } else if (type === "OWNERSHIP_SELL_SHARES") {
     action.buyerId = String(data.get("buyerId")); action.shares = Number(data.get("shares")); action.pricePerShareMinor = parseCredits(data.get("price"));
-   } else if (type === "OWNERSHIP_CREATE_RESOLUTION") {
-    action.title = String(data.get("title")); action.resolutionType = String(data.get("resolutionType"));
+   } else if (type === "OWNERSHIP_TRANSFER_SHARES") {
+     action.sellerId = String(data.get("sellerId")); action.buyerId = String(data.get("buyerId")); action.shares = Number(data.get("shares")); action.pricePerShareMinor = parseCredits(data.get("price"));
+    } else if (type === "OWNERSHIP_OPEN_BOARD_ELECTION") {
+     action.termTurns = Number(data.get("termTurns"));
+    } else if (type === "OWNERSHIP_CREATE_RESOLUTION") {
+    action.title = String(data.get("title")); action.resolutionType = String(data.get("resolutionType")); action.amountMinor = parseCredits(data.get("amount")); action.role = String(data.get("role")); action.candidateId = String(data.get("candidateId"));
    } else if (type === "OWNERSHIP_APPOINT_EXECUTIVE") {
     action.role = String(data.get("role")); action.candidateId = String(data.get("candidateId"));
    } else if (type === "OWNERSHIP_APPOINT_DIRECTOR") {
@@ -320,6 +324,7 @@ function setupBusinessControls() {
   if (button.dataset.companyId) action.companyId = button.dataset.companyId;
   if (button.dataset.targetId) action.targetId = button.dataset.targetId;
   if (button.dataset.resolutionId) action.resolutionId = button.dataset.resolutionId;
+  if (button.dataset.electionId) action.electionId = button.dataset.electionId;
   if (button.dataset.vote) action.vote = button.dataset.vote;
   if (button.dataset.candidateId) action.candidateId = button.dataset.candidateId;
   if (type === "OWNERSHIP_ACQUIRE_TARGET" && !window.confirm("Acquire this company outright using household cash? The purchase will be recorded as a private-equity asset.")) return;

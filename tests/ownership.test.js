@@ -132,21 +132,133 @@ test("acquisition purchases 100 percent of a listed target and posts the purchas
 
 test("company ownership and governance records survive JSON export and import", () => {
   let state = found(makeGame());
-  state = act(state, { type: "OWNERSHIP_CREATE_RESOLUTION", companyId: state.ownership.companies[0].id, title: "Approve a second service line", resolutionType: "CAPITAL_EXPANSION" });
+  state = act(state, { type: "OWNERSHIP_CREATE_RESOLUTION", companyId: state.ownership.companies[0].id, title: "Approve a second service line", resolutionType: "CAPITAL_EXPANSION", amountMinor: 10000 });
   const restored = parseImport(createExport(state));
   assert.deepEqual(restored.ownership, state.ownership);
   assert.deepEqual(restored.finance, state.finance);
   assert.equal(validateGameState(restored).valid, true);
 });
 
-test("schema v8 saves migrate to schema v9 with an empty ownership subsystem", () => {
+test("company double-entry ledger reconciles ownership cash and equity movements", () => {
+  let state = found(makeGame()), companyId = state.ownership.companies[0].id;
+  const company = () => state.ownership.companies.find(item => item.id === companyId);
+  const assertLedger = () => {
+    const c = company();
+    assert.ok(c.ledger.length >= 1);
+    for (const entry of c.ledger) assert.equal(entry.lines.reduce((sum, line) => sum + line.debitMinor, 0), entry.lines.reduce((sum, line) => sum + line.creditMinor, 0));
+    const account = id => c.ledgerAccounts.find(item => item.id === id).balanceMinor;
+    assert.equal(account("cash"), c.cashMinor);
+    assert.equal(account("shareCapital"), c.paidInCapitalMinor);
+    assert.equal(account("shareholderLoans"), c.loanBalanceMinor);
+    assert.equal(account("retainedEarnings"), c.retainedEarningsMinor);
+    assert.equal(validateOwnership(state.ownership, state.finance).valid, true);
+  };
+  assertLedger();
+  state = act(state, { type: "ADVANCE_TURN" }); assertLedger();
+  state = act(state, { type: "OWNERSHIP_CONTRIBUTE_CAPITAL", companyId, amountMinor: 25000 }); assertLedger();
+  state = act(state, { type: "OWNERSHIP_TAKE_LOAN", companyId, amountMinor: 12000 }); assertLedger();
+  state = act(state, { type: "OWNERSHIP_REPAY_LOAN", companyId, amountMinor: 5000 }); assertLedger();
+  state = act(state, { type: "OWNERSHIP_ISSUE_SHARES", companyId, investorId: "mira-chen", shares: 1000 }); assertLedger();
+  state = act(state, { type: "OWNERSHIP_BUYBACK_SHARES", companyId, shares: 100 }); assertLedger();
+  state = act(state, { type: "ADVANCE_TURN" });
+  const dividend = Math.max(1, Math.floor(company().retainedEarningsMinor / 10));
+  state = act(state, { type: "OWNERSHIP_PROPOSE_DIVIDEND", companyId, amountMinor: dividend });
+  const resolutionId = company().resolutions[0].id;
+  state = act(state, { type: "OWNERSHIP_VOTE", companyId, resolutionId, vote: "for" });
+  state = act(state, { type: "OWNERSHIP_CLOSE_VOTE", companyId, resolutionId });
+  assertLedger();
+});
+
+test("negotiated transfers settle between current holders and reconcile player cash and cost basis", () => {
+  let state = found(makeGame()), companyId = state.ownership.companies[0].id;
+  state = act(state, { type: "OWNERSHIP_ISSUE_SHARES", companyId, investorId: "mira-chen", shares: 20000 });
+  const beforeCash = state.finance.accounts.find(item => item.id === "cash").balanceMinor;
+  state = act(state, { type: "OWNERSHIP_TRANSFER_SHARES", companyId, sellerId: "player", buyerId: "mira-chen", shares: 5000, pricePerShareMinor: 4 });
+  let company = state.ownership.companies[0];
+  assert.equal(company.shareholders.find(item => item.id === "player").shares, 95000);
+  assert.equal(company.shareholders.find(item => item.id === "mira-chen").shares, 25000);
+  assert.equal(state.finance.accounts.find(item => item.id === "cash").balanceMinor, beforeCash + 20000);
+  assert.equal(validateGameState(state).valid, true);
+  state = act(state, { type: "OWNERSHIP_TRANSFER_SHARES", companyId, sellerId: "mira-chen", buyerId: "player", shares: 2000, pricePerShareMinor: 4 });
+  company = state.ownership.companies[0];
+  assert.equal(company.shareholders.find(item => item.id === "player").shares, 97000);
+  assert.equal(company.shareholders.find(item => item.id === "mira-chen").shares, 23000);
+  assert.equal(validateGameState(state).valid, true);
+});
+
+test("board election uses share-weighted votes and assigns a fixed director term", () => {
+  let state = found(makeGame()), companyId = state.ownership.companies[0].id;
+  state = act(state, { type: "OWNERSHIP_ISSUE_SHARES", companyId, investorId: "mira-chen", shares: 20000 });
+  state = act(state, { type: "OWNERSHIP_OPEN_BOARD_ELECTION", companyId, termTurns: 8 });
+  const electionId = state.ownership.companies[0].elections[0].id;
+  state = act(state, { type: "OWNERSHIP_VOTE_BOARD_ELECTION", companyId, electionId, candidateId: "mira-chen" });
+  state = act(state, { type: "OWNERSHIP_CLOSE_BOARD_ELECTION", companyId, electionId });
+  const director = state.ownership.companies[0].board.find(item => item.seat === "Director");
+  assert.equal(director.holderId, "mira-chen");
+  assert.equal(director.termEndsAtTurn, state.calendar.turn + 8);
+  assert.equal(state.ownership.companies[0].elections[0].status, "closed");
+  assert.equal(validateGameState(state).valid, true);
+});
+
+test("approved capital expansion transfers cash into a capital asset with balanced journal entries", () => {
+  let state = found(makeGame()), companyId = state.ownership.companies[0].id;
+  state = act(state, { type: "OWNERSHIP_CREATE_RESOLUTION", companyId, title: "Purchase production equipment", resolutionType: "CAPITAL_EXPANSION", amountMinor: 10000 });
+  const resolutionId = state.ownership.companies[0].resolutions[0].id;
+  state = act(state, { type: "OWNERSHIP_VOTE", companyId, resolutionId, vote: "for" });
+  state = act(state, { type: "OWNERSHIP_CLOSE_VOTE", companyId, resolutionId });
+  const company = state.ownership.companies[0];
+  assert.equal(company.capitalAssetsMinor, 10000);
+  assert.equal(company.cashMinor, 40000);
+  assert.equal(company.ledger[0].kind, "CAPITAL_EXPANSION");
+  assert.equal(validateGameState(state).valid, true);
+});
+
+test("elected director seats expire at the end of their fixed term", () => {
+  let state = found(makeGame()), companyId = state.ownership.companies[0].id;
+  state = act(state, { type: "OWNERSHIP_OPEN_BOARD_ELECTION", companyId, termTurns: 4 });
+  const electionId = state.ownership.companies[0].elections[0].id;
+  state = act(state, { type: "OWNERSHIP_VOTE_BOARD_ELECTION", companyId, electionId, candidateId: "player" });
+  state = act(state, { type: "OWNERSHIP_CLOSE_BOARD_ELECTION", companyId, electionId });
+  assert.ok(state.ownership.companies[0].board.some(item => item.seat === "Director" && item.holderId === "player"));
+  for (let i = 0; i < 4; i++) state = act(state, { type: "ADVANCE_TURN" });
+  assert.equal(state.ownership.companies[0].board.some(item => item.seat === "Director"), false);
+  assert.equal(validateGameState(state).valid, true);
+});
+test("approved executive appointment resolution changes the company executive register", () => {
+  let state = found(makeGame()), companyId = state.ownership.companies[0].id;
+  state = act(state, { type: "OWNERSHIP_ISSUE_SHARES", companyId, investorId: "mira-chen", shares: 20000 });
+  state = act(state, { type: "OWNERSHIP_CREATE_RESOLUTION", companyId, title: "Appoint Mira as operations chief", resolutionType: "EXECUTIVE_APPOINTMENT", role: "COO", candidateId: "mira-chen" });
+  const resolutionId = state.ownership.companies[0].resolutions[0].id;
+  state = act(state, { type: "OWNERSHIP_VOTE", companyId, resolutionId, vote: "for" });
+  state = act(state, { type: "OWNERSHIP_CLOSE_VOTE", companyId, resolutionId });
+  assert.equal(state.ownership.companies[0].executives.find(item => item.role === "COO").holderId, "mira-chen");
+  assert.equal(validateGameState(state).valid, true);
+});
+test("schema v9 ownership saves gain a balanced opening company ledger during migration", () => {
+  let old = found(makeGame());
+  old.schemaVersion = 9;
+  old.simulationVersion = "0.10.0";
+  for (const company of old.ownership.companies) {
+    delete company.ledger;
+    delete company.ledgerAccounts;
+    delete company.ledgerSequence;
+  }
+  const migrated = migrateGameState(old);
+  const company = migrated.ownership.companies[0];
+  assert.equal(migrated.schemaVersion, 10);
+  assert.equal(company.ledger.length, 1);
+  assert.equal(company.ledger[0].kind, "OPENING_BALANCE");
+  assert.equal(validateGameState(migrated).valid, true);
+});
+
+test("schema v8 saves migrate to schema v10 with an empty ownership subsystem", () => {
   const old = makeGame();
   old.schemaVersion = 8;
   old.simulationVersion = "0.9.0";
   delete old.ownership;
   old.finance.accounts = old.finance.accounts.filter(item => !["privateEquity", "shareholderLoans"].includes(item.id));
   const migrated = migrateGameState(old);
-  assert.equal(migrated.schemaVersion, 9);
+  assert.equal(migrated.schemaVersion, 10);
   assert.deepEqual(migrated.ownership.companies, []);
   assert.equal(validateGameState(migrated).valid, true);
 });
@@ -158,7 +270,9 @@ test("Businesses workspace exposes company formation, ownership portfolio and ac
   companyState = act(companyState, { type: "OWNERSHIP_ISSUE_SHARES", companyId, investorId: "mira-chen", shares: 20000 });
   companyState = act(companyState, { type: "OWNERSHIP_APPOINT_DIRECTOR", companyId, candidateId: "mira-chen", seat: "Director" });
   const owned = renderBusinessesView(companyState);
-  for (const label of ["OWNERSHIP_SELL_SHARES", "OWNERSHIP_APPOINT_DIRECTOR", "OWNERSHIP_REMOVE_DIRECTOR", "OWNERSHIP_PROPOSE_DIVIDEND"]) assert.ok(owned.includes(label), label);
+  for (const label of ["OWNERSHIP_SELL_SHARES", "OWNERSHIP_TRANSFER_SHARES", "OWNERSHIP_OPEN_BOARD_ELECTION", "Company journal", "OWNERSHIP_APPOINT_DIRECTOR", "OWNERSHIP_REMOVE_DIRECTOR", "OWNERSHIP_PROPOSE_DIVIDEND"]) assert.ok(owned.includes(label), label);
+  companyState = act(companyState, { type: "OWNERSHIP_OPEN_BOARD_ELECTION", companyId, termTurns: 8 });
+  assert.ok(renderBusinessesView(companyState).includes("OWNERSHIP_VOTE_BOARD_ELECTION"));
 });
 
 test("minority acquisition records the actual stake and leaves the seller on the cap table", () => {

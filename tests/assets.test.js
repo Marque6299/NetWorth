@@ -122,13 +122,13 @@ test("asset portfolio summarizes property and collectible value separately", () 
   assert.equal(validateGameState(state).valid, true);
 });
 
-test("schema v6 saves migrate to schema v9 without losing earlier systems", () => {
+test("schema v6 saves migrate to schema v10 without losing earlier systems", () => {
   const old = makeGame();
   old.schemaVersion = 6;
   old.simulationVersion = "0.7.0";
   delete old.assets;
   const migrated = migrateGameState(old);
-  assert.equal(migrated.schemaVersion, 9);
+  assert.equal(migrated.schemaVersion, 10);
   assert.equal(migrated.assets.properties.length, 0);
   assert.equal(migrated.assets.collectibles.length, 0);
   assert.deepEqual(migrated.markets, old.markets);

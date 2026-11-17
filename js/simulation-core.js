@@ -4,9 +4,9 @@ import { createBankingState, validateBanking, validateBankingAction, applyBankin
 import { createMarketState, validateMarkets, validateMarketAction, applyMarketAction, advanceMarkets } from "./markets.js";
 import { createAssetState, validateAssets, validateAssetAction, applyAssetAction, advanceAssets } from "./assets.js";
 import { createBusinessState, validateBusinesses, validateBusinessAction, applyBusinessAction, advanceBusinesses } from "./businesses.js";
-import { createOwnershipState, validateOwnership, validateOwnershipAction, applyOwnershipAction, advanceOwnership } from "./ownership.js";
-export const SAVE_SCHEMA_VERSION = 9;
-export const SIMULATION_VERSION = "0.10.0";
+import { createOwnershipState, migrateOwnershipLedger, validateOwnership, validateOwnershipAction, applyOwnershipAction, advanceOwnership } from "./ownership.js";
+export const SAVE_SCHEMA_VERSION = 10;
+export const SIMULATION_VERSION = "0.10.1";
 export const DAYS_PER_TURN = 7;
 export const WEEKLY_TIME_BUDGET = 112;
 export const SKILL_KEYS = ["financialLiteracy","negotiation","management","sales","technical","research","leadership","networking","operations"];
@@ -71,7 +71,7 @@ export function validateAction(state,action){
  if(["MARKET_BUY","MARKET_SELL","MARKET_WATCHLIST"].includes(action.type))return validateMarketAction(state.markets,state.finance,action);
   if(["ASSET_BUY_PROPERTY","ASSET_SELL_PROPERTY","ASSET_SET_PROPERTY_USE","ASSET_MAINTAIN_PROPERTY","ASSET_BUY_COLLECTIBLE","ASSET_SELL_COLLECTIBLE","ASSET_MAINTAIN_COLLECTIBLE"].includes(action.type))return validateAssetAction(state.assets,state.finance,state.banking,state.career,action);
  if(["BUSINESS_ACCEPT_MANDATE","BUSINESS_SET_PRICE","BUSINESS_SET_STAFFING","BUSINESS_ORDER_INVENTORY","BUSINESS_MARKETING_CAMPAIGN","BUSINESS_END_MANDATE"].includes(action.type))return validateBusinessAction(state.businesses,state.life?.character,action);
- if(["OWNERSHIP_FOUND_COMPANY","OWNERSHIP_ACQUIRE_TARGET","OWNERSHIP_CONTRIBUTE_CAPITAL","OWNERSHIP_TAKE_LOAN","OWNERSHIP_REPAY_LOAN","OWNERSHIP_PROPOSE_DIVIDEND","OWNERSHIP_CREATE_RESOLUTION","OWNERSHIP_VOTE","OWNERSHIP_CLOSE_VOTE","OWNERSHIP_ISSUE_SHARES","OWNERSHIP_BUYBACK_SHARES","OWNERSHIP_SELL_SHARES","OWNERSHIP_APPOINT_EXECUTIVE","OWNERSHIP_APPOINT_DIRECTOR","OWNERSHIP_REMOVE_DIRECTOR"].includes(action.type))return validateOwnershipAction(state.ownership,state.finance,state.life?.character,action);
+ if(["OWNERSHIP_FOUND_COMPANY","OWNERSHIP_ACQUIRE_TARGET","OWNERSHIP_CONTRIBUTE_CAPITAL","OWNERSHIP_TAKE_LOAN","OWNERSHIP_REPAY_LOAN","OWNERSHIP_PROPOSE_DIVIDEND","OWNERSHIP_CREATE_RESOLUTION","OWNERSHIP_VOTE","OWNERSHIP_CLOSE_VOTE","OWNERSHIP_ISSUE_SHARES","OWNERSHIP_BUYBACK_SHARES","OWNERSHIP_SELL_SHARES","OWNERSHIP_TRANSFER_SHARES","OWNERSHIP_OPEN_BOARD_ELECTION","OWNERSHIP_VOTE_BOARD_ELECTION","OWNERSHIP_CLOSE_BOARD_ELECTION","OWNERSHIP_APPOINT_EXECUTIVE","OWNERSHIP_APPOINT_DIRECTOR","OWNERSHIP_REMOVE_DIRECTOR"].includes(action.type))return validateOwnershipAction(state.ownership,state.finance,state.life?.character,action);
  if(["APPLY_FOR_JOB","ACCEPT_JOB_OFFER","RESIGN_FROM_JOB","ENROLL_COURSE"].includes(action.type))return validateCareerAction(state.career,state.life?.character,state.finance,action,state.calendar.turn);
  if(action.type==="ADD_GOAL"){
   if(!state.life?.character)return {valid:false,reason:"Create a character before adding goals."};
@@ -130,7 +130,7 @@ export function resolveAction(state,action){
    const result=applyAssetAction(next.assets,next.finance,next.banking,action,{date:next.calendar.currentDate,turn:next.calendar.turn,sequence:next.actionCount+1});next.assets=result.assets;next.finance=result.finance;next.banking=result.banking;appendEvent(next,action.type,action.type.replaceAll("_"," ").toLowerCase(),{propertyId:action.propertyId??null,collectibleId:action.collectibleId??null,listingId:action.listingId??null,catalogId:action.catalogId??null});
   }else if(["BUSINESS_ACCEPT_MANDATE","BUSINESS_SET_PRICE","BUSINESS_SET_STAFFING","BUSINESS_ORDER_INVENTORY","BUSINESS_MARKETING_CAMPAIGN","BUSINESS_END_MANDATE"].includes(action.type)){
   const result=applyBusinessAction(next.businesses,next.finance,next.life.character,action,{date:next.calendar.currentDate,turn:next.calendar.turn,sequence:next.actionCount+1});next.businesses=result.businesses;next.finance=result.finance;appendEvent(next,result.event.type,result.event.summary,result.event.details);
- }else if(["OWNERSHIP_FOUND_COMPANY","OWNERSHIP_ACQUIRE_TARGET","OWNERSHIP_CONTRIBUTE_CAPITAL","OWNERSHIP_TAKE_LOAN","OWNERSHIP_REPAY_LOAN","OWNERSHIP_PROPOSE_DIVIDEND","OWNERSHIP_CREATE_RESOLUTION","OWNERSHIP_VOTE","OWNERSHIP_CLOSE_VOTE","OWNERSHIP_ISSUE_SHARES","OWNERSHIP_BUYBACK_SHARES","OWNERSHIP_SELL_SHARES","OWNERSHIP_APPOINT_EXECUTIVE","OWNERSHIP_APPOINT_DIRECTOR","OWNERSHIP_REMOVE_DIRECTOR"].includes(action.type)){
+ }else if(["OWNERSHIP_FOUND_COMPANY","OWNERSHIP_ACQUIRE_TARGET","OWNERSHIP_CONTRIBUTE_CAPITAL","OWNERSHIP_TAKE_LOAN","OWNERSHIP_REPAY_LOAN","OWNERSHIP_PROPOSE_DIVIDEND","OWNERSHIP_CREATE_RESOLUTION","OWNERSHIP_VOTE","OWNERSHIP_CLOSE_VOTE","OWNERSHIP_ISSUE_SHARES","OWNERSHIP_BUYBACK_SHARES","OWNERSHIP_SELL_SHARES","OWNERSHIP_TRANSFER_SHARES","OWNERSHIP_OPEN_BOARD_ELECTION","OWNERSHIP_VOTE_BOARD_ELECTION","OWNERSHIP_CLOSE_BOARD_ELECTION","OWNERSHIP_APPOINT_EXECUTIVE","OWNERSHIP_APPOINT_DIRECTOR","OWNERSHIP_REMOVE_DIRECTOR"].includes(action.type)){
   const result=applyOwnershipAction(next.ownership,next.finance,next.life.character,action,{date:next.calendar.currentDate,turn:next.calendar.turn,sequence:next.actionCount+1});next.ownership=result.ownership;next.finance=result.finance;appendEvent(next,result.event.type,result.event.summary,result.event.details);
  }else if(["APPLY_FOR_JOB","ACCEPT_JOB_OFFER","RESIGN_FROM_JOB","ENROLL_COURSE"].includes(action.type)){
   let roll=0;if(action.type==="APPLY_FOR_JOB"){const draw=drawRandom(next.rng,100);roll=draw.value;next.rng=draw.rng;}
@@ -150,6 +150,7 @@ export function migrateGameState(input){
  if(state.schemaVersion===6){state.assets=state.life?.character?createAssetState(state.meta.seed):null;state.schemaVersion=7;}
  if(state.schemaVersion===7){state.businesses=state.life?.character?createBusinessState(state.meta.seed):null;state.schemaVersion=8;state.simulationVersion=SIMULATION_VERSION;}
  if(state.schemaVersion===8){state.ownership=state.life?.character?createOwnershipState():null;state.schemaVersion=9;state.simulationVersion=SIMULATION_VERSION;}
+ if(state.schemaVersion===9){if(state.ownership)migrateOwnershipLedger(state.ownership);state.schemaVersion=10;state.simulationVersion=SIMULATION_VERSION;}
  if(state.schemaVersion!==SAVE_SCHEMA_VERSION)throw new Error(`Unsupported save schema version: ${state.schemaVersion}`);
  return state;
 }
