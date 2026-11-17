@@ -315,6 +315,15 @@ export function validateOwnershipAction(state, finance, character, action) {
   }
   if (!company) return { valid: false, reason: "Select a company first." };
   if (company.status !== "active") return { valid: false, reason: "This company is not active." };
+  if (action.type === "OWNERSHIP_SET_OPERATING_PRICE") {
+    const operations = company.operations;
+    if (!operations || !safePositive(action.priceMinor) || action.priceMinor < Math.ceil(operations.unitCostMinor * 1.1) || action.priceMinor > operations.basePriceMinor * 3) return { valid: false, reason: "Set a selling price between 110% of unit cost and three times the sector reference price." };
+    return { valid: true };
+  }
+  if (action.type === "OWNERSHIP_SET_OPERATING_STAFFING") {
+    if (!Number.isInteger(action.staffCount) || action.staffCount < 1 || action.staffCount > 10) return { valid: false, reason: "Staffing must be a whole number between 1 and 10 employees." };
+    return { valid: true };
+  }
   if (["OWNERSHIP_CONTRIBUTE_CAPITAL","OWNERSHIP_ISSUE_SHARES","OWNERSHIP_BUYBACK_SHARES","OWNERSHIP_SELL_SHARES","OWNERSHIP_TRANSFER_SHARES"].includes(action.type) && (company.resolutions.some(item => item.status === "open") || (company.elections ?? []).some(item => item.status === "open"))) return { valid: false, reason: "Close open shareholder votes and board elections before changing the share register." };
   if (action.type === "OWNERSHIP_CONTRIBUTE_CAPITAL" || action.type === "OWNERSHIP_TAKE_LOAN") {
     if (!safePositive(amount) || amount > cash) return { valid: false, reason: "Enter a positive amount within available household cash." };
@@ -326,14 +335,14 @@ export function validateOwnershipAction(state, finance, character, action) {
     return { valid: true };
   }
   if (action.type === "OWNERSHIP_REPAY_LOAN") {
-    if (!safePositive(amount) || amount > company.loanBalanceMinor || amount > company.cashMinor) return { valid: false, reason: "Repayment must be positive and cannot exceed the loan balance or company cash." };
+    if (!safePositive(amount) || amount > company.loanBalanceMinor || amount > company.cashMinor - (company.operatingPayablesMinor ?? 0)) return { valid: false, reason: "Repayment must be positive and cannot exceed the loan balance or cash remaining after operating payables." };
     return { valid: true };
   }
   if (action.type === "OWNERSHIP_PROPOSE_DIVIDEND") {
     if (company.resolutions.some(item => item.status === "open")) return { valid: false, reason: "Close the existing shareholder resolution before proposing a dividend." };
     if (!playerControls(company)) return { valid: false, reason: "A controlling shareholder is required to submit a dividend proposal." };
     const reserve = Math.floor(company.paidInCapitalMinor * 20 / 100);
-    const available = Math.min(company.retainedEarningsMinor, Math.max(0, company.cashMinor - company.loanBalanceMinor - reserve));
+    const available = Math.min(company.retainedEarningsMinor, Math.max(0, company.cashMinor - company.loanBalanceMinor - (company.operatingPayablesMinor ?? 0) - reserve));
     if (!safePositive(amount) || amount > available) return { valid: false, reason: "The dividend exceeds distributable retained earnings after debt and the operating reserve." };
     return { valid: true };
   }
@@ -342,7 +351,7 @@ export function validateOwnershipAction(state, finance, character, action) {
     if (company.resolutions.some(item => item.status === "open")) return { valid: false, reason: "Close the existing shareholder resolution before opening another." };
     if (action.resolutionType === "CAPITAL_EXPANSION") {
       const reserve = Math.floor(company.paidInCapitalMinor * 20 / 100);
-      if (!safePositive(amount) || amount > Math.max(0, company.cashMinor - company.loanBalanceMinor - reserve)) return { valid: false, reason: "Capital expenditure must be funded from cash above debt and the operating reserve." };
+      if (!safePositive(amount) || amount > Math.max(0, company.cashMinor - company.loanBalanceMinor - (company.operatingPayablesMinor ?? 0) - reserve)) return { valid: false, reason: "Capital expenditure must be funded from cash above debt, operating payables and the operating reserve." };
     }
     if (action.resolutionType === "EXECUTIVE_APPOINTMENT" && (!["CEO", "CFO", "COO"].includes(action.role) || !company.shareholders.some(item => item.id === action.candidateId && item.shares > 0))) return { valid: false, reason: "Select an eligible shareholder and executive role." };
     return { valid: true };
@@ -359,7 +368,7 @@ export function validateOwnershipAction(state, finance, character, action) {
     if (!resolution.votes.some(item => item.shareholderId === "player")) return { valid: false, reason: "Cast your vote before closing the resolution." };
     if (resolution.type === "DIVIDEND") {
       const reserve = Math.floor(company.paidInCapitalMinor * 20 / 100);
-      const available = Math.min(company.retainedEarningsMinor, Math.max(0, company.cashMinor - company.loanBalanceMinor - reserve));
+      const available = Math.min(company.retainedEarningsMinor, Math.max(0, company.cashMinor - company.loanBalanceMinor - (company.operatingPayablesMinor ?? 0) - reserve));
       if (resolution.amountMinor > available) return { valid: false, reason: "The company no longer has sufficient distributable cash to settle this dividend." };
     }
     return { valid: true };
@@ -398,7 +407,7 @@ export function validateOwnershipAction(state, finance, character, action) {
     const shares = action.shares, holding = shareholderById(company, "player");
     if (!Number.isInteger(shares) || shares < 1 || shares > (holding?.shares ?? 0)) return { valid: false, reason: "You do not hold that many shares." };
     const proceeds = sharePrice(company) * shares, reserve = Math.floor(company.paidInCapitalMinor * 20 / 100);
-    if (proceeds > company.cashMinor - company.loanBalanceMinor - reserve || proceeds > company.paidInCapitalMinor) return { valid: false, reason: "The company cannot fund this buyback while preserving debt, paid-in capital and its operating reserve." };
+    if (proceeds > company.cashMinor - company.loanBalanceMinor - (company.operatingPayablesMinor ?? 0) - reserve || proceeds > company.paidInCapitalMinor) return { valid: false, reason: "The company cannot fund this buyback while preserving debt, operating payables, paid-in capital and its operating reserve." };
     return { valid: true };
   }
   if (action.type === "OWNERSHIP_SELL_SHARES") {
@@ -428,6 +437,18 @@ export function applyOwnershipAction(state, finance, character, action, { date, 
   const next = clone(state), company = action.companyId ? companyById(next, action.companyId) : null;
   ensureFinanceAccounts(finance);
   const postId = suffix => "ownership-journal-" + sequence + "-" + suffix;
+  if (action.type === "OWNERSHIP_SET_OPERATING_PRICE") {
+    const previousPriceMinor = company.operations.priceMinor;
+    company.operations.priceMinor = action.priceMinor;
+    transaction(next, company, turn, date, "OPERATING_PRICE_UPDATED", "Updated selling price for " + company.operations.productLabel, action.priceMinor, { previousPriceMinor, priceMinor: action.priceMinor });
+    return { ownership: next, finance, event: { type: "COMPANY_OPERATING_PRICE_UPDATED", summary: company.name + " selling price updated to " + money(action.priceMinor) + " per " + company.operations.productLabel.toLowerCase() + ".", details: { companyId: company.id, previousPriceMinor, priceMinor: action.priceMinor } } };
+  }
+  if (action.type === "OWNERSHIP_SET_OPERATING_STAFFING") {
+    const previousStaffCount = company.operations.staffCount;
+    company.operations.staffCount = action.staffCount;
+    transaction(next, company, turn, date, "OPERATING_STAFFING_UPDATED", "Changed operating staff from " + previousStaffCount + " to " + action.staffCount, 0, { previousStaffCount, staffCount: action.staffCount });
+    return { ownership: next, finance, event: { type: "COMPANY_OPERATING_STAFFING_UPDATED", summary: company.name + " staffing changed to " + action.staffCount + " employees.", details: { companyId: company.id, previousStaffCount, staffCount: action.staffCount } } };
+  }
   if (action.type === "OWNERSHIP_FOUND_COMPANY") {
     const id = "owned-company-" + next.nextId++;
     const name = action.name.trim(), shares = action.shares, capital = action.amountMinor;
@@ -525,7 +546,7 @@ export function applyOwnershipAction(state, finance, character, action, { date, 
     if (passed && resolution.type === "DIVIDEND") {
       const total = resolution.amountMinor, shares = outstandingShares(company);
       const reserve = Math.floor(company.paidInCapitalMinor * 20 / 100);
-      const available = Math.min(company.retainedEarningsMinor, Math.max(0, company.cashMinor - company.loanBalanceMinor - reserve));
+      const available = Math.min(company.retainedEarningsMinor, Math.max(0, company.cashMinor - company.loanBalanceMinor - (company.operatingPayablesMinor ?? 0) - reserve));
       if (total > available) throw new Error("The company no longer has sufficient distributable cash to settle this dividend.");
       let paid = 0;
       const recipients = company.shareholders.filter(item => item.shares > 0);
