@@ -1,6 +1,6 @@
 # Phase 10 — Browser Acceptance Checklist
 
-Use the Phase 10 preview build from the open draft pull request. These are manual acceptance checks; automated tests do not replace them.
+Use the Phase 10 preview build from the open draft pull request. These are manual acceptance checks; automated tests do not replace them. The company-ledger checks below are now part of the acceptance gate.
 
 ## Setup
 
@@ -17,7 +17,12 @@ Use the Phase 10 preview build from the open draft pull request. These are manua
 5. Confirm company cash starts at 2,500 Credits and is not shown as household cash.
 6. Try an unaffordable founding amount and a duplicate company name. Both must be rejected without changing balances.
 
-## B. Operations, valuation and funding
+## B. Operations, valuation, funding and company accounting
+
+- Open a company profile or journal area and confirm each company has a separate journal from household Finance.
+- Verify the opening entry debits company cash and credits share capital.
+- After profit, equity contributions, share issues, shareholder loans, repayments, buybacks and dividends, confirm each journal entry balances and the account balances reconcile to the company balance sheet.
+- Export and import a save after several company transactions; confirm the company journal and balances remain identical.
 
 1. Advance one turn. Confirm weekly operating profit is recorded and estimated equity value increases.
 2. Contribute another 500 Credits. Confirm new founder shares are issued and the cap table reconciles.
