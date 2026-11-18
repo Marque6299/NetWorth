@@ -13,6 +13,8 @@ test("navigation link includes stable route and active state", () => {
   assert.match(html, /href="#\/overview"/);
   assert.match(html, /aria-current="page"/);
   assert.match(html, /active/);
+  assert.match(html, /class="nav-icon"/);
+  assert.doesNotMatch(html, /class="nav-ico"/);
 });
 
 test("shared stat, empty-state and feature components render useful defaults", () => {

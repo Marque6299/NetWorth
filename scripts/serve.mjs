@@ -6,6 +6,11 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const host = process.env.HOST || "127.0.0.1";
 const port = Number(process.env.PORT || 4173);
+const basePath = String(process.env.BASE_PATH || "").trim().replace(/^\/+|\/+$/g, "");
+const basePrefix = basePath ? "/" + basePath : "";
+if (basePath.split("/").some(segment => segment === "." || segment === "..")) {
+  throw new Error("BASE_PATH cannot contain dot segments.");
+}
 const types = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
@@ -27,6 +32,18 @@ const server = http.createServer(async (request, response) => {
   } catch {
     response.writeHead(400).end("Bad request");
     return;
+  }
+
+  if (basePrefix) {
+    if (pathname === basePrefix) {
+      response.writeHead(308, { Location: basePrefix + "/" }).end();
+      return;
+    }
+    if (pathname !== basePrefix + "/" && !pathname.startsWith(basePrefix + "/")) {
+      response.writeHead(404).end("Not found");
+      return;
+    }
+    pathname = pathname === basePrefix + "/" ? "/" : pathname.slice(basePrefix.length);
   }
 
   const relativePath = pathname === "/" ? "index.html" : pathname.replace(/^\/+/, "");

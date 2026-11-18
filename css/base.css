@@ -1,0 +1,25 @@
+@layer base {
+*{box-sizing: border-box}
+
+html,body{margin: 0;min-width: 320px;min-height: 100%;background: var(--paper);color: var(--ink)}
+
+a{color: inherit;text-decoration: none}
+
+button,input{font: inherit}
+
+:focus-visible{outline: 3px solid var(--gold-700);outline-offset: 3px}
+
+.icon{display: block;width: 18px;height: 18px;flex: 0 0 auto}
+
+
+.app-root{display: flex;min-height: 100vh;opacity: 0;transition: opacity .2s}
+
+.app-root.ready{opacity: 1}
+@font-face{font-family:"Cormorant Garamond";font-style:normal;font-weight:600;font-display:swap;src:local("Cormorant Garamond SemiBold"),url("../assets/fonts/CormorantGaramond-SemiBold.woff2") format("woff2");}
+@font-face{font-family:"Cormorant Garamond";font-style:normal;font-weight:700;font-display:swap;src:local("Cormorant Garamond Bold"),url("../assets/fonts/CormorantGaramond-Bold.woff2") format("woff2");}
+@font-face{font-family:"Inter";font-style:normal;font-weight:400;font-display:swap;src:local("Inter"),url("../assets/fonts/Inter-Regular.woff2") format("woff2");}
+@font-face{font-family:"Inter";font-style:normal;font-weight:500;font-display:swap;src:local("Inter Medium"),url("../assets/fonts/Inter-Medium.woff2") format("woff2");}
+@font-face{font-family:"Inter";font-style:normal;font-weight:600;font-display:swap;src:local("Inter SemiBold"),url("../assets/fonts/Inter-SemiBold.woff2") format("woff2");}
+html,body{background:var(--bg-0);color:var(--text-0);font-family:var(--font-ui)}
+button,input,select,textarea{font:inherit}
+}

@@ -1,0 +1,81 @@
+@layer views {
+/* Phase 7 — investment markets */
+.market-overview-grid{display: grid;grid-template-columns: repeat(4,minmax(0,1fr));gap: 10px}
+
+.market-overview-card{padding: 15px;border: 1px solid var(--line);border-radius: 8px;background: var(--bg-2)}
+
+.market-overview-card small,.market-overview-card span{display: block;color: var(--text-1);font-size: var(--fs-11);font-weight: 800;letter-spacing: .08em}
+
+.market-overview-card strong{display: block;margin: 8px 0;color: var(--text-1);font-size: var(--fs-20);font-variant-numeric: tabular-nums}
+
+.market-overview-card span{font-weight: 500;letter-spacing: 0}
+
+.market-index-panel{display: flex;align-items: center;justify-content: space-between;gap: 18px}
+
+.market-index-panel label{color: var(--text-1);font-size: var(--fs-11);font-weight: 800;letter-spacing: .1em}
+
+.market-index-panel h2{margin: 7px 0;color: var(--sapphire);font-size: var(--fs-17)}
+
+.market-index-panel h2 strong{margin-left: 9px;font-size: var(--fs-24);font-variant-numeric: tabular-nums}
+
+.market-index-panel p{margin: 0;color: var(--text-1);font-size: var(--fs-12)}
+
+.market-order-form{display: grid;grid-template-columns: minmax(220px,1.5fr) minmax(130px,.7fr) auto;align-items: end;gap: 12px}
+
+.market-order-form label{display: grid;gap: 6px;color: var(--text-1);font-size: var(--fs-11);font-weight: 800;letter-spacing: .08em}
+
+.market-order-form input,.market-order-form select{width: 100%;min-height: 38px;padding: 9px 10px;border: 1px solid var(--line);border-radius: 6px;background: var(--bg-2);color: var(--text-1);font: inherit;font-size: var(--fs-12)}
+
+.market-order-buttons{display: flex;gap: 7px}
+
+.market-order-form>small{grid-column: 1/-1;color: var(--text-1);font-size: var(--fs-11)}
+
+.market-feedback{grid-column: 1/-1;min-height: 14px;margin: 0;color: var(--emerald);font-size: var(--fs-12)}
+
+.market-security-grid{display: grid;grid-template-columns: repeat(3,minmax(0,1fr));gap: 10px}
+
+.market-security{display: flex;flex-direction: column;gap: 9px;min-width: 0;padding: 13px;border: 1px solid var(--line);border-radius: 8px;background: var(--bg-2)}
+
+.market-security-top,.market-security-title,.market-security-bottom{display: flex;align-items: center;justify-content: space-between;gap: 8px}
+
+.market-security-top>span{color: var(--text-1);font-size: var(--fs-12);font-weight: 800;letter-spacing: .08em}
+
+.watch-toggle{width: 26px;height: 26px;border: 1px solid var(--line);border-radius: 50%;background: var(--bg-2);color: var(--text-1);font-size: var(--fs-15);cursor: pointer}
+
+.watch-toggle.active{border-color: var(--hairline);background: var(--bg-2);color: var(--emerald)}
+
+.market-security-title h3{margin: 0;color: var(--sapphire);font-size: var(--fs-11)}
+
+.market-security-title b{display: block;margin-top: 4px;color: var(--text-1);font-size: var(--fs-12);letter-spacing: .08em}
+
+.market-security-title>strong{color: var(--sapphire);font-size: var(--fs-15);font-variant-numeric: tabular-nums}
+
+.market-change{font-size: var(--fs-12);font-weight: 700}
+
+.positive{color: var(--emerald)}
+
+.negative{color: var(--ruby)}
+
+.market-security>p{min-height: 48px;margin: 0;color: var(--text-1);font-size: var(--fs-12);line-height: 1.55}
+
+.market-security-meta{display: flex;flex-wrap: wrap;gap: 8px;padding: 8px 0;border-top: 1px solid var(--hairline);border-bottom: 1px solid var(--hairline)}
+
+.market-security-meta span{color: var(--text-1);font-size: var(--fs-11)}
+
+.market-security-meta b{color: var(--text-1)}
+
+.market-sparkline{display: flex;align-items: center;justify-content: space-between;gap: 10px}
+
+.market-sparkline svg{width: 110px;height: 26px;overflow: visible}
+
+.market-sparkline small{color: var(--text-1);font-size: var(--fs-11)}
+
+.market-security-bottom{margin-top: auto;padding-top: 7px;border-top: 1px solid var(--hairline)}
+
+.market-security-bottom>span{color: var(--text-1);font-size: var(--fs-12);font-weight: 800}
+
+.market-security-bottom button{padding: 0;border: 0;background: none;color: var(--emerald);font-size: var(--fs-12);font-weight: 700;cursor: pointer}
+
+.market-feedback{color: var(--emerald)}
+
+}
