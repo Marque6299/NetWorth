@@ -57,3 +57,39 @@ test("Active Business workspace renders pricing, staffing, marketing, suppliers 
   assert.match(html, /data-business-form="BUSINESS_MARKETING_CAMPAIGN"/);
   assert.match(html, /data-business-action="BUSINESS_END_MANDATE"/);
 });
+
+
+test("active Overview hides the welcome hero and shows the latest eight escaped events", () => {
+  let state = createGameState({ seed: "overview-activity" });
+  state.eventLog = Array.from({ length: 10 }, (_, index) => ({
+    id: `test-event-${index + 1}`,
+    turn: index + 1,
+    date: `2026-01-${String(index + 1).padStart(2, "0")}`,
+    type: index === 9 ? "MARKET_CYCLE" : "TURN_ADVANCED",
+    summary: index === 9 ? 'Activity 10 <img src=x onerror="alert(1)">' : `Activity ${index + 1}`
+  }));
+  const html = renderOverview(state);
+  assert.doesNotMatch(html, /Every empire starts/);
+  assert.doesNotMatch(html, /Your story has not started yet/);
+  assert.match(html, /Activity 10 &lt;img src=x onerror=&quot;alert\(1\)&quot;&gt;/);
+  assert.doesNotMatch(html, /<img src=x onerror=/);
+  assert.ok(html.indexOf("Activity 10") < html.indexOf("Activity 9"));
+  assert.ok(html.indexOf("Activity 9") < html.indexOf("Activity 8"));
+  assert.doesNotMatch(html, /Activity 2/);
+  assert.match(html, /activity-dot market/);
+});
+
+test("Overview shows the welcome hero and empty Recent Activity when no game exists", () => {
+  const html = renderOverview();
+  assert.match(html, /Every empire starts/);
+  assert.match(html, /Your story has not started yet/);
+  assert.match(html, /Your balance sheet and cash flow, based on recorded ledger activity\./);
+});
+
+test("active Overview formats ledger money with the Cr prefix", () => {
+  let state = createGameState({ seed: "overview-money" });
+  state = resolveAction(state, { type: "CREATE_CHARACTER", name: "Taylor Morgan", age: 29, profileId: "early-career" }).state;
+  const html = renderOverview(state);
+  assert.match(html, /Cr [\d,]+\.\d{2}/);
+  assert.doesNotMatch(html, /Cr [\d,]+\.\d{2} Credits/);
+});

@@ -1,0 +1,21 @@
+@layer utilities{
+html,body{background:var(--bg-0);color:var(--text-0)}.app-root,.main-column,.main{background:var(--bg-0)}
+.sidebar{background:var(--bg-1);border-right:1px solid var(--hairline)}.topbar{background:var(--glass);border-color:var(--hairline)}
+.welcome{background:var(--hero-gradient);color:var(--text-0)}
+.panel,.stat,.feature,.intro,.game-panel,.character-hero,.career-card,.education-card,.bank-institution,.market-security,.asset-catalog-card,.asset-holding-card,.business-company-card,.business-product-card,.business-manage-form{background:var(--glass);border-color:var(--hairline);color:var(--text-0)}
+.panel-title h3,.stat>strong,.empty h3,.moves strong,.intro h2,.section-head h2,.feature h3,.game-panel-head h2,.life-section-head h2,.business-company-card h3,.business-product-head h3{color:var(--text-0)}
+.panel-title p,.stat>small,.empty p,.moves small,.note-dot,.feature p,.page-heading p,.game-panel-head p{color:var(--text-2)}
+input,select,textarea,.search{background:var(--bg-2);border-color:var(--hairline);color:var(--text-0)}input::placeholder,textarea::placeholder{color:var(--text-2)}
+.primary-button,.welcome-links .primary,.topbar-advance{background:var(--gold-400);border:1px solid var(--gold-400);color:var(--text-on-gold)}
+.primary-button:hover,.welcome-links .primary:hover,.topbar-advance:not(:disabled):hover{background:var(--gold-300);border-color:var(--gold-300);color:var(--text-on-gold)}
+.primary-button:disabled,.topbar-advance:disabled{background:var(--bg-2);border-color:var(--hairline);color:var(--text-2);cursor:not-allowed;opacity:.7}
+.subtle-button,.secondary-button,.icon-button{background:var(--bg-2);border-color:var(--hairline);color:var(--text-1)}
+.nav-link.active{background:var(--gold-soft);border-color:var(--hairline);color:var(--text-0)}.nav-link.active .nav-icon{color:var(--gold-300)}
+.phase,.phase-chip{background:var(--gold-soft);color:var(--gold-300);border-color:var(--hairline)}
+.positive{color:var(--emerald)}.negative{color:var(--ruby)}.business-good{color:var(--text-1)}.business-warning,.danger-button{color:var(--amber)}
+.danger-button{background:var(--bg-2);border-color:var(--hairline)}.ready{background:var(--bg-2);color:var(--text-1)}.ready>b{background:var(--gold-400)}
+.phase-note{background:var(--bg-2);color:var(--text-1)}.education-award{font-size:var(--fs-11)}
+.topbar-advance{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:36px;padding:0 12px;border-radius:var(--r-sm);font-size:var(--fs-12);font-weight:700;white-space:nowrap;cursor:pointer}
+.topbar-advance .icon{width:15px;height:15px}.money,.stat>strong,.market-overview-card strong{font-variant-numeric:tabular-nums}
+@media(max-width:600px){.topbar-advance{min-width:36px;padding:0 9px}.topbar-advance span{display:none}}
+}

@@ -1,0 +1,91 @@
+@layer views {
+/* Phase 2 — deterministic simulation controls */
+.game-panel{margin-top: 22px;padding: 24px}
+
+.game-panel-head,.subsection-title,.game-actions,.save-slot{display: flex;align-items: center}
+
+.game-panel-head,.subsection-title,.save-slot{justify-content: space-between}
+
+
+.game-panel-head h2{margin: 7px 0 5px;font-size: var(--fs-22)}
+
+.game-panel-head p{margin: 0;color: var(--muted);font-size: var(--fs-13)}
+
+.engine-status{display: inline-flex;align-items: center;gap: 8px;color: var(--muted);font-size: var(--fs-12);letter-spacing: .1em;white-space: nowrap}
+
+.engine-status i{width: 7px;height: 7px;border-radius: 50%;background: var(--emerald-soft);box-shadow: var(--shadow-soft)}
+
+
+.game-status-grid{display: grid;grid-template-columns: repeat(3,minmax(0,1fr));gap: 10px;margin: 22px 0}
+
+.game-status-grid>div{background: var(--glass-highlight);border: 1px solid var(--line);border-radius: 8px;padding: 14px}
+
+.game-status-grid small,.new-game-form label,.save-slot small,.subsection-title small{display: block;color: var(--muted);font-size: var(--fs-11);letter-spacing: .1em}
+
+.game-status-grid strong{display: block;margin-top: 7px;font-size: var(--fs-21);font-variant-numeric: tabular-nums}
+
+
+.new-game-form{display: grid;grid-template-columns: 1fr 1fr auto;align-items: end;gap: 12px;margin: 18px 0 22px}
+
+.new-game-form input{display: block;width: 100%;margin-top: 7px;padding: 11px 12px;color: inherit;background: var(--glass-highlight);border: 1px solid var(--line);border-radius: 6px;font: inherit}
+
+.primary-button,.subtle-button,.icon-button{min-height: 38px;border-radius: 6px;padding: 0 13px;font: inherit;font-size: var(--fs-12);cursor: pointer}
+
+.primary-button{display: inline-flex;align-items: center;gap: 10px;color: var(--sapphire);background: var(--bg-2);border: 1px solid var(--hairline);font-weight: 700}
+
+.primary-button .icon{width: 15px;height: 15px}
+
+.subtle-button,.icon-button{color: var(--ink);background: var(--glass-highlight);border: 1px solid var(--line)}
+
+.icon-button{min-width: 34px;padding: 0;font-size: var(--fs-18)}
+
+.game-actions{gap: 8px;flex-wrap: wrap;margin: 16px 0}
+
+.game-actions.compact{margin-top: 12px}
+
+
+.game-columns{display: grid;grid-template-columns: 1fr 1fr;gap: 26px;border-top: 1px solid var(--line);padding-top: 20px}
+
+.subsection-title{margin-bottom: 12px}
+
+.subsection-title h3{margin: 0;font-size: var(--fs-14)}
+
+.save-slots{display: grid;gap: 8px}
+
+.save-slot{min-height: 55px;gap: 12px;padding: 9px 11px;border: 1px solid var(--line);border-radius: 7px}
+
+.save-slot>div:first-child b{display: block;margin-bottom: 5px;font-size: var(--fs-12);letter-spacing: .08em}
+
+.slot-actions{display: flex;align-items: center;gap: 6px}
+
+.slot-actions .subtle-button{min-height: 30px}
+
+.slot-empty,.event-empty{color: var(--muted);font-size: var(--fs-12)}
+
+
+.event-list{display: grid;gap: 8px}
+
+.event-list article{display: flex;gap: 10px;padding: 9px 0;border-bottom: 1px solid var(--hairline)}
+
+.event-list article>.icon{width: 16px;height: 16px;color: var(--muted)}
+
+.event-list article b{display: block;font-size: var(--fs-11);font-weight: 600}
+
+.event-list article small{display: block;margin-top: 5px;color: var(--muted);font-size: var(--fs-11);letter-spacing: .06em}
+
+.import-label{display: inline-block;margin-top: 14px;color: var(--muted);font-size: var(--fs-11)}
+
+.import-label input{display: block;max-width: 100%;margin-top: 7px;font-size: var(--fs-11)}
+
+.game-feedback{margin: 18px 0 0;color: var(--muted);font-size: var(--fs-11)}
+
+.storage-warning{padding: 10px 12px;color: var(--amber);background: var(--amber-soft);border: 1px solid var(--hairline);border-radius: 6px;font-size: var(--fs-12)}
+
+
+
+/* Phase 2 event icon alignment */
+.event-list article>i{display: grid;place-items: center;color: var(--muted)}
+
+.event-list article>i .icon{width: 16px;height: 16px}
+
+}

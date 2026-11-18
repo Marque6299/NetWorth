@@ -5,25 +5,30 @@ import { TIME_KEYS } from "./simulation-core.js";
 import { createGameState, resolveAction } from "./simulation-core.js";
 import { createExport, deleteSave, listSaveSlots, loadGame, parseImport, saveGame } from "./persistence.js";
 import { renderGamePanel } from "./game-ui.js";
+import { VERSION, PHASE_LABEL } from "./build.js";
 
 const root=document.querySelector("#app");
 let currentGame=null,saveSlots=[],storageError="",feedbackMessage="",busy=false;
-function sidebar(active){
- return '<aside class="sidebar"><a class="brand" href="#/overview" data-route="overview"><span class="brand-mark">N</span><span><b>NETWORTH</b><small>CAPITAL & CONSEQUENCE</small></span></a><div class="side-rule"></div><div class="nav-groups">'+GROUPS.map(group=>'<section class="nav-group"><label>'+esc(group.label)+'</label><nav>'+group.pages.map(page=>navLink(page,active)).join("")+'</nav></section>').join("")+'</div><div class="side-bottom"><b>EARLY ACCESS SHELL</b><small>BUILD 0.10.0 / PHASE 10</small><p>A world of decisions.<br>A future of your making.</p></div></aside>';
+function sidebar(active) {
+  return `<aside class="sidebar"><a class="brand" href="#/overview" data-route="overview"><span class="brand-mark">N</span><span><b>NETWORTH</b><small>CAPITAL & CONSEQUENCE</small></span></a><div class="side-rule"></div><div class="nav-groups">${GROUPS.map(group => '<section class="nav-group"><label>' + esc(group.label) + '</label><nav>' + group.pages.map(page => navLink(page, active)).join("") + '</nav></section>').join("")}</div><div class="side-bottom"><b>EARLY ACCESS SHELL</b><small>BUILD ${esc(VERSION)}</small><small>${esc(PHASE_LABEL)}</small><p>A world of decisions.<br>A future of your making.</p></div></aside>`;
 }
-function topbar(page){
- const saveLabel=currentGame?`TURN ${currentGame.calendar.turn} · ${currentGame.calendar.currentDate}`:"NO SAVE LOADED";
- const avatar=currentGame?.life?.character?.name?.slice(0,1)?.toUpperCase()??"—";
- return '<header class="topbar"><div class="crumb">NETWORTH '+icon("right")+' <b>'+esc(page.label.toUpperCase())+'</b></div><div class="top-actions"><div class="search" id="searchWrap">'+icon("search")+'<input id="globalSearch" type="search" placeholder="Find a workspace" aria-label="Find a workspace" aria-controls="searchResults" aria-expanded="false" autocomplete="off"><kbd>⌘ K</kbd><div id="searchResults" class="results" role="listbox" hidden></div></div><div class="save"><i></i><span><small>SAVE STATUS</small><b>'+esc(saveLabel)+'</b></span></div><span class="avatar" aria-label="Player profile">'+avatar+'</span></div></header>';
+
+function topbar(page) {
+  const saveLabel = currentGame ? `TURN ${currentGame.calendar.turn} · ${currentGame.calendar.currentDate}` : "NO SAVE LOADED";
+  const avatar = currentGame?.life?.character?.name?.slice(0, 1)?.toUpperCase() ?? "—";
+  const advanceDisabled = currentGame && !busy ? "" : " disabled";
+  return `<header class="topbar glass"><div class="crumb">NETWORTH ${icon("right")} <b>${esc(page.label.toUpperCase())}</b></div><div class="top-actions"><button type="button" class="topbar-advance" data-game-action="advance" aria-label="Advance one week"${advanceDisabled}><span>Advance 1 week</span>${icon("arrow")}</button><div class="search" id="searchWrap">${icon("search")}<input id="globalSearch" type="search" placeholder="Find a workspace" aria-label="Find a workspace" aria-controls="searchResults" aria-expanded="false" autocomplete="off"><kbd>⌘ K</kbd><div id="searchResults" class="results" role="listbox" hidden></div></div><div class="save"><i></i><span><small>SAVE STATUS</small><b>${esc(saveLabel)}</b></span></div><span class="avatar" aria-label="Player profile">${esc(avatar)}</span></div></header>`;
 }
-function heading(page){
- return '<div class="page-heading"><div><label>'+(page.id==="overview"?"YOUR FINANCIAL COMMAND CENTER":"NETWORTH WORKSPACE / "+page.id.toUpperCase())+'</label><h1>'+esc(page.title)+'</h1><p>'+esc(page.description)+'</p></div><span class="phase">◇ PHASE 10 <small>OWNERSHIP & ENTERPRISE / 10 SECTIONS</small></span></div>';
+
+function heading(page) {
+  return `<div class="page-heading"><div><label>${page.id === "overview" ? "YOUR FINANCIAL COMMAND CENTER" : "NETWORTH WORKSPACE / " + page.id.toUpperCase()}</label><h1>${esc(page.title)}</h1><p>${esc(page.description)}</p></div><span class="phase">◇ ${esc(PHASE_LABEL)} <small>BUILD ${esc(VERSION)}</small></span></div>`;
 }
+
 function render(){
  let id=getPageIdFromHash(location.hash);
  if(!location.hash||!PAGES.some(page=>"#/"+page.id===location.hash)){history.replaceState(null,"","#/overview");id="overview";}
  const page=getPage(id);
- root.innerHTML=sidebar(id)+'<div class="main-column">'+topbar(page)+'<main class="main"><a class="skip" href="#content">Skip to content</a><div id="content">'+heading(page)+'<div class="content">'+(id==="overview"?renderOverview(currentGame)+renderGamePanel(currentGame,saveSlots,storageError,feedbackMessage):id==="personal"?renderPersonalView(currentGame):id==="finance"?renderFinanceView(currentGame):id==="markets"?renderMarketsView(currentGame):id==="assets"?renderAssetsView(currentGame):id==="businesses"?renderBusinessesView(currentGame):renderSection(id))+'</div></div><footer class="page-footer"><span>NETWORTH · CAPITAL & CONSEQUENCE</span><span>PHASE 10 / OWNERSHIP & ENTERPRISE · LOCAL GAME STATE</span></footer></main></div>';
+ root.innerHTML=sidebar(id)+'<div class="main-column">'+topbar(page)+'<main class="main"><a class="skip" href="#content">Skip to content</a><div id="content">'+heading(page)+'<div class="content">'+(id==="overview"?renderOverview(currentGame)+renderGamePanel(currentGame,saveSlots,storageError,feedbackMessage):id==="personal"?renderPersonalView(currentGame):id==="finance"?renderFinanceView(currentGame):id==="markets"?renderMarketsView(currentGame):id==="assets"?renderAssetsView(currentGame):id==="businesses"?renderBusinessesView(currentGame):renderSection(id))+'</div></div><footer class="page-footer"><span>NETWORTH · CAPITAL & CONSEQUENCE</span><span>' + esc(PHASE_LABEL) + ' · LOCAL GAME STATE</span></footer></main></div>';
  document.title=page.label+" — Networth";setupSearch();setupGameControls();setupPersonalControls();setupCareerControls();setupFinanceControls();setupBankingControls();setupMarketControls();setupAssetControls();setupBusinessControls();root.classList.add("ready");
 }
 function closeSearch(){const input=document.querySelector("#globalSearch"),results=document.querySelector("#searchResults");if(results)results.hidden=true;if(input)input.setAttribute("aria-expanded","false");}

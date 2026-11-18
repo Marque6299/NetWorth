@@ -21,7 +21,13 @@ const paths = {
 };
 export const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" })[c]);
 export const icon = name => '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (paths[name] || paths.layers) + '</svg>';
-export function navLink(page, active) { return '<a class="nav-link ' + (page.id === active ? 'active' : '') + '" href="#/' + page.id + '" data-route="' + page.id + '"' + (page.id === active ? ' aria-current="page"' : '') + '><span class="nav-ico">' + icon(page.icon) + '</span><span>' + esc(page.label) + '</span></a>'; }
+/**
+ * Render a safe navigation link and mark the active workspace.
+ * @param {{id:string,icon:string,label:string}} page Navigation page metadata.
+ * @param {string} active Active page identifier.
+ * @returns {string} HTML for the navigation link.
+ */
+export function navLink(page, active) { return '<a class="nav-link ' + (page.id === active ? 'active' : '') + '" href="#/' + page.id + '" data-route="' + page.id + '"' + (page.id === active ? ' aria-current="page"' : '') + '><span class="nav-icon">' + icon(page.icon) + '</span><span>' + esc(page.label) + '</span></a>'; }
 export function statCard(label, ico) { return '<article class="stat"><div class="stat-top"><span>' + esc(label) + '</span><i>' + icon(ico) + '</i></div><strong>—</strong><small><b></b>No active save</small></article>'; }
 export function emptyState(ico, title, body, tag = "NO DATA YET") { return '<div class="empty"><i>' + icon(ico) + '</i><div><label>' + esc(tag) + '</label><h3>' + esc(title) + '</h3><p>' + esc(body) + '</p></div></div>'; }
 export function panelTitle(title, subtitle) { return '<div class="panel-title"><div><h3>' + esc(title) + '</h3><p>' + esc(subtitle) + '</p></div></div>'; }

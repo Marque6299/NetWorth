@@ -1,0 +1,104 @@
+@layer views {
+/* Phase 8 — property and collectibles */
+.asset-overview-grid{display: grid;grid-template-columns: repeat(4,minmax(0,1fr));gap: 10px;margin-bottom: 14px}
+
+
+.asset-catalog-grid,.asset-holding-grid{display: grid;grid-template-columns: repeat(3,minmax(0,1fr));gap: 11px}
+
+
+.asset-catalog-card,.asset-holding-card{display: flex;flex-direction: column;gap: 10px;min-width: 0;padding: 15px;border: 1px solid var(--line);border-radius: 8px;background: var(--bg-2)}
+
+
+.asset-card-top{display: flex;align-items: center;justify-content: space-between;gap: 8px}
+
+
+.asset-card-top span,.asset-card-top b{color: var(--text-1);font-size: var(--fs-12);font-weight: 800;letter-spacing: .08em}
+
+
+.asset-card-top b{color: var(--emerald);text-align: right}
+
+
+.asset-catalog-card h3,.asset-holding-card h3{margin: 0;color: var(--sapphire);font-size: var(--fs-13);line-height: 1.4}
+
+
+.asset-catalog-card>p{min-height: 55px;margin: 0;color: var(--text-1);font-size: var(--fs-12);line-height: 1.6}
+
+
+.asset-price{padding: 9px 0;color: var(--sapphire);font-size: var(--fs-20);font-weight: 750;font-variant-numeric: tabular-nums}
+
+
+.asset-price small{display: block;margin-top: 4px;color: var(--text-1);font-size: var(--fs-11);font-weight: 500}
+
+
+.asset-detail-grid{display: grid;grid-template-columns: 1fr 1fr;gap: 7px}
+
+
+.asset-detail-grid>div{padding: 9px;border-radius: 6px;background: var(--bg-2);min-width: 0}
+
+
+.asset-detail-grid small,.asset-value-row small,.asset-condition small{display: block;color: var(--text-1);font-size: var(--fs-11);font-weight: 800;letter-spacing: .07em}
+
+
+.asset-detail-grid b{display: block;margin-top: 5px;color: var(--text-1);font-size: var(--fs-12);font-variant-numeric: tabular-nums;overflow-wrap: anywhere}
+
+
+.asset-purchase-form{display: grid;gap: 8px;margin-top: auto;padding-top: 9px;border-top: 1px solid var(--hairline)}
+
+
+.asset-purchase-form label,.asset-actions label{display: grid;gap: 5px;color: var(--text-1);font-size: var(--fs-11);font-weight: 800;letter-spacing: .06em}
+
+
+.asset-purchase-form select,.asset-actions select{width: 100%;min-height: 35px;padding: 7px 8px;border: 1px solid var(--line);border-radius: 5px;background: var(--bg-2);color: var(--text-1);font: inherit;font-size: var(--fs-12);letter-spacing: normal}
+
+
+.asset-purchase-form .primary-button{width: 100%;justify-content: center}
+
+
+.asset-owned-label{margin-top: auto;padding: 11px 0 2px;border-top: 1px solid var(--hairline);color: var(--emerald);font-size: var(--fs-11);font-weight: 800;letter-spacing: .08em}
+
+
+.asset-holding-card{margin-bottom: 10px}
+
+
+.asset-value-row{display: grid;grid-template-columns: 1fr 1fr;gap: 8px}
+
+
+.asset-value-row>div{min-width: 0}
+
+
+.asset-value-row strong{display: block;margin-top: 6px;color: var(--sapphire);font-size: var(--fs-16);font-variant-numeric: tabular-nums;overflow-wrap: anywhere}
+
+
+.asset-condition{display: grid;gap: 7px}
+
+
+.asset-condition>div:first-child{display: flex;align-items: center;justify-content: space-between;gap: 8px}
+
+
+.asset-condition b{color: var(--text-1);font-size: var(--fs-12)}
+
+
+.asset-condition .meter{height: 6px}
+
+
+.asset-actions{display: grid;grid-template-columns: 1fr 1fr;gap: 7px;padding-top: 9px;border-top: 1px solid var(--hairline)}
+
+
+.asset-actions form{grid-column: 1/-1;display: grid;grid-template-columns: 1fr auto;align-items: end;gap: 8px}
+
+
+.asset-actions .secondary-button,.asset-actions .danger-button{justify-content: center;min-height: 35px;font-size: var(--fs-12)}
+
+
+.danger-button{display: inline-flex;align-items: center;justify-content: center;gap: 6px;min-height: 36px;padding: 8px 12px;border: 1px solid var(--hairline);border-radius: 5px;background: var(--bg-2);color: var(--ruby);font: inherit;font-size: var(--fs-12);font-weight: 700;cursor: pointer}
+
+
+.danger-button:hover{background: var(--bg-2)}
+
+
+.asset-empty{padding: 18px;border: 1px dashed var(--hairline);border-radius: 7px;background: var(--bg-2);color: var(--text-1);font-size: var(--fs-12);line-height: 1.6}
+
+
+.asset-feedback{min-height: 15px;margin: 12px 0 0;color: var(--emerald);font-size: var(--fs-12)}
+
+}

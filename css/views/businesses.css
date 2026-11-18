@@ -1,0 +1,200 @@
+@layer views {
+/* Phase 9 — business operations */
+.business-intro,.business-active-head{display: flex;align-items: flex-end;justify-content: space-between;gap: 18px;padding: 20px;border: 1px solid var(--line);border-radius: 9px;background: linear-gradient(135deg,var(--bg-2),var(--bg-2));margin-bottom: 14px}
+
+
+.business-intro label,.business-active-head label{color: var(--text-1);font-size: var(--fs-11);font-weight: 800;letter-spacing: .11em}
+
+
+.business-intro h2,.business-active-head h2{margin: 7px 0;color: var(--sapphire);font-size: var(--fs-21)}
+
+
+.business-intro p,.business-active-head p{max-width: 730px;margin: 0;color: var(--text-1);font-size: var(--fs-12);line-height: 1.65}
+
+
+.business-company-grid{display: grid;grid-template-columns: repeat(2,minmax(0,1fr));gap: 11px}
+
+
+.business-company-card{display: flex;flex-direction: column;gap: 10px;min-width: 0;padding: 16px;border: 1px solid var(--line);border-radius: 8px;background: var(--bg-2)}
+
+
+.business-company-top{display: flex;align-items: center;justify-content: space-between;gap: 8px}
+
+
+.business-company-top span,.business-company-top b{color: var(--text-1);font-size: var(--fs-12);font-weight: 800;letter-spacing: .08em}
+
+
+.business-company-top b{color: var(--emerald);text-align: right}
+
+
+.business-company-card h3{margin: 0;color: var(--sapphire);font-size: var(--fs-15)}
+
+
+.business-company-card h4{margin: -7px 0 0;color: var(--text-1);font-size: var(--fs-12);font-weight: 600}
+
+
+.business-company-card>p{min-height: 42px;margin: 0;color: var(--text-1);font-size: var(--fs-12);line-height: 1.6}
+
+
+.business-company-stats{display: grid;grid-template-columns: 1fr 1fr;gap: 7px}
+
+
+.business-company-stats>div{padding: 9px;border-radius: 6px;background: var(--bg-2);min-width: 0}
+
+
+.business-company-stats small,.business-company-products small,.business-company-requirements small{display: block;color: var(--text-1);font-size: var(--fs-11);font-weight: 800;letter-spacing: .07em}
+
+
+.business-company-stats strong{display: block;margin-top: 5px;color: var(--text-1);font-size: var(--fs-11);overflow-wrap: anywhere}
+
+
+.business-company-products,.business-company-requirements{display: grid;gap: 5px}
+
+
+.business-company-products span,.business-company-requirements span{color: var(--text-1);font-size: var(--fs-12);line-height: 1.5}
+
+
+.business-company-card .primary-button{justify-content: center;margin-top: auto}
+
+
+.business-eligibility,.business-lock{color: var(--emerald);font-size: var(--fs-12);line-height: 1.4}
+
+
+.business-lock{color: var(--amber)}
+
+
+.business-feedback{min-height: 15px;margin: 10px 0 0;color: var(--emerald);font-size: var(--fs-12)}
+
+
+.business-active-head{align-items: center}
+
+
+.business-score{width: 190px;flex-shrink: 0;padding: 13px;border: 1px solid var(--hairline);border-radius: 7px;background: var(--bg-2)}
+
+
+.business-score small{display: block;color: var(--text-1);font-size: var(--fs-11);font-weight: 800;letter-spacing: .08em}
+
+
+.business-score strong{display: block;margin: 6px 0;color: var(--sapphire);font-size: var(--fs-25);font-variant-numeric: tabular-nums}
+
+
+.business-score strong span{color: var(--text-1);font-size: var(--fs-12)}
+
+
+.business-score .meter{height: 6px}
+
+
+.business-overview-grid{display: grid;grid-template-columns: repeat(4,minmax(0,1fr));gap: 10px;margin-bottom: 10px}
+
+
+.business-status-strip{display: grid;grid-template-columns: repeat(5,minmax(0,1fr));gap: 8px;margin-bottom: 14px}
+
+
+.business-status-strip>div{padding: 11px;border: 1px solid var(--line);border-radius: 7px;background: var(--bg-2);min-width: 0}
+
+
+.business-status-strip small{display: block;color: var(--text-1);font-size: var(--fs-11);font-weight: 800;letter-spacing: .07em}
+
+
+.business-status-strip b{display: block;margin-top: 6px;color: var(--text-1);font-size: var(--fs-11);font-variant-numeric: tabular-nums;overflow-wrap: anywhere}
+
+
+.business-management-grid{display: grid;grid-template-columns: repeat(3,minmax(0,1fr));gap: 9px}
+
+
+.business-manage-form{display: flex;flex-direction: column;gap: 9px;min-width: 0;padding: 13px;border: 1px solid var(--line);border-radius: 7px;background: var(--bg-2)}
+
+
+.business-manage-form h3{margin: 0;color: var(--text-0);font-size: var(--fs-11)}
+
+
+.business-manage-form label{display: grid;gap: 5px;color: var(--text-1);font-size: var(--fs-11);font-weight: 800;letter-spacing: .07em}
+
+
+.business-manage-form input,.business-manage-form select{width: 100%;min-height: 36px;padding: 8px 9px;border: 1px solid var(--line);border-radius: 5px;background: var(--bg-2);color: var(--text-1);font: inherit;font-size: var(--fs-12);letter-spacing: normal}
+
+
+.business-manage-form small{color: var(--text-1);font-size: var(--fs-11);line-height: 1.45}
+
+
+.business-manage-form .primary-button{justify-content: center;margin-top: auto}
+
+
+.business-working-capital>b{color: var(--emerald);font-size: var(--fs-11)}
+
+
+.business-good{color: var(--emerald)}
+
+
+.business-warning{color: var(--amber)}
+
+
+.business-product-grid{display: grid;grid-template-columns: repeat(2,minmax(0,1fr));gap: 10px}
+
+
+.business-product-card{display: flex;flex-direction: column;gap: 10px;min-width: 0;padding: 14px;border: 1px solid var(--line);border-radius: 8px;background: var(--bg-2)}
+
+
+.business-product-head{display: flex;align-items: flex-start;justify-content: space-between;gap: 8px}
+
+
+.business-product-head small{color: var(--text-1);font-size: var(--fs-11);font-weight: 800;letter-spacing: .08em}
+
+
+.business-product-head h3{margin: 5px 0 0;color: var(--sapphire);font-size: var(--fs-12);line-height: 1.35}
+
+
+.business-product-head>span{flex-shrink: 0;color: var(--text-1);font-size: var(--fs-12);font-weight: 800;letter-spacing: .06em}
+
+
+.business-product-metrics{display: grid;grid-template-columns: repeat(3,minmax(0,1fr));gap: 7px}
+
+
+.business-product-metrics>div{padding: 8px;border-radius: 5px;background: var(--bg-2);min-width: 0}
+
+
+.business-product-metrics small,.business-stock-row span{display: block;color: var(--text-1);font-size: var(--fs-11);font-weight: 800;letter-spacing: .06em}
+
+
+.business-product-metrics strong{display: block;margin-top: 5px;color: var(--text-1);font-size: var(--fs-12);font-variant-numeric: tabular-nums;overflow-wrap: anywhere}
+
+
+.business-stock-row{display: flex;flex-wrap: wrap;gap: 9px;padding: 8px 0;border-top: 1px solid var(--hairline);border-bottom: 1px solid var(--hairline)}
+
+
+.business-stock-row span{color: var(--text-1)}
+
+
+.business-stock-row b{color: var(--text-1)}
+
+
+.business-control-stack{display: grid;gap: 8px;margin-top: auto}
+
+
+.business-form-inline{display: grid;grid-template-columns: 1fr auto;align-items: end;gap: 8px}
+
+
+.business-form-inline label{display: grid;gap: 5px;color: var(--text-1);font-size: var(--fs-11);font-weight: 800;letter-spacing: .06em}
+
+
+.business-form-inline input,.business-form-inline select{width: 100%;min-height: 34px;padding: 7px 8px;border: 1px solid var(--line);border-radius: 5px;background: var(--bg-2);color: var(--text-1);font: inherit;font-size: var(--fs-12);letter-spacing: normal}
+
+
+.business-form-inline .secondary-button{justify-content: center;min-height: 34px;padding: 7px 10px;font-size: var(--fs-12)}
+
+
+.business-subtitle{margin: 18px 0 9px;color: var(--text-1);font-size: var(--fs-11)}
+
+
+.business-contract-note{display: flex;align-items: center;justify-content: space-between;gap: 14px;padding: 15px;border: 1px solid var(--hairline);border-radius: 8px;background: var(--bg-2)}
+
+
+.business-contract-note>div{display: grid;gap: 5px}
+
+
+.business-contract-note b{color: var(--amber);font-size: var(--fs-12)}
+
+
+.business-contract-note span{max-width: 750px;color: var(--text-1);font-size: var(--fs-12);line-height: 1.5}
+
+}
